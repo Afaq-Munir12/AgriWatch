@@ -1,0 +1,105 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&family=Noto+Nastaliq+Urdu:wght@500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-forest: #0B3D1E;
+  --color-forest-light: #124D28;
+  --color-primary: #3F8C2C;
+  --color-primary-light: #6FB33F;
+  --color-leaf: #8DC152;
+  --color-accent: #F2C230;
+  --color-ink: #12160F;
+  --color-paper: #F7F8F2;
+  --color-paper-dim: #EFF1E8;
+  --color-line: #DCE1D3;
+  --color-danger: #C1442D;
+  --color-warn: #D98A1F;
+  --color-ok: #3F8C2C;
+
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+}
+
+/* Urdu font is scoped to .i18n-ur wrapper only — NOT applied blanket via
+   html[dir=rtl], because that was bleeding Noto Nastaliq Urdu onto
+   still-English page content and garbling it. Components that are fully
+   translated (Sidebar, Login, Home, Guest view, Topbar, badges) opt in
+   explicitly via this class. */
+.i18n-ur, .i18n-ur .font-display {
+  font-family: 'Noto Nastaliq Urdu', var(--font-body);
+}
+
+/* Nastaliq's loops and diacritics overlap the line below at normal Latin
+   leading, and letter-spacing breaks the cursive joins between Urdu
+   letters — both are normalized here so the script renders cleanly. */
+.i18n-ur {
+  line-height: 2;
+}
+.i18n-ur .leading-tight,
+.i18n-ur .leading-snug,
+.i18n-ur .leading-none {
+  line-height: 2 !important;
+}
+.i18n-ur [class*="tracking-"] {
+  letter-spacing: normal !important;
+}
+
+.font-display { font-family: var(--font-display); }
+.font-mono { font-family: var(--font-mono); }
+
+/* signature scan-line accent, echoes the satellite pass in the logo */
+.scan-line {
+  position: relative;
+  overflow: hidden;
+}
+.scan-line::before {
+  content: "";
+  position: absolute;
+  top: 0; left: -40%;
+  width: 40%; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--color-accent), transparent);
+  animation: scan 3.2s linear infinite;
+}
+@keyframes scan {
+  0% { left: -40%; }
+  100% { left: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scan-line::before { animation: none; display: none; }
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: var(--color-line); border-radius: 4px; }
+/* Animated buttons — apply btn-animated alongside existing color classes */
+.btn-animated {
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+.btn-animated:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px -6px rgba(11, 61, 30, 0.35);
+}
+.btn-animated:active {
+  transform: translateY(0px) scale(0.97);
+}
+.btn-animated::after {
+  content: "";
+  position: absolute;
+  top: 0; left: -75%;
+  width: 50%; height: 100%;
+  background: linear-gradient(120deg, transparent, rgba(255,255,255,0.35), transparent);
+  transform: skewX(-20deg);
+  transition: left 0.5s ease;
+}
+.btn-animated:hover::after {
+  left: 125%;
+}
