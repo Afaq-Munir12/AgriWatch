@@ -29,7 +29,7 @@ export default function Alerts() {
   return (
     <>
       <Topbar title={t("ptAdminAlertsTitle")} subtitle={t("ptAdminAlertsSub")} />
-      <main className="p-8 space-y-6">
+      <main className="p-4 sm:p-8 space-y-6">
         <Card>
           <p className="font-display font-semibold mb-4">Create Alert</p>
           <form onSubmit={handleSend} className="grid grid-cols-1 md:grid-cols-4 gap-3">

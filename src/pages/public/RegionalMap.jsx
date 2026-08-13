@@ -12,7 +12,7 @@ export default function RegionalMap() {
   return (
     <>
       <Topbar title={t("ptPublicMapTitle")} subtitle={t("ptPublicMapSub")} />
-      <main className="p-8 space-y-4">
+      <main className="p-4 sm:p-8 space-y-4">
         <div className="flex items-center gap-4 text-xs text-ink/50">
           {Object.entries(severityColor).map(([k, v]) => (
             <span key={k} className={`flex items-center gap-1.5 ${lang === "ur" ? "i18n-ur" : ""}`}>

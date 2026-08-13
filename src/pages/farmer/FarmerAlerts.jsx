@@ -10,7 +10,7 @@ export default function FarmerAlerts() {
   return (
     <>
       <Topbar title={t("ptFarmerAlertsTitle")} subtitle={`${t("ptFarmerAlertsSub")} — ${currentFarmer.district}`} />
-      <main className="p-8 space-y-4">
+      <main className="p-4 sm:p-8 space-y-4">
         {mine.map((a) => (
           <Card key={a.id} className="flex items-start justify-between gap-4">
             <div>

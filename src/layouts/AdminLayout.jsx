@@ -1,5 +1,6 @@
 import { Outlet } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
+import { MobileNavProvider } from "../components/MobileNavContext";
 import {
   LayoutDashboard, Map, TrendingUp, Bell, Users, FileWarning, FileText, UserPlus, Settings,
 } from "lucide-react";
@@ -18,11 +19,13 @@ const navItems = [
 
 export default function AdminLayout() {
   return (
+    <MobileNavProvider>
     <div className="flex min-h-screen bg-paper">
       <Sidebar navItems={navItems} roleLabelKey="roleAdmin" basePath="/admin" />
       <div className="flex-1 min-w-0">
         <Outlet />
       </div>
     </div>
+    </MobileNavProvider>
   );
 }

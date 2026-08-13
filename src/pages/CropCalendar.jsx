@@ -8,7 +8,7 @@ export default function CropCalendar() {
   return (
     <>
       <Topbar title={t("ptCropCalendarTitle")} subtitle={t("ptCropCalendarSub")} />
-      <main className="p-8 space-y-4">
+      <main className="p-4 sm:p-8 space-y-4">
         {cropCalendar.map((c) => (
           <Card key={c.crop}>
             <div className="flex items-center justify-between mb-3">

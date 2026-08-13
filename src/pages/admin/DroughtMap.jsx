@@ -15,7 +15,7 @@ export default function DroughtMap() {
   return (
     <>
       <Topbar title={t("ptAdminMapTitle")} subtitle={t("ptAdminMapSub")} />
-      <main className="p-8 space-y-4">
+      <main className="p-4 sm:p-8 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex gap-2">
             {["severity", "ndvi", "soilMoisture"].map((l) => (

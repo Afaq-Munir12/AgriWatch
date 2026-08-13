@@ -29,7 +29,7 @@ export default function Complaints() {
   return (
     <>
       <Topbar title={t("ptAdminComplaintsTitle")} subtitle={t("ptAdminComplaintsSub")} />
-      <main className="p-8 space-y-6">
+      <main className="p-4 sm:p-8 space-y-6">
         <div className="grid grid-cols-3 gap-4">
           {["Under Review", "Forwarded", "Resolved"].map((s) => (
             <Card key={s}>

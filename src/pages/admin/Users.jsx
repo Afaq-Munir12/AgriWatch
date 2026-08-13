@@ -14,7 +14,7 @@ export default function Users() {
   return (
     <>
       <Topbar title={t("ptAdminUsersTitle")} subtitle={t("ptAdminUsersSub")} />
-      <main className="p-8 space-y-6">
+      <main className="p-4 sm:p-8 space-y-6">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex gap-2">
             {roles.map((r) => (

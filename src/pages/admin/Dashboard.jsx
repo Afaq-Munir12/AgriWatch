@@ -13,7 +13,7 @@ export default function Dashboard() {
   return (
     <>
       <Topbar title={t("ptAdminOverviewTitle")} subtitle={t("ptAdminOverviewSub")} />
-      <main className="p-8 space-y-6">
+      <main className="p-4 sm:p-8 space-y-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard label="Districts Monitored" value={districts.length} icon={MapPinned} delta="All Pakistan" deltaTone="ok" />
           <StatCard label="Extreme Drought" value={extreme} icon={AlertTriangle} delta="+1 vs last cycle" deltaTone="danger" />

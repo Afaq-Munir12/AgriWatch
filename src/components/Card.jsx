@@ -1,9 +1,14 @@
 import { useLanguage } from "../i18n/LanguageContext";
 
 export default function Card({ children, className = "", scan = false }) {
+  // If the caller passes their own bg-* class (e.g. "bg-forest"), skip the
+  // default bg-white entirely — otherwise Tailwind's generated stylesheet
+  // order can make bg-white silently win over the intended override,
+  // regardless of class order in the JSX.
+  const hasCustomBg = /(^|\s)bg-/.test(className);
   return (
     <div
-      className={`bg-white border border-line rounded-xl p-5 ${scan ? "scan-line" : ""} ${className}`}
+      className={`${hasCustomBg ? "" : "bg-white"} border border-line rounded-xl p-5 ${scan ? "scan-line" : ""} ${className}`}
     >
       {children}
     </div>

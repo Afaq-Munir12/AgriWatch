@@ -65,7 +65,7 @@ export default function FarmerComplaints() {
   return (
     <>
       <Topbar title={t("ptFarmerComplaintsTitle")} subtitle={t("ptFarmerComplaintsSub")} />
-      <main className="p-8 space-y-6">
+      <main className="p-4 sm:p-8 space-y-6">
         {justSubmittedId && (
           <div className="flex items-center gap-2 bg-primary/10 text-primary text-sm font-medium rounded-lg px-4 py-3">
             <CheckCircle2 size={16} />

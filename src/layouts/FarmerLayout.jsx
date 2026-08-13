@@ -1,5 +1,6 @@
 import { Outlet } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
+import { MobileNavProvider } from "../components/MobileNavContext";
 import {
   LayoutDashboard, Sprout, Droplets, TrendingDown, Bell, FileWarning, CalendarDays, Settings,
 } from "lucide-react";
@@ -17,11 +18,13 @@ const navItems = [
 
 export default function FarmerLayout() {
   return (
+    <MobileNavProvider>
     <div className="flex min-h-screen bg-paper">
       <Sidebar navItems={navItems} roleLabelKey="roleFarmer" basePath="/farmer" />
       <div className="flex-1 min-w-0">
         <Outlet />
       </div>
     </div>
+    </MobileNavProvider>
   );
 }

@@ -8,7 +8,7 @@ export default function PublicAlerts() {
   return (
     <>
       <Topbar title={t("ptPublicAlertsTitle")} subtitle={t("ptPublicAlertsSub")} />
-      <main className="p-8 space-y-4">
+      <main className="p-4 sm:p-8 space-y-4">
         {alerts.map((a) => (
           <Card key={a.id}>
             <div className="flex items-center gap-2 mb-1">

@@ -1,5 +1,6 @@
 import { Outlet } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
+import { MobileNavProvider } from "../components/MobileNavContext";
 import { LayoutDashboard, Map, Bell, BookOpen, CalendarDays, FileWarning, Settings } from "lucide-react";
 
 const navItems = [
@@ -14,11 +15,13 @@ const navItems = [
 
 export default function PublicLayout() {
   return (
+    <MobileNavProvider>
     <div className="flex min-h-screen bg-paper">
       <Sidebar navItems={navItems} roleLabelKey="rolePublic" basePath="/public" />
       <div className="flex-1 min-w-0">
         <Outlet />
       </div>
     </div>
+    </MobileNavProvider>
   );
 }

@@ -9,7 +9,7 @@ export default function YieldRisk() {
   return (
     <>
       <Topbar title={t("ptFarmerYieldTitle")} subtitle={`${currentFarmer.crop} · ${currentFarmer.district}`} />
-      <main className="p-8 space-y-6">
+      <main className="p-4 sm:p-8 space-y-6">
         <Card className="flex items-center justify-between flex-wrap gap-6" scan>
           <div>
             <p className="text-xs uppercase text-ink/40 font-medium">Risk Score</p>

@@ -27,7 +27,7 @@ export default function CommunityReports() {
         title="Community Reports"
         subtitle="Aggregate view of farmer damage reports and PDMA response — no personal details shown"
       />
-      <main className="p-8 space-y-6">
+      <main className="p-4 sm:p-8 space-y-6">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Card className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-warn/10 flex items-center justify-center shrink-0">

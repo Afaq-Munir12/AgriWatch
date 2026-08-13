@@ -9,7 +9,7 @@ export default function Awareness() {
   return (
     <>
       <Topbar title={t("ptPublicAwarenessTitle")} subtitle={t("ptPublicAwarenessSub")} />
-      <main className="p-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+      <main className="p-4 sm:p-8 grid grid-cols-1 md:grid-cols-2 gap-4">
         {awarenessTips.map((t) => (
           <Card key={t.id} className="flex gap-3">
             <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">

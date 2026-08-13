@@ -12,7 +12,7 @@ export default function Predictions() {
   return (
     <>
       <Topbar title={t("ptAdminPredictionsTitle")} subtitle={t("ptAdminPredictionsSub")} />
-      <main className="p-8 space-y-6">
+      <main className="p-4 sm:p-8 space-y-6">
         <Card className="flex flex-wrap items-center gap-4">
           <label className="text-sm text-ink/50">District</label>
           <select

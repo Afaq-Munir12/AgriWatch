@@ -27,7 +27,7 @@ export default function Reports() {
   return (
     <>
       <Topbar title={t("ptAdminReportsTitle")} subtitle={t("ptAdminReportsSub")} />
-      <main className="p-8 space-y-6">
+      <main className="p-4 sm:p-8 space-y-6">
         <Card>
           <p className="font-display font-semibold mb-4">Generate New Report</p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
