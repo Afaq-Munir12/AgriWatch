@@ -103,3 +103,69 @@ body {
 .btn-animated:hover::after {
   left: 125%;
 }
+
+/* Click ripple — used with addRipple() from utils/ripple.js on
+   .btn-animated buttons (needs position:relative + overflow:hidden,
+   both already set on .btn-animated). */
+.btn-ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  transform: scale(0);
+  animation: ripple-expand 0.6s ease-out;
+  pointer-events: none;
+}
+@keyframes ripple-expand {
+  to { transform: scale(2.4); opacity: 0; }
+}
+
+/* Gentle draw-attention pulse for primary CTAs */
+@keyframes pulse-soft {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+}
+.btn-pulse {
+  animation: pulse-soft 2.4s ease-in-out infinite;
+}
+
+/* Small inline spinner for buttons in a loading/processing state */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.btn-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+/* Notification dropdown entrance */
+@keyframes dropdown-in {
+  from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.dropdown-panel {
+  animation: dropdown-in 0.16s ease-out;
+  transform-origin: top right;
+}
+html[dir="rtl"] .dropdown-panel {
+  transform-origin: top left;
+}
+
+/* Shared form control styling for Signup and similar multi-field forms */
+.form-input, .form-select {
+  width: 100%;
+  border: 1px solid var(--color-line);
+  border-radius: 0.5rem;
+  padding: 0.55rem 0.75rem;
+  font-size: 0.875rem;
+  background: white;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+.form-input:focus, .form-select:focus {
+  border-color: var(--color-primary);
+}

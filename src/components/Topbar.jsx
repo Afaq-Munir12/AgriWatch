@@ -1,11 +1,17 @@
-import { Bell, Search, Menu } from "lucide-react";
+import { Search, Menu } from "lucide-react";
+import { useLocation } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext";
 import { useMobileNav } from "./MobileNavContext";
+import NotificationDropdown from "./NotificationDropdown";
 
 export default function Topbar({ title, subtitle }) {
   const { t, lang } = useLanguage();
   const { toggle } = useMobileNav();
+  const { pathname } = useLocation();
   const urduClass = lang === "ur" ? "i18n-ur" : "";
+
+  const base = pathname.startsWith("/farmer") ? "/farmer" : pathname.startsWith("/public") ? "/public" : "/admin";
+  const alertsHref = `${base}/alerts`;
 
   return (
     <header className="sticky top-0 z-30 bg-paper/90 backdrop-blur border-b border-line px-4 sm:px-8 py-4 sm:py-5 flex items-center justify-between gap-3">
@@ -31,10 +37,9 @@ export default function Topbar({ title, subtitle }) {
             className={`bg-transparent outline-none text-sm w-full placeholder:text-ink/30 ${urduClass}`}
           />
         </div>
-        <button className="relative p-2 rounded-lg border border-line bg-white hover:bg-paper-dim transition-colors">
-          <Bell size={17} className="text-ink/70" />
-          <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-danger text-white text-[9px] flex items-center justify-center font-mono">3</span>
-        </button>
+
+        <NotificationDropdown viewAllHref={alertsHref} />
+
         <div className="hidden sm:flex items-center gap-2 pl-3 border-l border-line">
           <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-display text-xs font-semibold shrink-0">
             ZO

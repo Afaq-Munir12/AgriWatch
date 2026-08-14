@@ -5,6 +5,7 @@ import Card, { StatusBadge } from "../../components/Card";
 import { currentFarmer } from "../../data/dummyData";
 import { useComplaints } from "../../store/ComplaintsContext";
 import { Paperclip, Send, X, CheckCircle2 } from "lucide-react";
+import { addRipple } from "../../utils/ripple";
 
 const MAX_PHOTO_MB = 3;
 
@@ -121,7 +122,7 @@ export default function FarmerComplaints() {
             {photoError && <p className="text-xs text-danger">{photoError}</p>}
 
             <div className="flex items-center justify-end pt-1">
-              <button type="submit" className="btn-animated flex items-center gap-2 bg-primary text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-primary-light transition-colors">
+              <button type="submit" onMouseDown={addRipple} className="btn-animated flex items-center gap-2 bg-primary text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-primary-light transition-colors">
                 <Send size={14} /> Submit
               </button>
             </div>

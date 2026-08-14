@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { useLanguage } from "../i18n/LanguageContext";
 import LanguageToggle from "../components/LanguageToggle";
+import { addRipple } from "../utils/ripple";
 
 const platformKeys = [
   { icon: ShieldCheck, titleKey: "platformWebTitle", bodyKey: "platformWebBody" },
@@ -34,7 +35,7 @@ export default function Home() {
         <div className="flex items-center gap-3 sm:gap-5">
           <LanguageToggle />
           <Link to="/guest" className="hidden sm:block text-sm font-medium text-ink/60 hover:text-ink">{t("viewAsGuest")}</Link>
-          <Link to="/login" className="bg-primary text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-primary-light transition-colors">
+          <Link to="/login" onMouseDown={addRipple} className="btn-animated bg-primary text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-primary-light transition-colors">
             {t("login")}
           </Link>
         </div>
@@ -53,10 +54,10 @@ export default function Home() {
           {t("heroBody")}
         </p>
         <div className="flex flex-wrap gap-3 mt-8">
-          <Link to="/login" className="flex items-center gap-2 bg-forest text-white px-5 py-3 rounded-lg text-sm font-medium hover:bg-forest-light transition-colors">
+          <Link to="/login" onMouseDown={addRipple} className="btn-animated btn-pulse flex items-center gap-2 bg-forest text-white px-5 py-3 rounded-lg text-sm font-medium hover:bg-forest-light transition-colors">
             {t("openDashboard")} <ArrowRight size={15} className="rtl:rotate-180" />
           </Link>
-          <Link to="/guest" className="flex items-center gap-2 bg-white border border-line px-5 py-3 rounded-lg text-sm font-medium hover:bg-paper-dim transition-colors">
+          <Link to="/guest" onMouseDown={addRipple} className="btn-animated flex items-center gap-2 bg-white border border-line px-5 py-3 rounded-lg text-sm font-medium hover:bg-paper-dim transition-colors">
             <Eye size={15} /> {t("previewNoAccount")}
           </Link>
         </div>

@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import Home from "./pages/Home";
 import Login from "./pages/Login";
+import Signup from "./pages/Signup";
 import GuestDashboard from "./pages/GuestDashboard";
 import CropCalendar from "./pages/CropCalendar";
 
@@ -39,6 +40,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
         <Route path="/guest" element={<GuestDashboard />} />
 
         <Route element={<AdminLayout />}>

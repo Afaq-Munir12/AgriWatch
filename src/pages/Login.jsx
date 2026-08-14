@@ -4,6 +4,7 @@ import logo from "../assets/logo.jpeg";
 import { Phone, Shield, Sprout, Users2, ShieldCheck, Eye } from "lucide-react";
 import { useLanguage } from "../i18n/LanguageContext";
 import LanguageToggle from "../components/LanguageToggle";
+import { addRipple } from "../utils/ripple";
 
 const roles = [
   { key: "farmer", labelKey: "roleFarmerLabel", icon: Sprout, dest: "/farmer" },
@@ -50,8 +51,10 @@ export default function Login() {
                 {roles.map(({ key, labelKey, icon: Icon }) => (
                   <button
                     key={key}
+                    type="button"
                     onClick={() => setRole(key)}
-                    className={`flex flex-col items-center gap-1.5 py-3 rounded-lg border text-xs font-medium transition-colors ${
+                    onMouseDown={addRipple}
+                    className={`btn-animated flex flex-col items-center gap-1.5 py-3 rounded-lg border text-xs font-medium transition-colors ${
                       role === key ? "bg-primary text-white border-primary" : "bg-white text-ink/60 border-line hover:bg-paper-dim"
                     }`}
                   >
@@ -75,13 +78,22 @@ export default function Login() {
                     />
                   </div>
                 </div>
-                <button type="submit" className="w-full bg-primary text-white rounded-lg py-2.5 text-sm font-medium hover:bg-primary-light transition-colors">
+                <button
+                  type="submit"
+                  onMouseDown={addRipple}
+                  className="btn-animated btn-pulse w-full bg-primary text-white rounded-lg py-2.5 text-sm font-medium hover:bg-primary-light transition-colors"
+                >
                   {t("sendOtp")}
                 </button>
                 {role === "admin" && (
                   <p className="text-xs text-ink/40 text-center">{t("adminApprovalNote")}</p>
                 )}
               </form>
+
+              <div className="mt-5 pt-4 border-t border-line flex items-center justify-center gap-1.5 text-xs">
+                <span className="text-ink/50">{t("newHereSignUp")}</span>
+                <Link to="/signup" className="font-medium text-primary hover:underline">{t("signUp")}</Link>
+              </div>
             </>
           )}
 
@@ -100,17 +112,23 @@ export default function Login() {
                 </div>
                 <p className="text-xs text-ink/40 mt-2">{t("codeSentTo")} {phone}</p>
               </div>
-              <button type="submit" className="w-full bg-primary text-white rounded-lg py-2.5 text-sm font-medium hover:bg-primary-light transition-colors">
+              <button
+                type="submit"
+                onMouseDown={addRipple}
+                className="btn-animated w-full bg-primary text-white rounded-lg py-2.5 text-sm font-medium hover:bg-primary-light transition-colors"
+              >
                 {t("verifyContinueAs")} {t(roles.find((r) => r.key === role).labelKey)}
               </button>
             </form>
           )}
 
-          <div className="mt-5 pt-4 border-t border-line flex items-center justify-center">
-            <Link to="/guest" className="flex items-center gap-1.5 text-xs font-medium text-ink/50 hover:text-ink">
-              <Eye size={13} /> {t("continueAsGuest")}
-            </Link>
-          </div>
+          {step === "phone" && (
+            <div className="mt-4 flex items-center justify-center">
+              <Link to="/guest" className="flex items-center gap-1.5 text-xs font-medium text-ink/50 hover:text-ink">
+                <Eye size={13} /> {t("continueAsGuest")}
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </div>

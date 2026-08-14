@@ -5,6 +5,7 @@ import Card from "../components/Card";
 import logo from "../assets/logo.jpeg";
 import { districts, severityColor, guestSummary } from "../data/dummyData";
 import { Lock, ArrowRight } from "lucide-react";
+import { addRipple } from "../utils/ripple";
 import { useLanguage } from "../i18n/LanguageContext";
 import LanguageToggle from "../components/LanguageToggle";
 
@@ -20,7 +21,7 @@ export default function GuestDashboard() {
         <div className="flex items-center gap-3">
           <LanguageToggle />
           <Link to="/login" className="text-sm font-medium text-ink/60 hover:text-ink">{t("login")}</Link>
-          <Link to="/login" className="bg-primary text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-primary-light transition-colors">
+          <Link to="/login" onMouseDown={addRipple} className="btn-animated bg-primary text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-primary-light transition-colors">
             {t("registerFree")}
           </Link>
         </div>
@@ -32,7 +33,7 @@ export default function GuestDashboard() {
             <p className="text-xs uppercase tracking-wide text-primary-light">{t("publicPreview")}</p>
             <p className="font-display text-lg font-semibold mt-1">{t("nationalOverview")}</p>
           </div>
-          <Link to="/login" className="flex items-center gap-1.5 text-sm font-medium bg-white text-forest px-4 py-2 rounded-lg">
+          <Link to="/login" onMouseDown={addRipple} className="btn-animated flex items-center gap-1.5 text-sm font-medium bg-white text-forest px-4 py-2 rounded-lg">
             {t("registerForAlerts")} <ArrowRight size={14} className="rtl:rotate-180" />
           </Link>
         </Card>

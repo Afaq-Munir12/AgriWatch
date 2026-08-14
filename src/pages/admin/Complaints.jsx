@@ -4,6 +4,7 @@ import { useLanguage } from "../../i18n/LanguageContext";
 import Card, { StatusBadge } from "../../components/Card";
 import { useComplaints } from "../../store/ComplaintsContext";
 import { Image as ImageIcon, X, CheckCircle2 } from "lucide-react";
+import { addRipple } from "../../utils/ripple";
 
 export default function Complaints() {
   const { t } = useLanguage();
@@ -162,18 +163,21 @@ export default function Complaints() {
               <div className="flex flex-wrap gap-2 pt-1">
                 <button
                   onClick={() => setStatus(open.id, "Under Review")}
+                  onMouseDown={addRipple}
                   className="btn-animated text-xs font-medium border border-line rounded-lg px-3 py-2 hover:bg-paper-dim"
                 >
                   Under Review
                 </button>
                 <button
                   onClick={() => setStatus(open.id, "Forwarded")}
+                  onMouseDown={addRipple}
                   className="btn-animated text-xs font-medium border border-line rounded-lg px-3 py-2 hover:bg-paper-dim"
                 >
                   Forward
                 </button>
                 <button
                   onClick={() => setStatus(open.id, "Resolved")}
+                  onMouseDown={addRipple}
                   className="btn-animated flex items-center gap-1.5 text-xs font-medium bg-primary text-white rounded-lg px-3 py-2 hover:bg-primary-light"
                 >
                   <CheckCircle2 size={14} /> Mark Resolved
