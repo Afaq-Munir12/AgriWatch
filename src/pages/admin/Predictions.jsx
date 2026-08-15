@@ -12,13 +12,13 @@ export default function Predictions() {
   return (
     <>
       <Topbar title={t("ptAdminPredictionsTitle")} subtitle={t("ptAdminPredictionsSub")} />
-      <main className="p-4 sm:p-8 space-y-6">
+      <main className="p-4 sm:p-8 space-y-6" dir="ltr">
         <Card className="flex flex-wrap items-center gap-4">
           <label className="text-sm text-ink/50">District</label>
           <select
             value={district}
             onChange={(e) => setDistrict(e.target.value)}
-            className="border border-line rounded-lg px-3 py-2 text-sm bg-white"
+            className="border border-line rounded-lg px-3 py-2 text-sm bg-surface"
           >
             {districts.map((d) => (
               <option key={d.id} value={d.name}>{d.name}</option>

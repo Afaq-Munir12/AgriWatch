@@ -14,7 +14,7 @@ export default function Users() {
   return (
     <>
       <Topbar title={t("ptAdminUsersTitle")} subtitle={t("ptAdminUsersSub")} />
-      <main className="p-4 sm:p-8 space-y-6">
+      <main className="p-4 sm:p-8 space-y-6" dir="ltr">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex gap-2">
             {roles.map((r) => (
@@ -22,14 +22,14 @@ export default function Users() {
                 key={r}
                 onClick={() => setFilter(r)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                  filter === r ? "bg-forest text-white border-forest" : "bg-white text-ink/60 border-line hover:bg-paper-dim"
+                  filter === r ? "bg-forest text-white border-forest" : "bg-surface text-ink/60 border-line hover:bg-paper-dim"
                 }`}
               >
                 {r}
               </button>
             ))}
           </div>
-          <button className="flex items-center gap-2 bg-white border border-line rounded-lg px-3 py-2 text-xs font-medium hover:bg-paper-dim">
+          <button className="flex items-center gap-2 bg-surface border border-line rounded-lg px-3 py-2 text-xs font-medium hover:bg-paper-dim">
             <Download size={14} /> Export CSV
           </button>
         </div>

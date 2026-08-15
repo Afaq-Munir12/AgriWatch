@@ -66,7 +66,7 @@ export default function FarmerComplaints() {
   return (
     <>
       <Topbar title={t("ptFarmerComplaintsTitle")} subtitle={t("ptFarmerComplaintsSub")} />
-      <main className="p-4 sm:p-8 space-y-6">
+      <main className="p-4 sm:p-8 space-y-6" dir="ltr">
         {justSubmittedId && (
           <div className="flex items-center gap-2 bg-primary/10 text-primary text-sm font-medium rounded-lg px-4 py-3">
             <CheckCircle2 size={16} />
@@ -80,7 +80,7 @@ export default function FarmerComplaints() {
             <select
               value={form.category}
               onChange={(e) => setForm({ ...form, category: e.target.value })}
-              className="border border-line rounded-lg px-3 py-2 text-sm bg-white w-full sm:w-64"
+              className="border border-line rounded-lg px-3 py-2 text-sm bg-surface w-full sm:w-64"
             >
               {["Crop Failure", "Irrigation Shortage", "Livestock Loss", "Other"].map((c) => <option key={c}>{c}</option>)}
             </select>
@@ -89,7 +89,7 @@ export default function FarmerComplaints() {
               onChange={(e) => setForm({ ...form, description: e.target.value })}
               placeholder="Describe the damage..."
               rows={3}
-              className="border border-line rounded-lg px-3 py-2 text-sm bg-white w-full"
+              className="border border-line rounded-lg px-3 py-2 text-sm bg-surface w-full"
             />
 
             <input

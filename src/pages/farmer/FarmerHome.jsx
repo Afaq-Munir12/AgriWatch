@@ -12,7 +12,7 @@ export default function FarmerHome() {
   return (
     <>
       <Topbar title={`${t("welcomeGreeting")}, ${currentFarmer.name.split(" ")[0]}`} subtitle={`${currentFarmer.district} · ${currentFarmer.crop} · ${currentFarmer.farmSize}`} />
-      <main className="p-4 sm:p-8 space-y-6">
+      <main className="p-4 sm:p-8 space-y-6" dir="ltr">
         <Card className="flex items-center justify-between flex-wrap gap-4 scan-line" >
           <div>
             <p className="text-xs uppercase text-ink/40 font-medium">District Drought Status</p>

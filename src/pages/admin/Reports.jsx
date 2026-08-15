@@ -27,15 +27,15 @@ export default function Reports() {
   return (
     <>
       <Topbar title={t("ptAdminReportsTitle")} subtitle={t("ptAdminReportsSub")} />
-      <main className="p-4 sm:p-8 space-y-6">
+      <main className="p-4 sm:p-8 space-y-6" dir="ltr">
         <Card>
           <p className="font-display font-semibold mb-4">Generate New Report</p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <select value={district} onChange={(e) => setDistrict(e.target.value)} className="border border-line rounded-lg px-3 py-2 text-sm bg-white">
+            <select value={district} onChange={(e) => setDistrict(e.target.value)} className="border border-line rounded-lg px-3 py-2 text-sm bg-surface">
               <option>All Districts</option>
               {districts.map((d) => <option key={d.id}>{d.name}</option>)}
             </select>
-            <select value={range} onChange={(e) => setRange(e.target.value)} className="border border-line rounded-lg px-3 py-2 text-sm bg-white">
+            <select value={range} onChange={(e) => setRange(e.target.value)} className="border border-line rounded-lg px-3 py-2 text-sm bg-surface">
               <option>Last 7 days</option>
               <option>Last 30 days</option>
               <option>Last quarter</option>

@@ -29,28 +29,28 @@ export default function Alerts() {
   return (
     <>
       <Topbar title={t("ptAdminAlertsTitle")} subtitle={t("ptAdminAlertsSub")} />
-      <main className="p-4 sm:p-8 space-y-6">
+      <main className="p-4 sm:p-8 space-y-6" dir="ltr">
         <Card>
           <p className="font-display font-semibold mb-4">Create Alert</p>
           <form onSubmit={handleSend} className="grid grid-cols-1 md:grid-cols-4 gap-3">
             <select
               value={form.district}
               onChange={(e) => setForm({ ...form, district: e.target.value })}
-              className="border border-line rounded-lg px-3 py-2 text-sm bg-white"
+              className="border border-line rounded-lg px-3 py-2 text-sm bg-surface"
             >
               {districts.map((d) => <option key={d.id} value={d.name}>{d.name}</option>)}
             </select>
             <select
               value={form.severity}
               onChange={(e) => setForm({ ...form, severity: e.target.value })}
-              className="border border-line rounded-lg px-3 py-2 text-sm bg-white"
+              className="border border-line rounded-lg px-3 py-2 text-sm bg-surface"
             >
               {["Normal", "Moderate", "Severe", "Extreme"].map((s) => <option key={s}>{s}</option>)}
             </select>
             <select
               value={form.audience}
               onChange={(e) => setForm({ ...form, audience: e.target.value })}
-              className="border border-line rounded-lg px-3 py-2 text-sm bg-white"
+              className="border border-line rounded-lg px-3 py-2 text-sm bg-surface"
             >
               <option>Farmers + Public</option>
               <option>Farmers</option>
@@ -63,7 +63,7 @@ export default function Alerts() {
               value={form.message}
               onChange={(e) => setForm({ ...form, message: e.target.value })}
               placeholder="Alert message (will be sent in the recipient's chosen language — English or Urdu)"
-              className="border border-line rounded-lg px-3 py-2 text-sm bg-white md:col-span-4"
+              className="border border-line rounded-lg px-3 py-2 text-sm bg-surface md:col-span-4"
               rows={2}
             />
           </form>

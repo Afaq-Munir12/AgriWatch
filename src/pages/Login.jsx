@@ -4,6 +4,7 @@ import logo from "../assets/logo.jpeg";
 import { Phone, Shield, Sprout, Users2, ShieldCheck, Eye } from "lucide-react";
 import { useLanguage } from "../i18n/LanguageContext";
 import LanguageToggle from "../components/LanguageToggle";
+import ThemeToggle from "../components/ThemeToggle";
 import { addRipple } from "../utils/ripple";
 
 const roles = [
@@ -32,8 +33,9 @@ export default function Login() {
   return (
     <div className={`min-h-screen bg-forest flex items-center justify-center p-6 ${lang === "ur" ? "i18n-ur" : ""}`}>
       <div className="w-full max-w-sm">
-        <div className="flex justify-end mb-3">
-          <LanguageToggle className="!bg-white/10 !border-white/10 !text-paper hover:!bg-white/15" />
+        <div className="flex justify-end gap-2 mb-3">
+          <ThemeToggle className="!bg-white/10 !border-white/10 !text-mist hover:!bg-white/15" />
+          <LanguageToggle className="!bg-white/10 !border-white/10 !text-mist hover:!bg-white/15" />
         </div>
         <div className="flex flex-col items-center mb-6">
           <Link to="/" className="flex flex-col items-center">
@@ -55,7 +57,7 @@ export default function Login() {
                     onClick={() => setRole(key)}
                     onMouseDown={addRipple}
                     className={`btn-animated flex flex-col items-center gap-1.5 py-3 rounded-lg border text-xs font-medium transition-colors ${
-                      role === key ? "bg-primary text-white border-primary" : "bg-white text-ink/60 border-line hover:bg-paper-dim"
+                      role === key ? "bg-primary text-white border-primary" : "bg-surface text-ink/60 border-line hover:bg-paper-dim"
                     }`}
                   >
                     <Icon size={16} />
@@ -67,7 +69,7 @@ export default function Login() {
               <form onSubmit={requestOtp} className="space-y-4">
                 <div>
                   <label className="text-xs font-medium text-ink/50 uppercase tracking-wide">{t("phoneNumber")}</label>
-                  <div className="flex items-center gap-2 mt-1 border border-line rounded-lg px-3 py-2.5 bg-white">
+                  <div className="flex items-center gap-2 mt-1 border border-line rounded-lg px-3 py-2.5 bg-surface">
                     <Phone size={16} className="text-ink/40" />
                     <input
                       value={phone}
@@ -101,7 +103,7 @@ export default function Login() {
             <form onSubmit={verifyOtp} className="space-y-4">
               <div>
                 <label className="text-xs font-medium text-ink/50 uppercase tracking-wide">{t("enterOtp")}</label>
-                <div className="flex items-center gap-2 mt-1 border border-line rounded-lg px-3 py-2.5 bg-white">
+                <div className="flex items-center gap-2 mt-1 border border-line rounded-lg px-3 py-2.5 bg-surface">
                   <Shield size={16} className="text-ink/40" />
                   <input
                     placeholder={t("otpPlaceholder")}

@@ -12,7 +12,7 @@ export default function PublicRegistrations() {
   return (
     <>
       <Topbar title={t("ptAdminPublicRegTitle")} subtitle={t("ptAdminPublicRegSub")} />
-      <main className="p-4 sm:p-8 space-y-6">
+      <main className="p-4 sm:p-8 space-y-6" dir="ltr">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <StatCard label="Total Registered" value={total} icon={Users2} delta="Across 5 districts" deltaTone="ok" />
           <StatCard label="Top District" value="Peshawar" icon={TrendingUp} delta="148 users" deltaTone="ok" />

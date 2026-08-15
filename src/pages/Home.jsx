@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { useLanguage } from "../i18n/LanguageContext";
 import LanguageToggle from "../components/LanguageToggle";
+import ThemeToggle from "../components/ThemeToggle";
 import { addRipple } from "../utils/ripple";
 
 const platformKeys = [
@@ -33,6 +34,7 @@ export default function Home() {
           <span className="font-display font-semibold text-sm">AgriWatch Pakistan</span>
         </div>
         <div className="flex items-center gap-3 sm:gap-5">
+          <ThemeToggle />
           <LanguageToggle />
           <Link to="/guest" className="hidden sm:block text-sm font-medium text-ink/60 hover:text-ink">{t("viewAsGuest")}</Link>
           <Link to="/login" onMouseDown={addRipple} className="btn-animated bg-primary text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-primary-light transition-colors">
@@ -57,38 +59,38 @@ export default function Home() {
           <Link to="/login" onMouseDown={addRipple} className="btn-animated btn-pulse flex items-center gap-2 bg-forest text-white px-5 py-3 rounded-lg text-sm font-medium hover:bg-forest-light transition-colors">
             {t("openDashboard")} <ArrowRight size={15} className="rtl:rotate-180" />
           </Link>
-          <Link to="/guest" onMouseDown={addRipple} className="btn-animated flex items-center gap-2 bg-white border border-line px-5 py-3 rounded-lg text-sm font-medium hover:bg-paper-dim transition-colors">
+          <Link to="/guest" onMouseDown={addRipple} className="btn-animated flex items-center gap-2 bg-surface border border-line px-5 py-3 rounded-lg text-sm font-medium hover:bg-paper-dim transition-colors">
             <Eye size={15} /> {t("previewNoAccount")}
           </Link>
         </div>
 
         <div className="mt-14 bg-forest rounded-xl p-5 scan-line relative overflow-hidden">
-          <div className="flex items-center justify-between flex-wrap gap-3 text-paper">
+          <div className="flex items-center justify-between flex-wrap gap-3 text-mist">
             <p className="text-xs font-mono text-primary-light">{t("liveSatellitePass")}</p>
-            <p className="text-xs font-mono text-paper/60">{t("districtsMonitoredStrip")}</p>
+            <p className="text-xs font-mono text-mist/60">{t("districtsMonitoredStrip")}</p>
           </div>
         </div>
       </section>
 
       {/* Problem stats */}
-      <section className="px-6 sm:px-10 py-16 bg-forest text-paper">
+      <section className="px-6 sm:px-10 py-16 bg-forest text-mist">
         <div className="max-w-6xl mx-auto">
           <p className="text-xs uppercase tracking-widest text-primary-light font-semibold mb-8">{t("problemLabel")}</p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
             <div>
               <p className="font-display text-4xl font-semibold">19%</p>
-              <p className="text-paper/60 text-sm mt-2">{t("statGdp")}</p>
+              <p className="text-mist/60 text-sm mt-2">{t("statGdp")}</p>
             </div>
             <div>
               <p className="font-display text-4xl font-semibold">38%</p>
-              <p className="text-paper/60 text-sm mt-2">{t("statWorkforce")}</p>
+              <p className="text-mist/60 text-sm mt-2">{t("statWorkforce")}</p>
             </div>
             <div>
               <p className="font-display text-4xl font-semibold">Top 10</p>
-              <p className="text-paper/60 text-sm mt-2">{t("statVulnerable")}</p>
+              <p className="text-mist/60 text-sm mt-2">{t("statVulnerable")}</p>
             </div>
           </div>
-          <p className="text-paper/70 text-sm mt-10 max-w-2xl leading-relaxed">
+          <p className="text-mist/70 text-sm mt-10 max-w-2xl leading-relaxed">
             {t("problemBody")}
           </p>
         </div>
@@ -100,7 +102,7 @@ export default function Home() {
         <h2 className="font-display text-2xl font-semibold mb-10">{t("solutionHeading")}</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {platformKeys.map((p) => (
-            <div key={p.titleKey} className="border border-line rounded-xl p-6 bg-white hover:border-primary/40 transition-colors">
+            <div key={p.titleKey} className="border border-line rounded-xl p-6 bg-surface hover:border-primary/40 transition-colors">
               <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
                 <p.icon size={18} className="text-primary" />
               </div>
@@ -121,7 +123,7 @@ export default function Home() {
               <Link
                 key={r.titleKey}
                 to={r.to}
-                className="group border border-line rounded-xl p-6 bg-white hover:border-primary hover:shadow-md transition-all flex flex-col"
+                className="group border border-line rounded-xl p-6 bg-surface hover:border-primary hover:shadow-md transition-all flex flex-col"
               >
                 <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary group-hover:text-white transition-colors">
                   <r.icon size={18} className="text-primary group-hover:text-white" />
@@ -170,7 +172,7 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="px-6 sm:px-10 py-8 border-t border-line bg-forest text-paper/50 text-xs flex flex-wrap items-center justify-between gap-3">
+      <footer className="px-6 sm:px-10 py-8 border-t border-line bg-forest text-mist/50 text-xs flex flex-wrap items-center justify-between gap-3">
         <span>{t("footerProject")}</span>
         <span className="font-mono tracking-widest">{t("tagline")}</span>
       </footer>

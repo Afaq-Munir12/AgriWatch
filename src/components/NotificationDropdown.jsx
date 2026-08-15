@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Bell, AlertTriangle, CheckCircle2, Info } from "lucide-react";
 import { Link } from "react-router-dom";
 import { alerts } from "../data/dummyData";
 import { addRipple } from "../utils/ripple";
+import { useLanguage } from "../i18n/LanguageContext";
 
 const iconFor = {
   Extreme: AlertTriangle,
@@ -18,21 +20,53 @@ const toneFor = {
   Normal: "text-primary bg-primary/10",
 };
 
+const PANEL_WIDTH = 320;
+
 export default function NotificationDropdown({ viewAllHref = "/admin/alerts" }) {
   const [open, setOpen] = useState(false);
   const [readIds, setReadIds] = useState([]);
-  const ref = useRef(null);
+  const [pos, setPos] = useState({ top: 0, left: 0 });
+  const btnRef = useRef(null);
+  const panelRef = useRef(null);
+  const { lang } = useLanguage();
 
   const items = alerts.slice(0, 5);
   const unreadCount = items.filter((a) => !readIds.includes(a.id)).length;
 
+  // Close on outside click — checks both the button and the portal'd panel
   useEffect(() => {
     function onClickOutside(e) {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+      if (
+        btnRef.current && !btnRef.current.contains(e.target) &&
+        panelRef.current && !panelRef.current.contains(e.target)
+      ) {
+        setOpen(false);
+      }
     }
     document.addEventListener("mousedown", onClickOutside);
     return () => document.removeEventListener("mousedown", onClickOutside);
   }, []);
+
+  // Position the portal'd panel against the real button location, so it's
+  // never clipped by a sticky header, backdrop-blur, or a Leaflet map's
+  // internal z-index stack — recalculated on open, resize, and scroll.
+  useEffect(() => {
+    if (!open) return;
+    function updatePosition() {
+      const rect = btnRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      let left = lang === "ur" ? rect.left : rect.right - PANEL_WIDTH;
+      left = Math.max(8, Math.min(left, window.innerWidth - PANEL_WIDTH - 8));
+      setPos({ top: rect.bottom + 8, left });
+    }
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+    };
+  }, [open, lang]);
 
   function toggle() {
     setOpen((o) => {
@@ -43,11 +77,12 @@ export default function NotificationDropdown({ viewAllHref = "/admin/alerts" }) 
   }
 
   return (
-    <div className="relative" ref={ref}>
+    <>
       <button
+        ref={btnRef}
         onClick={toggle}
         onMouseDown={addRipple}
-        className="btn-animated relative p-2 rounded-lg border border-line bg-white hover:bg-paper-dim transition-colors"
+        className="btn-animated relative p-2 rounded-lg border border-line bg-surface hover:bg-paper-dim transition-colors"
         aria-label="Notifications"
       >
         <Bell size={17} className="text-ink/70" />
@@ -58,8 +93,12 @@ export default function NotificationDropdown({ viewAllHref = "/admin/alerts" }) 
         )}
       </button>
 
-      {open && (
-        <div className="dropdown-panel absolute right-0 rtl:right-auto rtl:left-0 mt-2 w-80 max-w-[85vw] bg-white border border-line rounded-xl shadow-xl z-50 overflow-hidden">
+      {open && createPortal(
+        <div
+          ref={panelRef}
+          style={{ position: "fixed", top: pos.top, left: pos.left, width: PANEL_WIDTH }}
+          className="dropdown-panel max-w-[90vw] bg-surface border border-line rounded-xl shadow-2xl z-[999] overflow-hidden"
+        >
           <div className="flex items-center justify-between px-4 py-3 border-b border-line">
             <p className="font-display font-semibold text-sm">Notifications</p>
             <span className="text-xs text-ink/40">{items.length} recent</span>
@@ -93,8 +132,9 @@ export default function NotificationDropdown({ viewAllHref = "/admin/alerts" }) 
           >
             View all alerts
           </Link>
-        </div>
+        </div>,
+        document.body
       )}
-    </div>
+    </>
   );
 }

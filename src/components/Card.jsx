@@ -1,6 +1,6 @@
 import { useLanguage } from "../i18n/LanguageContext";
 
-export default function Card({ children, className = "", scan = false }) {
+export default function Card({ children, className = "", scan = false, ...rest }) {
   // If the caller passes their own bg-* class (e.g. "bg-forest"), skip the
   // default bg-white entirely — otherwise Tailwind's generated stylesheet
   // order can make bg-white silently win over the intended override,
@@ -8,7 +8,8 @@ export default function Card({ children, className = "", scan = false }) {
   const hasCustomBg = /(^|\s)bg-/.test(className);
   return (
     <div
-      className={`${hasCustomBg ? "" : "bg-white"} border border-line rounded-xl p-5 ${scan ? "scan-line" : ""} ${className}`}
+      className={`${hasCustomBg ? "" : "bg-surface"} border border-line rounded-xl p-5 ${scan ? "scan-line" : ""} ${className}`}
+      {...rest}
     >
       {children}
     </div>
@@ -66,7 +67,7 @@ export function StatusBadge({ status }) {
   const map = {
     Delivered: "bg-primary/10 text-primary",
     "Under Review": "bg-warn/10 text-warn",
-    Forwarded: "bg-blue-500/10 text-blue-600",
+    Forwarded: "bg-info/10 text-info",
     Resolved: "bg-primary/10 text-primary",
   };
   return (

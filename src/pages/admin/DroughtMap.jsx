@@ -15,7 +15,7 @@ export default function DroughtMap() {
   return (
     <>
       <Topbar title={t("ptAdminMapTitle")} subtitle={t("ptAdminMapSub")} />
-      <main className="p-4 sm:p-8 space-y-4">
+      <main className="p-4 sm:p-8 space-y-4" dir="ltr">
         <div className="flex items-center justify-between">
           <div className="flex gap-2">
             {["severity", "ndvi", "soilMoisture"].map((l) => (
@@ -25,7 +25,7 @@ export default function DroughtMap() {
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                   layer === l
                     ? "bg-forest text-white border-forest"
-                    : "bg-white text-ink/60 border-line hover:bg-paper-dim"
+                    : "bg-surface text-ink/60 border-line hover:bg-paper-dim"
                 }`}
               >
                 {l === "severity" ? "Severity" : l === "ndvi" ? "NDVI" : "Soil Moisture"}

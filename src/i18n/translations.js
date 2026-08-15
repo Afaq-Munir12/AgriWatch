@@ -22,6 +22,7 @@ const dict = {
   navPredictions: { en: "Predictions", ur: "پیش گوئیاں" },
   navAlerts: { en: "Alerts", ur: "اطلاعات" },
   navUsers: { en: "Users", ur: "صارفین" },
+  navVerifications: { en: "Verifications", ur: "تصدیقات" },
   navComplaints: { en: "Complaints", ur: "شکایات" },
   navReports: { en: "Reports", ur: "رپورٹس" },
   navPublicRegistrations: { en: "Public Registrations", ur: "عوامی رجسٹریشن" },
@@ -150,6 +151,10 @@ const dict = {
   adminPendingBody: {
     en: "Your PDMA officer account is awaiting approval from a district coordinator. You'll be notified once your access is granted.",
     ur: "آپ کا PDMA افسر اکاؤنٹ ضلعی کوآرڈینیٹر کی منظوری کا منتظر ہے۔ رسائی ملنے پر آپ کو مطلع کیا جائے گا۔",
+  },
+  farmerPendingBody: {
+    en: "Your farmer account details are being verified by your district PDMA office. This usually only takes a short while — you'll get access as soon as it's confirmed.",
+    ur: "آپ کے کسان اکاؤنٹ کی تفصیلات آپ کے ضلعی PDMA دفتر کی جانب سے تصدیق کی جا رہی ہیں۔ تصدیق ہوتے ہی آپ کو رسائی مل جائے گی۔",
   },
   backToHome: { en: "Back to Home", ur: "ہوم پیج پر واپس جائیں" },
   signupSuccessFarmer: { en: "Account created — welcome to AgriWatch", ur: "اکاؤنٹ بن گیا — ایگری واچ میں خوش آمدید" },

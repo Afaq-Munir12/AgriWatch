@@ -8,17 +8,19 @@ import { Lock, ArrowRight } from "lucide-react";
 import { addRipple } from "../utils/ripple";
 import { useLanguage } from "../i18n/LanguageContext";
 import LanguageToggle from "../components/LanguageToggle";
+import ThemeToggle from "../components/ThemeToggle";
 
 export default function GuestDashboard() {
   const { t, lang } = useLanguage();
   return (
     <div className={`min-h-screen bg-paper ${lang === "ur" ? "i18n-ur" : ""}`}>
-      <header className="border-b border-line bg-white px-6 sm:px-8 py-4 flex items-center justify-between sticky top-0 z-10">
+      <header className="border-b border-line bg-surface px-6 sm:px-8 py-4 flex items-center justify-between sticky top-0 z-10">
         <Link to="/" className="flex items-center gap-3">
           <img src={logo} alt="AgriWatch Pakistan" className="w-9 h-9 rounded-full object-cover" />
           <span className="font-display font-semibold text-sm">AgriWatch <span className="text-ink/40 font-normal">· {t("guestView")}</span></span>
         </Link>
         <div className="flex items-center gap-3">
+          <ThemeToggle />
           <LanguageToggle />
           <Link to="/login" className="text-sm font-medium text-ink/60 hover:text-ink">{t("login")}</Link>
           <Link to="/login" onMouseDown={addRipple} className="btn-animated bg-primary text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-primary-light transition-colors">
@@ -28,12 +30,12 @@ export default function GuestDashboard() {
       </header>
 
       <main className="max-w-6xl mx-auto p-6 sm:p-8 space-y-6">
-        <Card className="bg-forest text-paper border-0 flex items-center justify-between flex-wrap gap-4">
+        <Card className="bg-forest text-mist border-0 flex items-center justify-between flex-wrap gap-4">
           <div>
             <p className="text-xs uppercase tracking-wide text-primary-light">{t("publicPreview")}</p>
             <p className="font-display text-lg font-semibold mt-1">{t("nationalOverview")}</p>
           </div>
-          <Link to="/login" onMouseDown={addRipple} className="btn-animated flex items-center gap-1.5 text-sm font-medium bg-white text-forest px-4 py-2 rounded-lg">
+          <Link to="/login" onMouseDown={addRipple} className="btn-animated flex items-center gap-1.5 text-sm font-medium bg-surface text-forest px-4 py-2 rounded-lg">
             {t("registerForAlerts")} <ArrowRight size={14} className="rtl:rotate-180" />
           </Link>
         </Card>

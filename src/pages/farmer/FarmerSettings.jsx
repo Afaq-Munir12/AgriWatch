@@ -8,7 +8,7 @@ export default function FarmerSettings() {
   return (
     <>
       <Topbar title={t("ptFarmerSettingsTitle")} subtitle={t("ptFarmerSettingsSub")} />
-      <main className="p-4 sm:p-8 space-y-4">
+      <main className="p-4 sm:p-8 space-y-4" dir="ltr">
         <Card className="max-w-lg">
           <p className="font-display font-semibold mb-4">Profile</p>
           <div className="space-y-3 text-sm">

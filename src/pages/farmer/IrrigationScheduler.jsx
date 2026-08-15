@@ -10,7 +10,7 @@ export default function IrrigationScheduler() {
   return (
     <>
       <Topbar title={t("ptFarmerIrrigationTitle")} subtitle={t("ptFarmerIrrigationSub")} />
-      <main className="p-4 sm:p-8 space-y-6">
+      <main className="p-4 sm:p-8 space-y-6" dir="ltr">
         <Card scan>
           <p className="font-display font-semibold mb-4">7-Day Forecast &amp; Irrigation Plan</p>
           <ResponsiveContainer width="100%" height={240}>

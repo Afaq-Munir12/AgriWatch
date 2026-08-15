@@ -9,8 +9,8 @@ export default function CropRecommendations() {
   return (
     <>
       <Topbar title={t("ptFarmerCropsTitle")} subtitle={`${currentFarmer.crop} · ${currentFarmer.district}`} />
-      <main className="p-4 sm:p-8 space-y-4">
-        <Card className="bg-forest text-paper border-0">
+      <main className="p-4 sm:p-8 space-y-4" dir="ltr">
+        <Card className="bg-forest text-mist border-0">
           <p className="text-xs uppercase tracking-wide text-primary-light">{t("weeklyGuidanceLabel")}</p>
           <p className="font-display text-lg font-semibold mt-1">{t("weeklyGuidanceHeading")}</p>
         </Card>

@@ -7,7 +7,7 @@ export default function Settings() {
   return (
     <>
       <Topbar title={t("ptAdminSettingsTitle")} subtitle={t("ptAdminSettingsSub")} />
-      <main className="p-4 sm:p-8">
+      <main className="p-4 sm:p-8" dir="ltr">
         <Card>
           <p className="font-display font-semibold mb-2">Coming soon</p>
           <p className="text-sm text-ink/50">Profile, language, and notification preferences will live here once auth is connected.</p>

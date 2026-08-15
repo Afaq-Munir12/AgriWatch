@@ -2,7 +2,7 @@ import { Outlet } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import { MobileNavProvider } from "../components/MobileNavContext";
 import {
-  LayoutDashboard, Map, TrendingUp, Bell, Users, FileWarning, FileText, UserPlus, Settings,
+  LayoutDashboard, Map, TrendingUp, Bell, Users, FileWarning, FileText, UserPlus, UserCheck, Settings,
 } from "lucide-react";
 
 const navItems = [
@@ -11,6 +11,7 @@ const navItems = [
   { to: "/predictions", labelKey: "navPredictions", icon: TrendingUp },
   { to: "/alerts", labelKey: "navAlerts", icon: Bell },
   { to: "/users", labelKey: "navUsers", icon: Users },
+  { to: "/verifications", labelKey: "navVerifications", icon: UserCheck },
   { to: "/complaints", labelKey: "navComplaints", icon: FileWarning },
   { to: "/reports", labelKey: "navReports", icon: FileText },
   { to: "/public-stats", labelKey: "navPublicRegistrations", icon: UserPlus },

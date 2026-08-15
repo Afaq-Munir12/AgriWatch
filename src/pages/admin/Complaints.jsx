@@ -30,7 +30,7 @@ export default function Complaints() {
   return (
     <>
       <Topbar title={t("ptAdminComplaintsTitle")} subtitle={t("ptAdminComplaintsSub")} />
-      <main className="p-4 sm:p-8 space-y-6">
+      <main className="p-4 sm:p-8 space-y-6" dir="ltr">
         <div className="grid grid-cols-3 gap-4">
           {["Under Review", "Forwarded", "Resolved"].map((s) => (
             <Card key={s}>
@@ -101,7 +101,7 @@ export default function Complaints() {
           onClick={closeReport}
         >
           <div
-            className="bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl"
+            className="bg-surface rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-5 py-4 border-b border-line">
@@ -156,7 +156,7 @@ export default function Complaints() {
                   onChange={(e) => setNote(e.target.value)}
                   rows={2}
                   placeholder="Visible to the farmer once marked resolved..."
-                  className="border border-line rounded-lg px-3 py-2 text-sm bg-white w-full"
+                  className="border border-line rounded-lg px-3 py-2 text-sm bg-surface w-full"
                 />
               </div>
 

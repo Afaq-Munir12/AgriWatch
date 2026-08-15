@@ -10,7 +10,7 @@ export default function PublicHome() {
   return (
     <>
       <Topbar title={t("ptPublicHomeTitle")} subtitle={`${myDistrict.name}, ${myDistrict.province}`} />
-      <main className="p-4 sm:p-8 space-y-6">
+      <main className="p-4 sm:p-8 space-y-6" dir="ltr">
         <Card className="flex items-center justify-between flex-wrap gap-4" scan>
           <div>
             <p className="text-xs uppercase text-ink/40 font-medium">{t("currentStatus")}</p>

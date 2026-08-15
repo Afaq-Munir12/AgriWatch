@@ -13,6 +13,7 @@ import Predictions from "./pages/admin/Predictions";
 import Alerts from "./pages/admin/Alerts";
 import Users from "./pages/admin/Users";
 import Complaints from "./pages/admin/Complaints";
+import Verifications from "./pages/admin/Verifications";
 import Reports from "./pages/admin/Reports";
 import PublicRegistrations from "./pages/admin/PublicRegistrations";
 import AdminSettings from "./pages/admin/Settings";
@@ -50,6 +51,7 @@ export default function App() {
           <Route path="/admin/alerts" element={<Alerts />} />
           <Route path="/admin/users" element={<Users />} />
           <Route path="/admin/complaints" element={<Complaints />} />
+          <Route path="/admin/verifications" element={<Verifications />} />
           <Route path="/admin/reports" element={<Reports />} />
           <Route path="/admin/public-stats" element={<PublicRegistrations />} />
           <Route path="/admin/settings" element={<AdminSettings />} />

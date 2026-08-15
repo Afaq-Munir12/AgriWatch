@@ -18,7 +18,7 @@ export default function Topbar({ title, subtitle }) {
       <div className="flex items-center gap-3 min-w-0">
         <button
           onClick={toggle}
-          className="lg:hidden shrink-0 p-2 rounded-lg border border-line bg-white hover:bg-paper-dim transition-colors"
+          className="lg:hidden shrink-0 p-2 rounded-lg border border-line bg-surface hover:bg-paper-dim transition-colors"
           aria-label="Open menu"
         >
           <Menu size={18} className="text-ink/70" />
@@ -30,7 +30,7 @@ export default function Topbar({ title, subtitle }) {
       </div>
 
       <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-        <div className="hidden md:flex items-center gap-2 bg-white border border-line rounded-lg px-3 py-2 w-64">
+        <div className="hidden md:flex items-center gap-2 bg-surface border border-line rounded-lg px-3 py-2 w-64">
           <Search size={15} className="text-ink/40" />
           <input
             placeholder={t("searchDistrict")}

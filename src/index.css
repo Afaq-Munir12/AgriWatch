@@ -15,11 +15,51 @@
   --color-danger: #C1442D;
   --color-warn: #D98A1F;
   --color-ok: #3F8C2C;
+  --color-surface: #FFFFFF;
+  --color-info: #2563EB;
+  /* Fixed light color for text/elements on surfaces that are ALWAYS dark
+     green regardless of theme (Sidebar, Login/Signup, forest-colored
+     banner cards) — deliberately NOT overridden in .dark, since those
+     surfaces don't change between light/dark mode. Using bg-paper's
+     token here was the earlier bug: --color-paper flips dark in dark
+     mode for the page background, which broke text relying on it always
+     being light. */
+  --color-mist: #F7F8F2;
 
   --font-display: 'Space Grotesk', sans-serif;
   --font-body: 'Inter', sans-serif;
   --font-mono: 'IBM Plex Mono', monospace;
 }
+
+/* Dark theme — a mid grey base (not near-black) so translucent "muted"
+   text — tuned for a white background at low opacity — still has enough
+   contrast to read comfortably. Brand greens (forest, primary, accent)
+   stay the same in both themes since they're the logo's identity, not a
+   light/dark concern. */
+.dark {
+  --color-ink: #F3F5EF;
+  --color-paper: #22261F;
+  --color-paper-dim: #2B302A;
+  --color-line: #454C42;
+  --color-surface: #2B302A;
+  --color-info: #7FA8F5;
+}
+
+/* The opacity modifiers on text-ink/NN were tuned against a white
+   background — at the same percentage on a dark background they read as
+   nearly invisible. Boost every value actually used in the app to a
+   readable floor while keeping the relative muted/emphasized hierarchy. */
+.dark .text-ink\/25 { color: color-mix(in oklab, var(--color-ink) 55%, transparent); }
+.dark .text-ink\/30 { color: color-mix(in oklab, var(--color-ink) 58%, transparent); }
+.dark .text-ink\/35 { color: color-mix(in oklab, var(--color-ink) 60%, transparent); }
+.dark .text-ink\/40 { color: color-mix(in oklab, var(--color-ink) 62%, transparent); }
+.dark .text-ink\/45 { color: color-mix(in oklab, var(--color-ink) 65%, transparent); }
+.dark .text-ink\/50 { color: color-mix(in oklab, var(--color-ink) 68%, transparent); }
+.dark .text-ink\/55 { color: color-mix(in oklab, var(--color-ink) 70%, transparent); }
+.dark .text-ink\/60 { color: color-mix(in oklab, var(--color-ink) 72%, transparent); }
+.dark .text-ink\/65 { color: color-mix(in oklab, var(--color-ink) 75%, transparent); }
+.dark .text-ink\/70 { color: color-mix(in oklab, var(--color-ink) 78%, transparent); }
+.dark .placeholder\:text-ink\/30::placeholder { color: color-mix(in oklab, var(--color-ink) 45%, transparent); }
 
 body {
   background: var(--color-paper);
@@ -162,7 +202,8 @@ html[dir="rtl"] .dropdown-panel {
   border-radius: 0.5rem;
   padding: 0.55rem 0.75rem;
   font-size: 0.875rem;
-  background: white;
+  background: var(--color-surface);
+  color: var(--color-ink);
   outline: none;
   transition: border-color 0.15s ease;
 }

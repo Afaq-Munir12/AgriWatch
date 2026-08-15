@@ -3,6 +3,7 @@ import { LogOut, X } from "lucide-react";
 import logo from "../assets/logo.jpeg";
 import { useLanguage } from "../i18n/LanguageContext";
 import LanguageToggle from "./LanguageToggle";
+import ThemeToggle from "./ThemeToggle";
 import { useMobileNav } from "./MobileNavContext";
 
 export default function Sidebar({ navItems, roleLabelKey, basePath }) {
@@ -20,7 +21,7 @@ export default function Sidebar({ navItems, roleLabelKey, basePath }) {
       )}
 
       <aside
-        className={`w-64 shrink-0 bg-forest text-paper flex flex-col h-screen fixed lg:sticky top-0 start-0 z-50
+        className={`w-64 shrink-0 bg-forest text-mist flex flex-col h-screen fixed lg:sticky top-0 start-0 z-50
           transition-transform duration-300 ease-out
           ${open ? "translate-x-0" : "-translate-x-full rtl:translate-x-full lg:translate-x-0"}
           ${lang === "ur" ? "i18n-ur" : ""}`}
@@ -33,7 +34,7 @@ export default function Sidebar({ navItems, roleLabelKey, basePath }) {
               <p className="text-[11px] tracking-widest text-primary-light/90 uppercase truncate">{t(roleLabelKey)}</p>
             </div>
           </Link>
-          <button onClick={close} className="lg:hidden text-paper/60 hover:text-paper shrink-0" aria-label="Close menu">
+          <button onClick={close} className="lg:hidden text-mist/60 hover:text-mist shrink-0" aria-label="Close menu">
             <X size={20} />
           </button>
         </div>
@@ -49,7 +50,7 @@ export default function Sidebar({ navItems, roleLabelKey, basePath }) {
                 `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors relative ${
                   isActive
                     ? "bg-primary/90 text-white"
-                    : "text-paper/70 hover:bg-white/5 hover:text-paper"
+                    : "text-mist/70 hover:bg-white/5 hover:text-mist"
                 }`
               }
             >
@@ -67,11 +68,14 @@ export default function Sidebar({ navItems, roleLabelKey, basePath }) {
         </nav>
 
         <div className="px-5 py-4 border-t border-white/10 space-y-3">
-          <LanguageToggle className="!bg-white/10 !border-white/10 !text-paper hover:!bg-white/15 w-full justify-center" />
-          <Link to="/" className="flex items-center gap-3 text-paper/60 hover:text-paper text-sm">
+          <div className="grid grid-cols-2 gap-2">
+            <LanguageToggle className="!bg-white/10 !border-white/10 !text-mist hover:!bg-white/15 justify-center" />
+            <ThemeToggle className="!bg-white/10 !border-white/10 !text-mist hover:!bg-white/15 justify-center" />
+          </div>
+          <Link to="/" className="flex items-center gap-3 text-mist/60 hover:text-mist text-sm">
             <LogOut size={16} /> {t("exitToHome")}
           </Link>
-          <p className="text-[10px] text-paper/40 font-mono">{t("tagline")}</p>
+          <p className="text-[10px] text-mist/40 font-mono">{t("tagline")}</p>
         </div>
       </aside>
     </>

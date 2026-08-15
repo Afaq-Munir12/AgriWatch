@@ -6,8 +6,10 @@ import {
 } from "lucide-react";
 import { useLanguage } from "../i18n/LanguageContext";
 import LanguageToggle from "../components/LanguageToggle";
+import ThemeToggle from "../components/ThemeToggle";
 import { districts } from "../data/dummyData";
 import { addRipple } from "../utils/ripple";
+import { useRegistrations } from "../store/RegistrationsContext";
 
 const roles = [
   { key: "farmer", labelKey: "roleFarmerLabel", icon: Sprout, dest: "/farmer" },
@@ -26,6 +28,7 @@ const crops = [
 export default function Signup() {
   const { t, lang, setLang } = useLanguage();
   const navigate = useNavigate();
+  const { addRegistration } = useRegistrations();
 
   const [role, setRole] = useState("farmer");
   const [step, setStep] = useState("phone"); // phone -> otp -> details -> processing -> pending
@@ -53,8 +56,17 @@ export default function Signup() {
     if (role === "farmer" && farmerForm.language !== lang) setLang(farmerForm.language);
     if (role === "public" && publicForm.language !== lang) setLang(publicForm.language);
 
+    const record =
+      role === "farmer"
+        ? { role, phone, district: farmerForm.district, tehsil: farmerForm.tehsil, crop: farmerForm.crop, farmSize: farmerForm.farmSize }
+        : role === "public"
+        ? { role, phone, district: publicForm.district, name: publicForm.name || "—" }
+        : { role, phone, designation: adminForm.designation, district: adminForm.district };
+
+    addRegistration(record);
+
     setTimeout(() => {
-      if (role === "admin") {
+      if (role === "admin" || role === "farmer") {
         setStep("pending");
       } else {
         navigate(roles.find((r) => r.key === role).dest);
@@ -67,8 +79,9 @@ export default function Signup() {
   return (
     <div className={`min-h-screen bg-forest flex items-center justify-center p-6 ${urduClass}`}>
       <div className="w-full max-w-md">
-        <div className="flex justify-end mb-3">
-          <LanguageToggle className="!bg-white/10 !border-white/10 !text-paper hover:!bg-white/15" />
+        <div className="flex justify-end gap-2 mb-3">
+          <ThemeToggle className="!bg-white/10 !border-white/10 !text-mist hover:!bg-white/15" />
+          <LanguageToggle className="!bg-white/10 !border-white/10 !text-mist hover:!bg-white/15" />
         </div>
         <div className="flex flex-col items-center mb-6">
           <Link to="/" className="flex flex-col items-center">
@@ -91,7 +104,7 @@ export default function Signup() {
                     onClick={() => setRole(key)}
                     onMouseDown={addRipple}
                     className={`btn-animated flex flex-col items-center gap-1.5 py-3 rounded-lg border text-xs font-medium transition-colors ${
-                      role === key ? "bg-primary text-white border-primary" : "bg-white text-ink/60 border-line hover:bg-paper-dim"
+                      role === key ? "bg-primary text-white border-primary" : "bg-surface text-ink/60 border-line hover:bg-paper-dim"
                     }`}
                   >
                     <Icon size={16} />
@@ -103,7 +116,7 @@ export default function Signup() {
               <form onSubmit={requestOtp} className="space-y-4">
                 <div>
                   <label className="text-xs font-medium text-ink/50 uppercase tracking-wide">{t("phoneNumber")}</label>
-                  <div className="flex items-center gap-2 mt-1 border border-line rounded-lg px-3 py-2.5 bg-white">
+                  <div className="flex items-center gap-2 mt-1 border border-line rounded-lg px-3 py-2.5 bg-surface">
                     <Phone size={16} className="text-ink/40" />
                     <input
                       value={phone}
@@ -133,7 +146,7 @@ export default function Signup() {
             <form onSubmit={verifyOtp} className="space-y-4">
               <div>
                 <label className="text-xs font-medium text-ink/50 uppercase tracking-wide">{t("enterOtp")}</label>
-                <div className="flex items-center gap-2 mt-1 border border-line rounded-lg px-3 py-2.5 bg-white">
+                <div className="flex items-center gap-2 mt-1 border border-line rounded-lg px-3 py-2.5 bg-surface">
                   <Shield size={16} className="text-ink/40" />
                   <input
                     placeholder={t("otpPlaceholder")}
@@ -261,7 +274,9 @@ export default function Signup() {
                 <Clock size={26} className="text-warn" />
               </div>
               <p className="font-display font-semibold">{t("adminPendingTitle")}</p>
-              <p className="text-sm text-ink/55 leading-relaxed">{t("adminPendingBody")}</p>
+              <p className="text-sm text-ink/55 leading-relaxed">
+                {role === "farmer" ? t("farmerPendingBody") : t("adminPendingBody")}
+              </p>
               <Link
                 to="/"
                 onMouseDown={addRipple}
@@ -300,7 +315,7 @@ function LangPill({ selected, onClick, label }) {
       onClick={onClick}
       onMouseDown={addRipple}
       className={`btn-animated text-sm font-medium rounded-lg py-2 border transition-colors ${
-        selected ? "bg-primary text-white border-primary" : "bg-white text-ink/60 border-line hover:bg-paper-dim"
+        selected ? "bg-primary text-white border-primary" : "bg-surface text-ink/60 border-line hover:bg-paper-dim"
       }`}
     >
       {label}
