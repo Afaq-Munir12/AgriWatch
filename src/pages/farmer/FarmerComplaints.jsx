@@ -6,12 +6,14 @@ import { currentFarmer } from "../../data/dummyData";
 import { useComplaints } from "../../store/ComplaintsContext";
 import { Paperclip, Send, X, CheckCircle2 } from "lucide-react";
 import { addRipple } from "../../utils/ripple";
+import { useToast } from "../../components/ToastContext";
 
 const MAX_PHOTO_MB = 3;
 
 export default function FarmerComplaints() {
   const { t } = useLanguage();
   const { complaints, addComplaint } = useComplaints();
+  const { showToast } = useToast();
   const fileInputRef = useRef(null);
 
   const mine = complaints.filter((c) => c.farmer === currentFarmer.name);
@@ -60,6 +62,7 @@ export default function FarmerComplaints() {
     setForm({ ...form, description: "" });
     removePhoto();
     setJustSubmittedId(id);
+    showToast(`Complaint ${id} submitted successfully`, "success");
     setTimeout(() => setJustSubmittedId(null), 4000);
   }
 

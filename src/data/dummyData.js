@@ -24,6 +24,12 @@ export const severityColor = {
 };
 
 export const trendData = [
+  { month: "Aug", ndvi: 0.47, spi3: 0.1, soilMoisture: 32 },
+  { month: "Sep", ndvi: 0.46, spi3: 0.0, soilMoisture: 31 },
+  { month: "Oct", ndvi: 0.44, spi3: -0.1, soilMoisture: 30 },
+  { month: "Nov", ndvi: 0.43, spi3: -0.2, soilMoisture: 29 },
+  { month: "Dec", ndvi: 0.42, spi3: -0.3, soilMoisture: 28 },
+  { month: "Jan", ndvi: 0.42, spi3: -0.3, soilMoisture: 28 },
   { month: "Feb", ndvi: 0.41, spi3: -0.4, soilMoisture: 27 },
   { month: "Mar", ndvi: 0.38, spi3: -0.6, soilMoisture: 25 },
   { month: "Apr", ndvi: 0.34, spi3: -0.9, soilMoisture: 22 },

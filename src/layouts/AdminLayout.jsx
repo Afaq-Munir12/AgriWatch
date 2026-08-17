@@ -2,12 +2,13 @@ import { Outlet } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import { MobileNavProvider } from "../components/MobileNavContext";
 import {
-  LayoutDashboard, Map, TrendingUp, Bell, Users, FileWarning, FileText, UserPlus, UserCheck, Settings,
+  LayoutDashboard, Map, TrendingUp, Bell, Users, FileWarning, FileText, UserPlus, UserCheck, GitCompare, Settings,
 } from "lucide-react";
 
 const navItems = [
   { to: "", labelKey: "navOverview", icon: LayoutDashboard },
   { to: "/map", labelKey: "navDroughtMap", icon: Map },
+  { to: "/compare", labelKey: "navCompare", icon: GitCompare },
   { to: "/predictions", labelKey: "navPredictions", icon: TrendingUp },
   { to: "/alerts", labelKey: "navAlerts", icon: Bell },
   { to: "/users", labelKey: "navUsers", icon: Users },

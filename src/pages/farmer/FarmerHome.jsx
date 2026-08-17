@@ -1,6 +1,9 @@
 import Topbar from "../../components/Topbar";
+import { Link } from "react-router-dom";
 import { useLanguage } from "../../i18n/LanguageContext";
 import Card, { StatCard, SeverityBadge } from "../../components/Card";
+import { SkeletonStatCard } from "../../components/Skeleton";
+import { useSimulatedLoading } from "../../utils/useSimulatedLoading";
 import { currentFarmer, districts, alerts, trendData } from "../../data/dummyData";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { Droplets, Leaf, ThermometerSun, Bell } from "lucide-react";
@@ -9,26 +12,35 @@ const myDistrict = districts.find((d) => d.name === currentFarmer.district) || d
 
 export default function FarmerHome() {
   const { t } = useLanguage();
+  const loading = useSimulatedLoading(600);
   return (
     <>
       <Topbar title={`${t("welcomeGreeting")}, ${currentFarmer.name.split(" ")[0]}`} subtitle={`${currentFarmer.district} · ${currentFarmer.crop} · ${currentFarmer.farmSize}`} />
       <main className="p-4 sm:p-8 space-y-6" dir="ltr">
-        <Card className="flex items-center justify-between flex-wrap gap-4 scan-line" >
-          <div>
-            <p className="text-xs uppercase text-ink/40 font-medium">District Drought Status</p>
-            <div className="flex items-center gap-3 mt-1">
-              <SeverityBadge level={myDistrict.severity} />
-              <span className="text-sm text-ink/50">{myDistrict.name}, {myDistrict.province}</span>
+        <Link to={`/farmer/district/${myDistrict.id}`} className="block">
+          <Card className="flex items-center justify-between flex-wrap gap-4 scan-line hover:border-primary/40 transition-colors">
+            <div>
+              <p className="text-xs uppercase text-ink/40 font-medium">District Drought Status</p>
+              <div className="flex items-center gap-3 mt-1">
+                <SeverityBadge level={myDistrict.severity} />
+                <span className="text-sm text-ink/50">{myDistrict.name}, {myDistrict.province}</span>
+              </div>
             </div>
-          </div>
-          <p className="text-xs text-ink/40">Updated 10 days ago · next satellite pass in 4 days</p>
-        </Card>
+            <p className="text-xs text-ink/40">Updated 10 days ago · next satellite pass in 4 days</p>
+          </Card>
+        </Link>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <StatCard label="NDVI" value={myDistrict.ndvi.toFixed(2)} icon={Leaf} delta="Vegetation index" deltaTone="warn" />
-          <StatCard label="Soil Moisture" value={myDistrict.soilMoisture} unit="%" icon={Droplets} delta="Below crop threshold" deltaTone="danger" />
-          <StatCard label="SPI-3 (Rainfall)" value={myDistrict.spi3.toFixed(1)} icon={ThermometerSun} delta="Deficit trend" deltaTone="warn" />
-        </div>
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <SkeletonStatCard /><SkeletonStatCard /><SkeletonStatCard />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <StatCard label="NDVI" value={myDistrict.ndvi.toFixed(2)} icon={Leaf} delta="Vegetation index" deltaTone="warn" />
+            <StatCard label="Soil Moisture" value={myDistrict.soilMoisture} unit="%" icon={Droplets} delta="Below crop threshold" deltaTone="danger" />
+            <StatCard label="SPI-3 (Rainfall)" value={myDistrict.spi3.toFixed(1)} icon={ThermometerSun} delta="Deficit trend" deltaTone="warn" />
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <Card className="lg:col-span-2">

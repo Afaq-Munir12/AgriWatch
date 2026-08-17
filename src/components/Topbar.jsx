@@ -1,11 +1,12 @@
-import { Search, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext";
 import { useMobileNav } from "./MobileNavContext";
 import NotificationDropdown from "./NotificationDropdown";
+import DistrictSearch from "./DistrictSearch";
 
 export default function Topbar({ title, subtitle }) {
-  const { t, lang } = useLanguage();
+  const { lang } = useLanguage();
   const { toggle } = useMobileNav();
   const { pathname } = useLocation();
   const urduClass = lang === "ur" ? "i18n-ur" : "";
@@ -30,13 +31,7 @@ export default function Topbar({ title, subtitle }) {
       </div>
 
       <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-        <div className="hidden md:flex items-center gap-2 bg-surface border border-line rounded-lg px-3 py-2 w-64">
-          <Search size={15} className="text-ink/40" />
-          <input
-            placeholder={t("searchDistrict")}
-            className={`bg-transparent outline-none text-sm w-full placeholder:text-ink/30 ${urduClass}`}
-          />
-        </div>
+        <DistrictSearch />
 
         <NotificationDropdown viewAllHref={alertsHref} />
 

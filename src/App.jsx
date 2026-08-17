@@ -4,6 +4,8 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import GuestDashboard from "./pages/GuestDashboard";
+import DistrictDetail from "./pages/DistrictDetail";
+import DistrictCompare from "./pages/DistrictCompare";
 import CropCalendar from "./pages/CropCalendar";
 
 import AdminLayout from "./layouts/AdminLayout";
@@ -46,6 +48,8 @@ export default function App() {
 
         <Route element={<AdminLayout />}>
           <Route path="/admin" element={<Dashboard />} />
+          <Route path="/admin/district/:id" element={<DistrictDetail />} />
+          <Route path="/admin/compare" element={<DistrictCompare />} />
           <Route path="/admin/map" element={<DroughtMap />} />
           <Route path="/admin/predictions" element={<Predictions />} />
           <Route path="/admin/alerts" element={<Alerts />} />
@@ -59,6 +63,7 @@ export default function App() {
 
         <Route element={<FarmerLayout />}>
           <Route path="/farmer" element={<FarmerHome />} />
+          <Route path="/farmer/district/:id" element={<DistrictDetail />} />
           <Route path="/farmer/crops" element={<CropRecommendations />} />
           <Route path="/farmer/irrigation" element={<IrrigationScheduler />} />
           <Route path="/farmer/yield-risk" element={<YieldRisk />} />
@@ -70,6 +75,8 @@ export default function App() {
 
         <Route element={<PublicLayout />}>
           <Route path="/public" element={<PublicHome />} />
+          <Route path="/public/district/:id" element={<DistrictDetail />} />
+          <Route path="/public/compare" element={<DistrictCompare />} />
           <Route path="/public/map" element={<RegionalMap />} />
           <Route path="/public/alerts" element={<PublicAlerts />} />
           <Route path="/public/reports" element={<CommunityReports />} />

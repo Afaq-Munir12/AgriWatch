@@ -2,15 +2,26 @@ import { useState } from "react";
 import Topbar from "../../components/Topbar";
 import { useLanguage } from "../../i18n/LanguageContext";
 import Card, { StatusBadge } from "../../components/Card";
+import { SkeletonTableRows } from "../../components/Skeleton";
+import SortableHeader from "../../components/SortableHeader";
+import ConfirmDialog from "../../components/ConfirmDialog";
+import { useSimulatedLoading } from "../../utils/useSimulatedLoading";
+import { useSortableData } from "../../utils/useSortableData";
 import { useComplaints } from "../../store/ComplaintsContext";
 import { Image as ImageIcon, X, CheckCircle2 } from "lucide-react";
 import { addRipple } from "../../utils/ripple";
+import { useToast } from "../../components/ToastContext";
 
 export default function Complaints() {
   const { t } = useLanguage();
   const { complaints, updateStatus } = useComplaints();
+  const { showToast } = useToast();
+  const loading = useSimulatedLoading(600);
   const [open, setOpen] = useState(null); // complaint object being viewed
   const [note, setNote] = useState("");
+  const [confirmResolve, setConfirmResolve] = useState(null); // complaint id pending resolve confirm
+
+  const { sorted, sortConfig, requestSort } = useSortableData(complaints);
 
   function openReport(c) {
     setOpen(c);
@@ -25,6 +36,15 @@ export default function Complaints() {
   function setStatus(id, status) {
     updateStatus(id, status, status === "Resolved" ? note : undefined);
     if (open?.id === id) setOpen({ ...open, status, resolutionNote: status === "Resolved" ? note : open.resolutionNote });
+    showToast(
+      status === "Resolved" ? `Complaint ${id} marked resolved` : `Complaint ${id} status set to ${status}`,
+      "success"
+    );
+  }
+
+  function confirmMarkResolved() {
+    if (confirmResolve) setStatus(confirmResolve, "Resolved");
+    setConfirmResolve(null);
   }
 
   return (
@@ -48,47 +68,52 @@ export default function Complaints() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-xs uppercase text-ink/40 border-b border-line">
-                  <th className="pb-2 font-medium">ID</th>
-                  <th className="pb-2 font-medium">Farmer</th>
-                  <th className="pb-2 font-medium">District</th>
-                  <th className="pb-2 font-medium">Category</th>
+                  <SortableHeader label="ID" sortKey="id" sortConfig={sortConfig} onSort={requestSort} />
+                  <SortableHeader label="Farmer" sortKey="farmer" sortConfig={sortConfig} onSort={requestSort} />
+                  <SortableHeader label="District" sortKey="district" sortConfig={sortConfig} onSort={requestSort} />
+                  <SortableHeader label="Category" sortKey="category" sortConfig={sortConfig} onSort={requestSort} />
                   <th className="pb-2 font-medium">Photo</th>
-                  <th className="pb-2 font-medium">Date</th>
-                  <th className="pb-2 font-medium">Status</th>
+                  <SortableHeader label="Date" sortKey="date" sortConfig={sortConfig} onSort={requestSort} />
+                  <SortableHeader label="Status" sortKey="status" sortConfig={sortConfig} onSort={requestSort} />
                   <th className="pb-2 font-medium">Update</th>
                 </tr>
               </thead>
               <tbody>
-                {complaints.map((c) => (
-                  <tr key={c.id} className="border-b border-line last:border-0 hover:bg-paper-dim/60">
-                    <td className="py-2.5 font-mono text-xs text-ink/50">{c.id}</td>
-                    <td className="py-2.5 font-medium">{c.farmer}</td>
-                    <td className="py-2.5 text-ink/60">{c.district}</td>
-                    <td className="py-2.5 text-ink/60">{c.category}</td>
-                    <td className="py-2.5">
-                      {c.photo ? (
-                        <img
-                          src={c.photo}
-                          alt=""
+                {loading ? (
+                  <SkeletonTableRows rows={5} cols={8} />
+                ) : (
+                  sorted.map((c) => (
+                    <tr key={c.id} className="border-b border-line last:border-0 hover:bg-paper-dim/60">
+                      <td className="py-2.5 font-mono text-xs text-ink/50">{c.id}</td>
+                      <td className="py-2.5 font-medium">{c.farmer}</td>
+                      <td className="py-2.5 text-ink/60">{c.district}</td>
+                      <td className="py-2.5 text-ink/60">{c.category}</td>
+                      <td className="py-2.5">
+                        {c.photo ? (
+                          <img
+                            src={c.photo}
+                            alt=""
+                            onClick={() => openReport(c)}
+                            className="w-9 h-9 rounded-md object-cover cursor-pointer border border-line hover:opacity-80"
+                          />
+                        ) : (
+                          <span className="text-ink/25 text-xs">—</span>
+                        )}
+                      </td>
+                      <td className="py-2.5 font-mono text-xs text-ink/50">{c.date}</td>
+                      <td className="py-2.5"><StatusBadge status={c.status} /></td>
+                      <td className="py-2.5">
+                        <button
                           onClick={() => openReport(c)}
-                          className="w-9 h-9 rounded-md object-cover cursor-pointer border border-line hover:opacity-80"
-                        />
-                      ) : (
-                        <span className="text-ink/25 text-xs">—</span>
-                      )}
-                    </td>
-                    <td className="py-2.5 font-mono text-xs text-ink/50">{c.date}</td>
-                    <td className="py-2.5"><StatusBadge status={c.status} /></td>
-                    <td className="py-2.5">
-                      <button
-                        onClick={() => openReport(c)}
-                        className="btn-animated text-xs font-medium text-primary border border-primary/30 rounded-md px-3 py-1.5 hover:bg-primary/5"
-                      >
-                        View report
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                          onMouseDown={addRipple}
+                          className="btn-animated text-xs font-medium text-primary border border-primary/30 rounded-md px-3 py-1.5 hover:bg-primary/5"
+                        >
+                          View report
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -99,6 +124,8 @@ export default function Complaints() {
         <div
           className="fixed inset-0 bg-ink/40 backdrop-blur-sm z-50 flex items-center justify-center p-4"
           onClick={closeReport}
+          role="dialog"
+          aria-modal="true"
         >
           <div
             className="bg-surface rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl"
@@ -109,7 +136,7 @@ export default function Complaints() {
                 <p className="font-display font-semibold">{open.category}</p>
                 <p className="text-xs text-ink/40 font-mono">{open.id} · {open.date}</p>
               </div>
-              <button onClick={closeReport} className="text-ink/40 hover:text-ink">
+              <button onClick={closeReport} aria-label="Close report" className="text-ink/40 hover:text-ink">
                 <X size={18} />
               </button>
             </div>
@@ -176,7 +203,7 @@ export default function Complaints() {
                   Forward
                 </button>
                 <button
-                  onClick={() => setStatus(open.id, "Resolved")}
+                  onClick={() => setConfirmResolve(open.id)}
                   onMouseDown={addRipple}
                   className="btn-animated flex items-center gap-1.5 text-xs font-medium bg-primary text-white rounded-lg px-3 py-2 hover:bg-primary-light"
                 >
@@ -187,6 +214,16 @@ export default function Complaints() {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!confirmResolve}
+        title="Mark this complaint resolved?"
+        body="The farmer will see this as resolved along with your response note, right away."
+        confirmLabel="Mark resolved"
+        tone="primary"
+        onConfirm={confirmMarkResolved}
+        onCancel={() => setConfirmResolve(null)}
+      />
     </>
   );
 }

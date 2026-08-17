@@ -1,11 +1,12 @@
 import { Outlet } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import { MobileNavProvider } from "../components/MobileNavContext";
-import { LayoutDashboard, Map, Bell, BookOpen, CalendarDays, FileWarning, Settings } from "lucide-react";
+import { LayoutDashboard, Map, GitCompare, Bell, BookOpen, CalendarDays, FileWarning, Settings } from "lucide-react";
 
 const navItems = [
   { to: "", labelKey: "navHome", icon: LayoutDashboard },
   { to: "/map", labelKey: "navRegionalMap", icon: Map },
+  { to: "/compare", labelKey: "navCompare", icon: GitCompare },
   { to: "/alerts", labelKey: "navAlerts", icon: Bell },
   { to: "/reports", labelKey: "navCommunityReports", icon: FileWarning },
   { to: "/awareness", labelKey: "navAwareness", icon: BookOpen },

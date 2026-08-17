@@ -1,12 +1,21 @@
 import Topbar from "../../components/Topbar";
+import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { useLanguage } from "../../i18n/LanguageContext";
 import Card, { StatCard, SeverityBadge } from "../../components/Card";
+import { SkeletonStatCard, SkeletonTableRows, SkeletonCardList } from "../../components/Skeleton";
+import RangeToggle from "../../components/RangeToggle";
+import { useSimulatedLoading } from "../../utils/useSimulatedLoading";
 import { districts, trendData, alerts } from "../../data/dummyData";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { AlertTriangle, MapPinned, Radio, Droplets } from "lucide-react";
 
 export default function Dashboard() {
   const { t } = useLanguage();
+  const navigate = useNavigate();
+  const loading = useSimulatedLoading(650);
+  const [range, setRange] = useState("6mo");
+  const chartData = range === "6mo" ? trendData.slice(-6) : trendData;
   const extreme = districts.filter((d) => d.severity === "Extreme").length;
   const severe = districts.filter((d) => d.severity === "Severe").length;
 
@@ -14,23 +23,30 @@ export default function Dashboard() {
     <>
       <Topbar title={t("ptAdminOverviewTitle")} subtitle={t("ptAdminOverviewSub")} />
       <main className="p-4 sm:p-8 space-y-6" dir="ltr">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard label="Districts Monitored" value={districts.length} icon={MapPinned} delta="All Pakistan" deltaTone="ok" />
-          <StatCard label="Extreme Drought" value={extreme} icon={AlertTriangle} delta="+1 vs last cycle" deltaTone="danger" />
-          <StatCard label="Severe Drought" value={severe} icon={Droplets} delta="+2 vs last cycle" deltaTone="warn" />
-          <StatCard label="Alerts Sent (7d)" value={alerts.length} icon={Radio} delta="All delivered" deltaTone="ok" />
-        </div>
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <SkeletonStatCard /><SkeletonStatCard /><SkeletonStatCard /><SkeletonStatCard />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCard label="Districts Monitored" value={districts.length} icon={MapPinned} delta="All Pakistan" deltaTone="ok" />
+            <StatCard label="Extreme Drought" value={extreme} icon={AlertTriangle} delta="+1 vs last cycle" deltaTone="danger" />
+            <StatCard label="Severe Drought" value={severe} icon={Droplets} delta="+2 vs last cycle" deltaTone="warn" />
+            <StatCard label="Alerts Sent (7d)" value={alerts.length} icon={Radio} delta="All delivered" deltaTone="ok" />
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <Card className="lg:col-span-2">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
               <div>
                 <p className="font-display font-semibold">National Trend — NDVI &amp; Soil Moisture</p>
-                <p className="text-xs text-ink/40 font-mono">Feb – Jul 2026</p>
+                <p className="text-xs text-ink/40 font-mono">{range === "6mo" ? "Last 6 months" : "Last 12 months"}</p>
               </div>
+              <RangeToggle range={range} setRange={setRange} />
             </div>
             <ResponsiveContainer width="100%" height={240}>
-              <AreaChart data={trendData}>
+              <AreaChart data={chartData}>
                 <defs>
                   <linearGradient id="ndvi" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#3F8C2C" stopOpacity={0.35} />
@@ -84,16 +100,24 @@ export default function Dashboard() {
                 </tr>
               </thead>
               <tbody>
-                {districts.map((d) => (
-                  <tr key={d.id} className="border-b border-line last:border-0 hover:bg-paper-dim/60">
-                    <td className="py-2.5 font-medium">{d.name}</td>
-                    <td className="py-2.5 text-ink/60">{d.province}</td>
-                    <td className="py-2.5 font-mono text-ink/70">{d.ndvi.toFixed(2)}</td>
-                    <td className="py-2.5 font-mono text-ink/70">{d.spi3.toFixed(1)}</td>
-                    <td className="py-2.5 font-mono text-ink/70">{d.soilMoisture}%</td>
-                    <td className="py-2.5"><SeverityBadge level={d.severity} /></td>
-                  </tr>
-                ))}
+                {loading ? (
+                  <SkeletonTableRows rows={6} cols={6} />
+                ) : (
+                  districts.map((d) => (
+                    <tr
+                      key={d.id}
+                      onClick={() => navigate(`/admin/district/${d.id}`)}
+                      className="border-b border-line last:border-0 hover:bg-paper-dim/60 cursor-pointer"
+                    >
+                      <td className="py-2.5 font-medium">{d.name}</td>
+                      <td className="py-2.5 text-ink/60">{d.province}</td>
+                      <td className="py-2.5 font-mono text-ink/70">{d.ndvi.toFixed(2)}</td>
+                      <td className="py-2.5 font-mono text-ink/70">{d.spi3.toFixed(1)}</td>
+                      <td className="py-2.5 font-mono text-ink/70">{d.soilMoisture}%</td>
+                      <td className="py-2.5"><SeverityBadge level={d.severity} /></td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

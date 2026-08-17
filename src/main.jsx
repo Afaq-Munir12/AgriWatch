@@ -6,16 +6,19 @@ import { LanguageProvider } from './i18n/LanguageContext.jsx'
 import { ThemeProvider } from './theme/ThemeContext.jsx'
 import { ComplaintsProvider } from './store/ComplaintsContext.jsx'
 import { RegistrationsProvider } from './store/RegistrationsContext.jsx'
+import { ToastProvider } from './components/ToastContext.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <ThemeProvider>
       <LanguageProvider>
-        <ComplaintsProvider>
-          <RegistrationsProvider>
-            <App />
-          </RegistrationsProvider>
-        </ComplaintsProvider>
+        <ToastProvider>
+          <ComplaintsProvider>
+            <RegistrationsProvider>
+              <App />
+            </RegistrationsProvider>
+          </ComplaintsProvider>
+        </ToastProvider>
       </LanguageProvider>
     </ThemeProvider>
   </StrictMode>,

@@ -1,14 +1,26 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import Topbar from "../../components/Topbar";
 import { useLanguage } from "../../i18n/LanguageContext";
 import Card, { SeverityBadge } from "../../components/Card";
 import { alerts as initialAlerts, districts } from "../../data/dummyData";
 import { Send } from "lucide-react";
+import { addRipple } from "../../utils/ripple";
+import { useToast } from "../../components/ToastContext";
 
 export default function Alerts() {
   const { t } = useLanguage();
+  const { showToast } = useToast();
+  const [searchParams] = useSearchParams();
   const [alerts, setAlerts] = useState(initialAlerts);
   const [form, setForm] = useState({ district: districts[0].name, severity: "Moderate", message: "", audience: "Farmers + Public" });
+
+  useEffect(() => {
+    const prefillDistrict = searchParams.get("district");
+    if (prefillDistrict && districts.some((d) => d.name === prefillDistrict)) {
+      setForm((f) => ({ ...f, district: prefillDistrict }));
+    }
+  }, [searchParams]);
 
   function handleSend(e) {
     e.preventDefault();
@@ -24,6 +36,7 @@ export default function Alerts() {
     };
     setAlerts([newAlert, ...alerts]);
     setForm({ ...form, message: "" });
+    showToast(`Alert dispatched to ${newAlert.district}`, "success");
   }
 
   return (
@@ -56,7 +69,7 @@ export default function Alerts() {
               <option>Farmers</option>
               <option>General Public</option>
             </select>
-            <button type="submit" className="flex items-center justify-center gap-2 bg-primary text-white rounded-lg px-3 py-2 text-sm font-medium hover:bg-primary-light transition-colors">
+            <button type="submit" onMouseDown={addRipple} className="btn-animated flex items-center justify-center gap-2 bg-primary text-white rounded-lg px-3 py-2 text-sm font-medium hover:bg-primary-light transition-colors">
               <Send size={15} /> Dispatch
             </button>
             <textarea

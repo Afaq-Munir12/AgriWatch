@@ -1,6 +1,7 @@
 import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import Topbar from "../../components/Topbar";
+import { Link } from "react-router-dom";
 import Card, { SeverityBadge } from "../../components/Card";
 import { districts, severityColor } from "../../data/dummyData";
 import { useState } from "react";
@@ -65,6 +66,9 @@ export default function DroughtMap() {
                     <p className="font-semibold">{d.name}, {d.province}</p>
                     <p>NDVI: {d.ndvi} · SPI-3: {d.spi3} · Soil: {d.soilMoisture}%</p>
                     <p className="mt-1 font-medium">{d.severity} drought</p>
+                    <Link to={`/admin/district/${d.id}`} className="text-primary text-xs font-medium hover:underline mt-1 inline-block">
+                      View full details →
+                    </Link>
                   </div>
                 </Popup>
               </CircleMarker>
@@ -76,11 +80,15 @@ export default function DroughtMap() {
           <p className="font-display font-semibold mb-3">Tap a district for details</p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {districts.map((d) => (
-              <div key={d.id} className="border border-line rounded-lg p-3">
+              <Link
+                to={`/admin/district/${d.id}`}
+                key={d.id}
+                className="btn-animated border border-line rounded-lg p-3 block hover:border-primary/40 transition-colors"
+              >
                 <p className="text-sm font-medium">{d.name}</p>
                 <p className="text-xs text-ink/40 mb-2">{d.province}</p>
                 <SeverityBadge level={d.severity} />
-              </div>
+              </Link>
             ))}
           </div>
         </Card>

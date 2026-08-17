@@ -1,9 +1,12 @@
 import Topbar from "../../components/Topbar";
+import { useState } from "react";
 import { useLanguage } from "../../i18n/LanguageContext";
 import Card, { StatusBadge } from "../../components/Card";
+import ConfirmDialog from "../../components/ConfirmDialog";
 import { useRegistrations } from "../../store/RegistrationsContext";
 import { addRipple } from "../../utils/ripple";
 import { ShieldCheck, Sprout, Users2, Check, X } from "lucide-react";
+import { useToast } from "../../components/ToastContext";
 
 const roleIcon = { admin: ShieldCheck, farmer: Sprout, public: Users2 };
 const roleLabel = { admin: "Admin / PDMA", farmer: "Farmer", public: "General Public" };
@@ -15,9 +18,24 @@ const statusAlias = { Pending: "Under Review", Approved: "Resolved", Rejected: "
 export default function Verifications() {
   const { t } = useLanguage();
   const { registrations, setStatus } = useRegistrations();
+  const { showToast } = useToast();
+  const [confirming, setConfirming] = useState(null); // registration pending rejection confirm
 
   const pending = registrations.filter((r) => r.status === "Pending");
   const decided = registrations.filter((r) => r.status !== "Pending");
+
+  function decide(r, status) {
+    setStatus(r.id, status);
+    showToast(
+      status === "Approved" ? `${roleLabel[r.role]} request approved` : `${roleLabel[r.role]} request rejected`,
+      status === "Approved" ? "success" : "info"
+    );
+  }
+
+  function confirmReject() {
+    if (confirming) decide(confirming, "Rejected");
+    setConfirming(null);
+  }
 
   return (
     <>
@@ -68,14 +86,14 @@ export default function Verifications() {
                   </div>
                   <div className="flex gap-2 shrink-0">
                     <button
-                      onClick={() => setStatus(r.id, "Rejected")}
+                      onClick={() => setConfirming(r)}
                       onMouseDown={addRipple}
                       className="btn-animated flex items-center gap-1.5 text-xs font-medium border border-danger/30 text-danger rounded-lg px-3 py-2 hover:bg-danger/5"
                     >
                       <X size={14} /> Reject
                     </button>
                     <button
-                      onClick={() => setStatus(r.id, "Approved")}
+                      onClick={() => decide(r, "Approved")}
                       onMouseDown={addRipple}
                       className="btn-animated flex items-center gap-1.5 text-xs font-medium bg-primary text-white rounded-lg px-3 py-2 hover:bg-primary-light"
                     >
@@ -119,6 +137,16 @@ export default function Verifications() {
           </div>
         </Card>
       </main>
+
+      <ConfirmDialog
+        open={!!confirming}
+        title={`Reject this ${confirming ? roleLabel[confirming.role] : ""} request?`}
+        body="The applicant will need to sign up again if you reject this. This can't be undone from here."
+        confirmLabel="Reject request"
+        tone="danger"
+        onConfirm={confirmReject}
+        onCancel={() => setConfirming(null)}
+      />
     </>
   );
 }

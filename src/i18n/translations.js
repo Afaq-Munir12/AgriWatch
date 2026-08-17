@@ -37,6 +37,7 @@ const dict = {
 
   // Public nav
   navRegionalMap: { en: "Regional Map", ur: "علاقائی نقشہ" },
+  navCompare: { en: "Compare Districts", ur: "اضلاع کا موازنہ" },
   navAwareness: { en: "Awareness & Tips", ur: "آگاہی اور تجاویز" },
   navCommunityReports: { en: "Community Reports", ur: "کمیونٹی رپورٹس" },
 
