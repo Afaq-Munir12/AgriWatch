@@ -15,7 +15,7 @@ export default function DistrictSearch() {
   const ref = useRef(null);
   const urduClass = lang === "ur" ? "i18n-ur" : "";
 
-  const base = pathname.startsWith("/farmer") ? "/farmer" : pathname.startsWith("/public") ? "/public" : "/admin";
+  const base = pathname.startsWith("/farmer") ? "/farmer" : pathname.startsWith("/public") ? "/public" : "/pdma";
 
   const recentIds = getRecentDistrictIds();
   const recentDistricts = recentIds
@@ -62,7 +62,7 @@ export default function DistrictSearch() {
   }
 
   return (
-    <div className="relative hidden md:block" ref={ref}>
+    <div data-tour="district-search" className="relative hidden md:block" ref={ref}>
       <div className="flex items-center gap-2 bg-surface border border-line rounded-lg px-3 py-2 w-64 focus-within:border-primary transition-colors">
         <Search size={15} className="text-ink/40 shrink-0" />
         <input

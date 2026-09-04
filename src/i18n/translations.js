@@ -12,7 +12,7 @@ const dict = {
   searchDistrict: { en: "Search district...", ur: "ضلع تلاش کریں..." },
 
   // Sidebar role labels
-  roleAdmin: { en: "Pakistan · Admin", ur: "پاکستان · ایڈمن" },
+  roleAdmin: { en: "Pakistan · PDMA", ur: "پاکستان · پی ڈی ایم اے" },
   roleFarmer: { en: "Farmer Portal", ur: "کسان پورٹل" },
   rolePublic: { en: "Public Portal", ur: "عوامی پورٹل" },
 
@@ -26,6 +26,7 @@ const dict = {
   navComplaints: { en: "Complaints", ur: "شکایات" },
   navReports: { en: "Reports", ur: "رپورٹس" },
   navPublicRegistrations: { en: "Public Registrations", ur: "عوامی رجسٹریشن" },
+  navMobileRequests: { en: "Access Requests", ur: "رسائی کی درخواستیں" },
   navSettings: { en: "Settings", ur: "ترتیبات" },
 
   // Farmer nav
@@ -45,11 +46,11 @@ const dict = {
   loginIAmA: { en: "I am a", ur: "میں ہوں ایک" },
   roleFarmerLabel: { en: "Farmer", ur: "کسان" },
   rolePublicLabel: { en: "General Public", ur: "عام شہری" },
-  roleAdminLabel: { en: "Admin / PDMA", ur: "ایڈمن / پی ڈی ایم اے" },
+  roleAdminLabel: { en: "PDMA Officer", ur: "پی ڈی ایم اے افسر" },
   phoneNumber: { en: "Phone Number", ur: "فون نمبر" },
   phonePlaceholder: { en: "+92 3XX XXXXXXX", ur: "+92 3XX XXXXXXX" },
   sendOtp: { en: "Send OTP", ur: "او ٹی پی بھیجیں" },
-  adminApprovalNote: { en: "Admin access requires prior approval by a district coordinator.", ur: "ایڈمن رسائی کے لیے ضلعی کوآرڈینیٹر کی پیشگی منظوری درکار ہے۔" },
+  adminApprovalNote: { en: "PDMA officer access requires prior approval by an admin.", ur: "پی ڈی ایم اے افسر تک رسائی کے لیے ایڈمن کی پیشگی منظوری درکار ہے۔" },
   enterOtp: { en: "Enter OTP", ur: "او ٹی پی درج کریں" },
   otpPlaceholder: { en: "6-digit code", ur: "6 ہندسوں کا کوڈ" },
   codeSentTo: { en: "Code sent to", ur: "کوڈ بھیجا گیا" },

@@ -10,7 +10,7 @@ import { addRipple } from "../utils/ripple";
 const roles = [
   { key: "farmer", labelKey: "roleFarmerLabel", icon: Sprout, dest: "/farmer" },
   { key: "public", labelKey: "rolePublicLabel", icon: Users2, dest: "/public" },
-  { key: "admin", labelKey: "roleAdminLabel", icon: ShieldCheck, dest: "/admin" },
+  { key: "admin", labelKey: "roleAdminLabel", icon: ShieldCheck, dest: "/pdma" },
 ];
 
 export default function Login() {
@@ -132,6 +132,14 @@ export default function Login() {
             </div>
           )}
         </div>
+
+        {step === "phone" && (
+          <div className="mt-4 flex items-center justify-center">
+            <Link to="/admin-portal/login" className="flex items-center gap-1.5 text-xs font-medium text-mist/60 hover:text-mist">
+              <ShieldCheck size={13} /> Admin Portal login →
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );

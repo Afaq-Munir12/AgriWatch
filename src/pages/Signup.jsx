@@ -14,7 +14,7 @@ import { useRegistrations } from "../store/RegistrationsContext";
 const roles = [
   { key: "farmer", labelKey: "roleFarmerLabel", icon: Sprout, dest: "/farmer" },
   { key: "public", labelKey: "rolePublicLabel", icon: Users2, dest: "/public" },
-  { key: "admin", labelKey: "roleAdminLabel", icon: ShieldCheck, dest: "/admin" },
+  { key: "admin", labelKey: "roleAdminLabel", icon: ShieldCheck, dest: "/pdma" },
 ];
 
 const crops = [

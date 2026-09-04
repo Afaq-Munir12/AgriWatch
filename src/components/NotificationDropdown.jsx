@@ -22,7 +22,7 @@ const toneFor = {
 
 const PANEL_WIDTH = 320;
 
-export default function NotificationDropdown({ viewAllHref = "/admin/alerts" }) {
+export default function NotificationDropdown({ viewAllHref = "/pdma/alerts" }) {
   const [open, setOpen] = useState(false);
   const [readIds, setReadIds] = useState([]);
   const [pos, setPos] = useState({ top: 0, left: 0 });
@@ -82,6 +82,7 @@ export default function NotificationDropdown({ viewAllHref = "/admin/alerts" }) 
         ref={btnRef}
         onClick={toggle}
         onMouseDown={addRipple}
+        data-tour="notifications"
         className="btn-animated relative p-2 rounded-lg border border-line bg-surface hover:bg-paper-dim transition-colors"
         aria-label="Notifications"
       >

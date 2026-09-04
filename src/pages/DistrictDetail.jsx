@@ -20,8 +20,8 @@ export default function DistrictDetail() {
   const chartData = range === "6mo" ? trendData.slice(-6) : trendData;
   const { complaints } = useComplaints();
 
-  const base = pathname.startsWith("/farmer") ? "/farmer" : pathname.startsWith("/public") ? "/public" : "/admin";
-  const isAdmin = base === "/admin";
+  const base = pathname.startsWith("/farmer") ? "/farmer" : pathname.startsWith("/public") ? "/public" : "/pdma";
+  const isAdmin = base === "/pdma";
 
   const district = districts.find((d) => String(d.id) === String(id));
   const districtAlerts = alerts.filter((a) => a.district === district?.name);

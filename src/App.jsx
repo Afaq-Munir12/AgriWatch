@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import CommandPalette from "./components/CommandPalette";
 
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -13,11 +14,15 @@ import Dashboard from "./pages/admin/Dashboard";
 import DroughtMap from "./pages/admin/DroughtMap";
 import Predictions from "./pages/admin/Predictions";
 import Alerts from "./pages/admin/Alerts";
-import Users from "./pages/admin/Users";
 import Complaints from "./pages/admin/Complaints";
-import Verifications from "./pages/admin/Verifications";
+import RequireAdminAuth from "./components/RequireAdminAuth";
+import AdminPortalLayout from "./layouts/AdminPortalLayout";
+import AdminPortalLogin from "./pages/adminportal/AdminPortalLogin";
+import AdminPortalOverview from "./pages/adminportal/AdminPortalOverview";
+import AdminPortalRequests from "./pages/adminportal/AdminPortalRequests";
+import AdminPortalUsers from "./pages/adminportal/AdminPortalUsers";
+import AdminPortalReports from "./pages/adminportal/AdminPortalReports";
 import Reports from "./pages/admin/Reports";
-import PublicRegistrations from "./pages/admin/PublicRegistrations";
 import AdminSettings from "./pages/admin/Settings";
 
 import FarmerLayout from "./layouts/FarmerLayout";
@@ -40,25 +45,35 @@ import PublicSettings from "./pages/public/PublicSettings";
 export default function App() {
   return (
     <BrowserRouter>
+      <CommandPalette />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/guest" element={<GuestDashboard />} />
 
+        {/* Admin portal — full-system oversight: access requests, user directory, reports. Separate Google-account login from the phone/OTP login above. */}
+        <Route path="/admin-portal/login" element={<AdminPortalLogin />} />
+        <Route element={<RequireAdminAuth />}>
+          <Route element={<AdminPortalLayout />}>
+            <Route path="/admin-portal" element={<AdminPortalOverview />} />
+            <Route path="/admin-portal/requests" element={<AdminPortalRequests />} />
+            <Route path="/admin-portal/users" element={<AdminPortalUsers />} />
+            <Route path="/admin-portal/reports" element={<AdminPortalReports />} />
+          </Route>
+        </Route>
+
+        {/* PDMA Officer portal — day-to-day drought monitoring & farmer complaints for a signed-in PDMA officer */}
         <Route element={<AdminLayout />}>
-          <Route path="/admin" element={<Dashboard />} />
-          <Route path="/admin/district/:id" element={<DistrictDetail />} />
-          <Route path="/admin/compare" element={<DistrictCompare />} />
-          <Route path="/admin/map" element={<DroughtMap />} />
-          <Route path="/admin/predictions" element={<Predictions />} />
-          <Route path="/admin/alerts" element={<Alerts />} />
-          <Route path="/admin/users" element={<Users />} />
-          <Route path="/admin/complaints" element={<Complaints />} />
-          <Route path="/admin/verifications" element={<Verifications />} />
-          <Route path="/admin/reports" element={<Reports />} />
-          <Route path="/admin/public-stats" element={<PublicRegistrations />} />
-          <Route path="/admin/settings" element={<AdminSettings />} />
+          <Route path="/pdma" element={<Dashboard />} />
+          <Route path="/pdma/district/:id" element={<DistrictDetail />} />
+          <Route path="/pdma/compare" element={<DistrictCompare />} />
+          <Route path="/pdma/map" element={<DroughtMap />} />
+          <Route path="/pdma/predictions" element={<Predictions />} />
+          <Route path="/pdma/alerts" element={<Alerts />} />
+          <Route path="/pdma/complaints" element={<Complaints />} />
+          <Route path="/pdma/reports" element={<Reports />} />
+          <Route path="/pdma/settings" element={<AdminSettings />} />
         </Route>
 
         <Route element={<FarmerLayout />}>

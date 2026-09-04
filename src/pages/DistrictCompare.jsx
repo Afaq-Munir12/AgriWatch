@@ -9,7 +9,7 @@ import { ArrowLeftRight } from "lucide-react";
 
 export default function DistrictCompare() {
   const { pathname } = useLocation();
-  const base = pathname.startsWith("/public") ? "/public" : "/admin";
+  const base = pathname.startsWith("/public") ? "/public" : "/pdma";
   const [idA, setIdA] = useState(districts[0].id);
   const [idB, setIdB] = useState(districts[1].id);
   const [range, setRange] = useState("6mo");

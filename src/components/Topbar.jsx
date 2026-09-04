@@ -11,7 +11,7 @@ export default function Topbar({ title, subtitle }) {
   const { pathname } = useLocation();
   const urduClass = lang === "ur" ? "i18n-ur" : "";
 
-  const base = pathname.startsWith("/farmer") ? "/farmer" : pathname.startsWith("/public") ? "/public" : "/admin";
+  const base = pathname.startsWith("/farmer") ? "/farmer" : pathname.startsWith("/public") ? "/public" : "/pdma";
   const alertsHref = `${base}/alerts`;
 
   return (

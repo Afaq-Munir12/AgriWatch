@@ -1,5 +1,5 @@
 import { NavLink, Link } from "react-router-dom";
-import { LogOut, X } from "lucide-react";
+import { LogOut, X, Command } from "lucide-react";
 import logo from "../assets/logo.jpeg";
 import { useLanguage } from "../i18n/LanguageContext";
 import LanguageToggle from "./LanguageToggle";
@@ -39,7 +39,7 @@ export default function Sidebar({ navItems, roleLabelKey, basePath }) {
           </button>
         </div>
 
-        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+        <nav data-tour="sidebar-nav" className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
           {navItems.map(({ to, labelKey, icon: Icon }) => (
             <NavLink
               key={to}
@@ -67,6 +67,15 @@ export default function Sidebar({ navItems, roleLabelKey, basePath }) {
           ))}
         </nav>
 
+        <div className="px-5 pb-2">
+          <div className="flex items-center gap-2 text-[11px] text-mist/45 bg-white/5 rounded-lg px-3 py-2">
+            <Command size={12} className="shrink-0" />
+            <span>Press</span>
+            <kbd className="bg-white/10 rounded px-1.5 py-0.5 font-mono text-[10px]">Ctrl K</kbd>
+            <span>to search</span>
+          </div>
+        </div>
+
         <div className="px-5 py-4 border-t border-white/10 space-y-3">
           <div className="grid grid-cols-2 gap-2">
             <LanguageToggle className="!bg-white/10 !border-white/10 !text-mist hover:!bg-white/15 justify-center" />
@@ -75,6 +84,11 @@ export default function Sidebar({ navItems, roleLabelKey, basePath }) {
           <Link to="/" className="flex items-center gap-3 text-mist/60 hover:text-mist text-sm">
             <LogOut size={16} /> {t("exitToHome")}
           </Link>
+          {basePath === "/pdma" && (
+            <Link to="/admin-portal/login" className="block text-[11px] text-mist/40 hover:text-mist/70">
+              Go to Admin Portal →
+            </Link>
+          )}
           <p className="text-[10px] text-mist/40 font-mono">{t("tagline")}</p>
         </div>
       </aside>
