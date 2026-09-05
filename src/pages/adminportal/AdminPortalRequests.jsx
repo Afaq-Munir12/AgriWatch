@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Card from "../../components/Card";
 import ConfirmDialog from "../../components/ConfirmDialog";
+import RequestDetailModal from "../../components/RequestDetailModal";
 import { SkeletonCardList } from "../../components/Skeleton";
 import { useFirestoreCollection } from "../../firebase/useFirestoreCollection";
 import { db } from "../../firebase/config";
@@ -9,7 +10,7 @@ import { useRegistrations } from "../../store/RegistrationsContext";
 import { useToast } from "../../components/ToastContext";
 import { addRipple } from "../../utils/ripple";
 import {
-  AlertTriangle, Check, X, ShieldCheck, Sprout, Users2, HelpCircle,
+  AlertTriangle, Check, X, ShieldCheck, Sprout, Users2, HelpCircle, Eye,
 } from "lucide-react";
 
 // ⚠️ ADJUST if your friend's collection is named differently — check
@@ -63,16 +64,17 @@ function FirestoreRequestsSection({ showToast }) {
   const [roleFilter, setRoleFilter] = useState("all");
   const [confirmReject, setConfirmReject] = useState(null);
   const [busyId, setBusyId] = useState(null);
-  const [expandedRaw, setExpandedRaw] = useState(null);
+  const [detailItem, setDetailItem] = useState(null);
 
-  const roles = ["all", ...Array.from(new Set(data.map((d) => (pick(d, "role", "userType", "type") || "unknown").toLowerCase())))];
-  const filtered = roleFilter === "all" ? data : data.filter((d) => (pick(d, "role", "userType", "type") || "unknown").toLowerCase() === roleFilter);
+  const roles = ["all", ...Array.from(new Set(data.map((d) => (pick(d, "role", "userType", "type", "requestedRole") || "unknown").toLowerCase())))];
+  const filtered = roleFilter === "all" ? data : data.filter((d) => (pick(d, "role", "userType", "type", "requestedRole") || "unknown").toLowerCase() === roleFilter);
 
   async function setStatus(item, status) {
     setBusyId(item.id);
     try {
       await updateDoc(doc(db, COLLECTION_NAME, item.id), { status });
       showToast(status === STATUS.APPROVED ? "Request approved — written to Firestore" : "Request rejected — written to Firestore", status === STATUS.APPROVED ? "success" : "info");
+      setDetailItem(null);
     } catch (err) {
       console.error("Failed to update request status:", err);
       showToast(`Couldn't update Firestore: ${err.message}`, "error");
@@ -134,13 +136,9 @@ function FirestoreRequestsSection({ showToast }) {
         <div className="space-y-3">
           {filtered.map((item) => {
             const name = pick(item, "name", "fullName", "farmerName", "userName");
-            const phone = pick(item, "phone", "phoneNumber", "mobile");
-            const role = (pick(item, "role", "userType", "type") || "unknown").toLowerCase();
+            const role = (pick(item, "role", "userType", "type") || pick(item, "requestedRole") || "unknown").toLowerCase();
             const district = pick(item, "district", "assignedDistrict", "location");
-            const tehsil = pick(item, "tehsil");
-            const crop = pick(item, "crop", "primaryCrop");
-            const farmSize = pick(item, "farmSize");
-            const designation = pick(item, "designation");
+            const phone = pick(item, "phone", "phoneNumber", "mobile");
             const status = (pick(item, "status") || STATUS.PENDING).toLowerCase();
             const createdAt = pick(item, "createdAt", "date", "timestamp", "submittedAt");
             const RoleIcon = roleIcon[role] || HelpCircle;
@@ -157,7 +155,7 @@ function FirestoreRequestsSection({ showToast }) {
                     <p className="text-sm font-medium">
                       {name || "Unnamed applicant"} <span className="text-ink/40 font-normal capitalize">· {role}</span>
                     </p>
-                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full capitalize ${
+                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full capitalize shrink-0 ${
                       status === STATUS.APPROVED ? "bg-primary/10 text-primary"
                       : status === STATUS.REJECTED ? "bg-danger/10 text-danger"
                       : "bg-warn/10 text-warn"
@@ -165,37 +163,47 @@ function FirestoreRequestsSection({ showToast }) {
                       {status}
                     </span>
                   </div>
-                  <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-ink/55 mt-1">
-                    {phone && <span>{phone}</span>}
-                    {district && <span>{district}{tehsil ? `, ${tehsil}` : ""}</span>}
-                    {designation && <span>{designation}</span>}
-                    {crop && <span>{crop}{farmSize ? ` · ${farmSize}` : ""}</span>}
-                  </div>
-                  <div className="flex items-center gap-3 mt-2 flex-wrap">
-                    {createdAt && <p className="text-xs text-ink/35 font-mono">{formatDate(createdAt)}</p>}
-                    <button onClick={() => setExpandedRaw(expandedRaw === item.id ? null : item.id)} className="text-xs text-primary hover:underline">
-                      {expandedRaw === item.id ? "Hide raw data" : "View raw data"}
+                  <p className="text-xs text-ink/50 mt-1">
+                    {[phone, district].filter(Boolean).join(" · ") || "—"}
+                    {createdAt && <span className="text-ink/35"> · {formatDate(createdAt)}</span>}
+                  </p>
+
+                  <div className="flex items-center gap-2 mt-3 flex-wrap">
+                    <button
+                      onClick={() => setDetailItem(item)}
+                      onMouseDown={addRipple}
+                      className="btn-animated flex items-center gap-1.5 text-xs font-medium border border-line rounded-lg px-3 py-1.5 hover:bg-paper-dim"
+                    >
+                      <Eye size={13} /> View details
                     </button>
+                    {isPending && (
+                      <>
+                        <button disabled={isBusy} onClick={() => setConfirmReject(item)} onMouseDown={addRipple} className="btn-animated flex items-center gap-1.5 text-xs font-medium border border-danger/30 text-danger rounded-lg px-3 py-1.5 hover:bg-danger/5 disabled:opacity-50">
+                          <X size={13} /> Reject
+                        </button>
+                        <button disabled={isBusy} onClick={() => setStatus(item, STATUS.APPROVED)} onMouseDown={addRipple} className="btn-animated flex items-center gap-1.5 text-xs font-medium bg-primary text-white rounded-lg px-3 py-1.5 hover:bg-primary-light disabled:opacity-50">
+                          <Check size={13} /> {isBusy ? "Saving..." : "Approve"}
+                        </button>
+                      </>
+                    )}
                   </div>
-                  {expandedRaw === item.id && (
-                    <pre className="text-[11px] bg-paper-dim rounded-lg p-3 mt-2 overflow-x-auto font-mono text-ink/70">{JSON.stringify(item, null, 2)}</pre>
-                  )}
-                  {isPending && (
-                    <div className="flex gap-2 mt-3">
-                      <button disabled={isBusy} onClick={() => setConfirmReject(item)} onMouseDown={addRipple} className="btn-animated flex items-center gap-1.5 text-xs font-medium border border-danger/30 text-danger rounded-lg px-3 py-1.5 hover:bg-danger/5 disabled:opacity-50">
-                        <X size={13} /> Reject
-                      </button>
-                      <button disabled={isBusy} onClick={() => setStatus(item, STATUS.APPROVED)} onMouseDown={addRipple} className="btn-animated flex items-center gap-1.5 text-xs font-medium bg-primary text-white rounded-lg px-3 py-1.5 hover:bg-primary-light disabled:opacity-50">
-                        <Check size={13} /> {isBusy ? "Saving..." : "Approve"}
-                      </button>
-                    </div>
-                  )}
                 </div>
               </Card>
             );
           })}
         </div>
       )}
+
+      <RequestDetailModal
+        item={detailItem}
+        open={!!detailItem}
+        onClose={() => setDetailItem(null)}
+        onApprove={(item) => setStatus(item, STATUS.APPROVED)}
+        onReject={(item) => { setConfirmReject(item); }}
+        busy={busyId === detailItem?.id}
+        statusValues={STATUS}
+        roleIcon={roleIcon}
+      />
 
       <ConfirmDialog
         open={!!confirmReject}
@@ -215,12 +223,14 @@ function FirestoreRequestsSection({ showToast }) {
 function LocalVerificationsSection({ showToast }) {
   const { registrations, setStatus } = useRegistrations();
   const [confirming, setConfirming] = useState(null);
+  const [detailItem, setDetailItem] = useState(null);
 
   const pending = registrations.filter((r) => r.status === "Pending");
 
   function decide(r, status) {
     setStatus(r.id, status);
     showToast(status === "Approved" ? `${localRoleLabel[r.role]} request approved` : `${localRoleLabel[r.role]} request rejected`, status === "Approved" ? "success" : "info");
+    setDetailItem(null);
   }
 
   function confirmReject() {
@@ -242,12 +252,12 @@ function LocalVerificationsSection({ showToast }) {
           {pending.map((r) => {
             const Icon = roleIcon[r.role] || HelpCircle;
             return (
-              <Card key={r.id} className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
-                <div className="flex items-start gap-3">
+              <Card key={r.id} className="flex flex-col sm:flex-row sm:items-start gap-3 justify-between">
+                <div className="flex items-start gap-3 min-w-0">
                   <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                     <Icon size={16} className="text-primary" />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-sm font-medium">
                       {r.role === "admin" ? r.designation : r.role === "farmer" ? "Farmer applicant" : (r.name || "Public applicant")}
                       <span className="text-ink/40 font-normal"> · {localRoleLabel[r.role]}</span>
@@ -261,6 +271,9 @@ function LocalVerificationsSection({ showToast }) {
                   </div>
                 </div>
                 <div className="flex gap-2 shrink-0">
+                  <button onClick={() => setDetailItem(r)} onMouseDown={addRipple} className="btn-animated flex items-center gap-1.5 text-xs font-medium border border-line rounded-lg px-3 py-2 hover:bg-paper-dim">
+                    <Eye size={14} /> View
+                  </button>
                   <button onClick={() => setConfirming(r)} onMouseDown={addRipple} className="btn-animated flex items-center gap-1.5 text-xs font-medium border border-danger/30 text-danger rounded-lg px-3 py-2 hover:bg-danger/5">
                     <X size={14} /> Reject
                   </button>
@@ -273,6 +286,17 @@ function LocalVerificationsSection({ showToast }) {
           })}
         </div>
       )}
+
+      <RequestDetailModal
+        item={detailItem}
+        open={!!detailItem}
+        onClose={() => setDetailItem(null)}
+        onApprove={(item) => decide(item, "Approved")}
+        onReject={(item) => setConfirming(item)}
+        statusValues={{ PENDING: "Pending", APPROVED: "Approved", REJECTED: "Rejected" }}
+        roleIcon={roleIcon}
+        roleLabelOverride={detailItem ? localRoleLabel[detailItem.role] : undefined}
+      />
 
       <ConfirmDialog
         open={!!confirming}
