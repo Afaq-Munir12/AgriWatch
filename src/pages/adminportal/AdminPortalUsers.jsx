@@ -10,8 +10,8 @@ import { addRipple } from "../../utils/ripple";
 import { useToast } from "../../components/ToastContext";
 
 // This directory is seeded from local sample data for now. Once approved
-// requests are meant to create real user_profiles documents in Firestore,
-// swap `users` below for a useFirestoreCollection("user_profiles") call.
+// requests are meant to create real rows in the user_profiles table in
+// Supabase, swap `users` below for a useSupabaseTable("user_profiles") call.
 export default function AdminPortalUsers() {
   const { showToast } = useToast();
   const loading = useSimulatedLoading(500);

@@ -2,17 +2,45 @@ import { Menu } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext";
 import { useMobileNav } from "./MobileNavContext";
+import { useCurrentProfile } from "../supabase/useCurrentProfile";
 import NotificationDropdown from "./NotificationDropdown";
+import ProfileDropdown from "./ProfileDropdown";
 import DistrictSearch from "./DistrictSearch";
 
+// Maps the current portal to the fallbackRole useCurrentProfile expects,
+// and to the translation key for the small role label under the name.
+const portalMeta = {
+  "/farmer": { fallbackRole: "farmer", roleLabelKey: "roleFarmerLabel" },
+  "/public": { fallbackRole: "public", roleLabelKey: "rolePublicLabel" },
+  "/pdma": { fallbackRole: "pdma", roleLabelKey: "roleAdminLabel" },
+};
+
 export default function Topbar({ title, subtitle }) {
-  const { lang } = useLanguage();
+  const { t, lang } = useLanguage();
   const { toggle } = useMobileNav();
   const { pathname } = useLocation();
   const urduClass = lang === "ur" ? "i18n-ur" : "";
 
   const base = pathname.startsWith("/farmer") ? "/farmer" : pathname.startsWith("/public") ? "/public" : "/pdma";
   const alertsHref = `${base}/alerts`;
+
+  // Whoever is actually signed in for this portal — falls back to a demo
+  // profile only when there's no real Supabase session (see
+  // useCurrentProfile), so a farmer logging in sees their own name here
+  // instead of a hardcoded PDMA officer.
+  const { fallbackRole, roleLabelKey } = portalMeta[base];
+  const profile = useCurrentProfile(fallbackRole);
+  const displayName = profile.name || t(roleLabelKey);
+  const initials =
+    displayName
+      .trim()
+      .split(/\s+/)
+      .map((w) => w[0])
+      .slice(0, 2)
+      .join("")
+      .toUpperCase() || "?";
+  const displaySubtitle = [t(roleLabelKey), profile.district].filter(Boolean).join(" · ");
+  const profileHref = `${base}/settings`;
 
   return (
     <header className="sticky top-0 z-30 bg-paper/90 backdrop-blur border-b border-line px-4 sm:px-8 py-4 sm:py-5 flex items-center justify-between gap-3">
@@ -24,7 +52,7 @@ export default function Topbar({ title, subtitle }) {
         >
           <Menu size={18} className="text-ink/70" />
         </button>
-        <div className="min-w-0">
+        <div className="min-w-0" dir={lang === "ur" ? "rtl" : undefined}>
           <h1 className={`font-display text-lg sm:text-xl font-semibold text-ink truncate ${urduClass}`}>{title}</h1>
           {subtitle && <p className={`text-xs sm:text-sm text-ink/50 mt-0.5 truncate ${urduClass}`}>{subtitle}</p>}
         </div>
@@ -35,15 +63,12 @@ export default function Topbar({ title, subtitle }) {
 
         <NotificationDropdown viewAllHref={alertsHref} />
 
-        <div className="hidden sm:flex items-center gap-2 pl-3 border-l border-line">
-          <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-display text-xs font-semibold shrink-0">
-            ZO
-          </div>
-          <div className="hidden sm:block leading-tight">
-            <p className="text-sm font-medium">Zahid Officer</p>
-            <p className="text-[11px] text-ink/40">PDMA · Quetta</p>
-          </div>
-        </div>
+        <ProfileDropdown
+          displayName={displayName}
+          subtitle={displaySubtitle}
+          initials={initials}
+          profileHref={profileHref}
+        />
       </div>
     </header>
   );

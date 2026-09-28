@@ -1,10 +1,12 @@
 import { useState } from "react";
 import Card, { StatCard } from "../../components/Card";
-import { publicRegByDistrict, users, complaints } from "../../data/dummyData";
+import { publicRegByDistrict, users } from "../../data/dummyData";
+import { useComplaints } from "../../store/ComplaintsContext";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { Users2, TrendingUp, FileText, Download } from "lucide-react";
 
 export default function AdminPortalReports() {
+  const { complaints } = useComplaints();
   const total = publicRegByDistrict.reduce((s, d) => s + d.count, 0);
   const [range, setRange] = useState("Last 30 days");
   const [generated, setGenerated] = useState([

@@ -28,6 +28,8 @@ const dict = {
   navPublicRegistrations: { en: "Public Registrations", ur: "عوامی رجسٹریشن" },
   navMobileRequests: { en: "Access Requests", ur: "رسائی کی درخواستیں" },
   navSettings: { en: "Settings", ur: "ترتیبات" },
+  navReportIssue: { en: "Report an Issue", ur: "مسئلہ رپورٹ کریں" },
+  navSubmitReport: { en: "Submit a Report", ur: "رپورٹ جمع کرائیں" },
 
   // Farmer nav
   navHome: { en: "Home", ur: "ہوم" },
@@ -194,7 +196,7 @@ const dict = {
   // Farmer — page headers
   ptFarmerCropsTitle: { en: "AI Crop Recommendations", ur: "اے آئی فصل کی تجاویز" },
   ptFarmerIrrigationTitle: { en: "Irrigation Scheduler", ur: "آبپاشی شیڈول" },
-  ptFarmerIrrigationSub: { en: "AI schedule from SMAP soil moisture, forecasted rainfall, and crop water needs", ur: "مٹی کی نمی اور بارش کی پیش گوئی کی بنیاد پر آبپاشی کا شیڈول" },
+  ptFarmerIrrigationSub: { en: "A 7-day plan built from live weather, your crop, and its growth stage", ur: "زندہ موسمی معلومات، آپ کی فصل اور اس کے مرحلے کی بنیاد پر 7 دن کا منصوبہ" },
   ptFarmerYieldTitle: { en: "Yield Risk Assessment", ur: "پیداواری خطرے کا جائزہ" },
   ptFarmerAlertsTitle: { en: "Alerts", ur: "اطلاعات" },
   ptFarmerAlertsSub: { en: "Full-season alert log for your district", ur: "آپ کے ضلع کے لیے مکمل موسمی اطلاعات کی فہرست" },
@@ -229,6 +231,23 @@ const dict = {
   updatedEvery10Days: { en: "Updated every 10 days from satellite pass", ur: "ہر 10 دن بعد سیٹلائٹ ڈیٹا سے اپ ڈیٹ" },
   weeklyGuidanceHeading: { en: "4 recommendations based on current drought severity, crop stage, and weather", ur: "خشک سالی کی شدت، فصل کے مرحلے اور موسم کی بنیاد پر 4 تجاویز" },
   recSourcedNote: { en: "Recommendations sourced from PARC guidelines and updated with each satellite pass.", ur: "تجاویز PARC رہنما اصولوں سے حاصل کی گئی ہیں اور ہر سیٹلائٹ گزر کے ساتھ اپ ڈیٹ ہوتی ہیں۔" },
+
+  // Profile dropdown + editable profile card
+  yourProfile: { en: "Your Profile", ur: "آپ کی پروفائل" },
+  signOut: { en: "Sign Out", ur: "سائن آؤٹ" },
+  editProfile: { en: "Edit Profile", ur: "پروفائل میں ترمیم کریں" },
+  saveChanges: { en: "Save Changes", ur: "تبدیلیاں محفوظ کریں" },
+  cancel: { en: "Cancel", ur: "منسوخ کریں" },
+  fullName: { en: "Full Name", ur: "پورا نام" },
+  district: { en: "District", ur: "ضلع" },
+  tehsil: { en: "Tehsil", ur: "تحصیل" },
+  primaryCrop: { en: "Primary Crop", ur: "بنیادی فصل" },
+  farmSizeLabel: { en: "Farm Size", ur: "رقبہ" },
+  notSet: { en: "Not set", ur: "مقرر نہیں" },
+  profileUpdated: { en: "Profile updated", ur: "پروفائل اپ ڈیٹ ہو گئی" },
+  profileUpdateFailed: { en: "Couldn't save changes. Try again.", ur: "تبدیلیاں محفوظ نہیں ہو سکیں۔ دوبارہ کوشش کریں۔" },
+  profileCardSub: { en: "View and edit your profile details", ur: "اپنی پروفائل کی تفصیلات دیکھیں اور ترمیم کریں" },
+  demoProfileNote: { en: "You're not signed in with an account yet, so changes are saved on this device only.", ur: "آپ نے ابھی تک اکاؤنٹ سے سائن ان نہیں کیا، اس لیے تبدیلیاں صرف اس ڈیوائس پر محفوظ ہوں گی۔" },
 };
 
 export default dict;

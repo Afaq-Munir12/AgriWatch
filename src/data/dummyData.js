@@ -91,6 +91,23 @@ export const currentFarmer = {
   language: "English",
 };
 
+// ---- Demo fallback profiles for the other two portals ----
+// Used the same way as currentFarmer: only shown when nobody actually
+// signed in via Google (the phone/OTP demo flow doesn't create a Supabase
+// session), so the topbar still has something sensible to display instead
+// of leaving the profile blank. Reuses the matching row already seeded in
+// `users` above so the demo data stays internally consistent.
+
+export const currentOfficer = {
+  name: "Zahid Officer",
+  district: "Quetta",
+};
+
+export const currentPublicUser = {
+  name: "Ayesha Noor",
+  district: "Multan",
+};
+
 export const cropRecommendations = [
   { id: 1, title: "Delay next irrigation by 3 days", detail: "Soil moisture is still above wilting point for cotton at this growth stage. Delaying saves water without stressing the crop." },
   { id: 2, title: "Apply light mulching", detail: "Reduces evaporation loss given the current SPI-3 rainfall deficit in Bahawalpur district." },

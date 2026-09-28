@@ -1,12 +1,12 @@
 import { useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import logo from "../../assets/logo.jpeg";
-import { useGoogleAuth } from "../../firebase/useGoogleAuth";
+import { useSupabaseAuth } from "../../supabase/useSupabaseAuth";
 import { ShieldCheck, AlertTriangle } from "lucide-react";
 import { addRipple } from "../../utils/ripple";
 
 export default function AdminPortalLogin() {
-  const { user, loading, error, signIn } = useGoogleAuth();
+  const { user, loading, error, signIn } = useSupabaseAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -36,7 +36,7 @@ export default function AdminPortalLogin() {
           </div>
 
           <button
-            onClick={signIn}
+            onClick={() => signIn()}
             onMouseDown={addRipple}
             disabled={loading}
             className="btn-animated w-full flex items-center justify-center gap-3 bg-surface border border-line rounded-lg py-2.5 text-sm font-medium hover:bg-paper-dim transition-colors disabled:opacity-60"

@@ -21,9 +21,10 @@ export default function Sidebar({ navItems, roleLabelKey, basePath }) {
       )}
 
       <aside
-        className={`w-64 shrink-0 bg-forest text-mist flex flex-col h-screen fixed lg:sticky top-0 start-0 z-50
+        dir={lang === "ur" ? "rtl" : undefined}
+        className={`w-64 min-w-0 shrink-0 bg-forest text-mist flex flex-col h-screen fixed lg:sticky top-0 left-0 z-50
           transition-transform duration-300 ease-out
-          ${open ? "translate-x-0" : "-translate-x-full rtl:translate-x-full lg:translate-x-0"}
+          ${open ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
           ${lang === "ur" ? "i18n-ur" : ""}`}
       >
         <div className="flex items-center justify-between gap-2 px-5 py-5 border-b border-white/10">
@@ -59,8 +60,8 @@ export default function Sidebar({ navItems, roleLabelKey, basePath }) {
                   {isActive && (
                     <span className="absolute -left-3 rtl:-left-auto rtl:-right-3 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-accent" />
                   )}
-                  <Icon size={17} strokeWidth={2} />
-                  {t(labelKey)}
+                  <Icon size={17} strokeWidth={2} className="shrink-0" />
+                  <span className="min-w-0 flex-1 truncate">{t(labelKey)}</span>
                 </>
               )}
             </NavLink>
@@ -68,7 +69,7 @@ export default function Sidebar({ navItems, roleLabelKey, basePath }) {
         </nav>
 
         <div className="px-5 pb-2">
-          <div className="flex items-center gap-2 text-[11px] text-mist/45 bg-white/5 rounded-lg px-3 py-2">
+          <div dir="ltr" className="flex items-center gap-2 text-[11px] text-mist/45 bg-white/5 rounded-lg px-3 py-2">
             <Command size={12} className="shrink-0" />
             <span>Press</span>
             <kbd className="bg-white/10 rounded px-1.5 py-0.5 font-mono text-[10px]">Ctrl K</kbd>
@@ -81,8 +82,8 @@ export default function Sidebar({ navItems, roleLabelKey, basePath }) {
             <LanguageToggle className="!bg-white/10 !border-white/10 !text-mist hover:!bg-white/15 justify-center" />
             <ThemeToggle className="!bg-white/10 !border-white/10 !text-mist hover:!bg-white/15 justify-center" />
           </div>
-          <Link to="/" className="flex items-center gap-3 text-mist/60 hover:text-mist text-sm">
-            <LogOut size={16} /> {t("exitToHome")}
+          <Link to="/" className="flex items-center gap-3 text-mist/60 hover:text-mist text-sm min-w-0">
+            <LogOut size={16} className="shrink-0" /> <span className="min-w-0 truncate">{t("exitToHome")}</span>
           </Link>
           {basePath === "/pdma" && (
             <Link to="/admin-portal/login" className="block text-[11px] text-mist/40 hover:text-mist/70">

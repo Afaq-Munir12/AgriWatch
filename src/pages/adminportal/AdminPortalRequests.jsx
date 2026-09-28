@@ -3,9 +3,8 @@ import Card from "../../components/Card";
 import ConfirmDialog from "../../components/ConfirmDialog";
 import RequestDetailModal from "../../components/RequestDetailModal";
 import { SkeletonCardList } from "../../components/Skeleton";
-import { useFirestoreCollection } from "../../firebase/useFirestoreCollection";
-import { db } from "../../firebase/config";
-import { doc, updateDoc } from "firebase/firestore";
+import { useSupabaseTable } from "../../supabase/useSupabaseTable";
+import { supabase } from "../../supabase/config";
 import { useRegistrations } from "../../store/RegistrationsContext";
 import { useToast } from "../../components/ToastContext";
 import { addRipple } from "../../utils/ripple";
@@ -13,10 +12,10 @@ import {
   AlertTriangle, Check, X, ShieldCheck, Sprout, Users2, HelpCircle, Eye,
 } from "lucide-react";
 
-// ⚠️ ADJUST if your friend's collection is named differently — check
-// Firebase Console → Firestore Database to see the real name.
-const COLLECTION_NAME = "access_requests";
-const ORDER_BY_FIELD = "submittedAt"; // matches the field the mobile app actually writes
+// ⚠️ ADJUST if your friend's table is named differently — check
+// Supabase Dashboard → Table Editor to see the real name.
+const TABLE_NAME = "access_requests";
+const ORDER_BY_FIELD = "submitted_at"; // matches the column the mobile app actually writes
 
 // ⚠️ ADJUST these to match the exact status strings the mobile app reads/writes.
 const STATUS = { PENDING: "pending", APPROVED: "approved", REJECTED: "rejected" };
@@ -51,16 +50,286 @@ export default function AdminPortalRequests() {
         </p>
       </div>
 
-      <FirestoreRequestsSection showToast={showToast} />
+      <AdminRequestsSection showToast={showToast} />
+      <WebsiteSignupRequestsSection showToast={showToast} />
+      <SupabaseRequestsSection showToast={showToast} />
       <LocalVerificationsSection showToast={showToast} />
     </main>
   );
 }
 
-// ---- Live requests from the mobile app, via Firestore (mostly PDMA officer sign-ups) ----
+// ---- Requests to become an Admin Portal admin (Google sign-ins not yet on the allowlist) ----
 
-function FirestoreRequestsSection({ showToast }) {
-  const { data, loading, error } = useFirestoreCollection(COLLECTION_NAME, ORDER_BY_FIELD);
+function AdminRequestsSection({ showToast }) {
+  const { data, loading, error } = useSupabaseTable("admin_access_requests", "requested_at");
+  const [busyId, setBusyId] = useState(null);
+  const [confirmReject, setConfirmReject] = useState(null);
+
+  const pending = data.filter((r) => (r.status || "pending").toLowerCase() === "pending");
+
+  async function setStatus(item, status) {
+    setBusyId(item.user_id);
+    try {
+      const { error: updErr } = await supabase
+        .from("admin_access_requests")
+        .update({ status, decided_at: new Date().toISOString() })
+        .eq("user_id", item.user_id);
+      if (updErr) throw updErr;
+      showToast(
+        status === "approved" ? `${item.email} approved as admin` : `${item.email}'s request rejected`,
+        status === "approved" ? "success" : "info"
+      );
+    } catch (err) {
+      console.error("Failed to update admin request:", err);
+      showToast(`Couldn't update: ${err.message}`, "error");
+    } finally {
+      setBusyId(null);
+      setConfirmReject(null);
+    }
+  }
+
+  return (
+    <section className="space-y-4">
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <h2 className="font-display font-semibold">Admin Portal access requests</h2>
+        <span className="text-xs text-ink/40 font-mono">admin_access_requests</span>
+      </div>
+
+      {error && (
+        <Card className="border-danger/30 bg-danger/5">
+          <div className="flex items-start gap-3">
+            <AlertTriangle size={18} className="text-danger shrink-0 mt-0.5" />
+            <p className="text-sm text-danger">Couldn't load admin requests: {error.message}</p>
+          </div>
+        </Card>
+      )}
+
+      {loading ? (
+        <SkeletonCardList count={2} />
+      ) : pending.length === 0 && !error ? (
+        <Card><p className="text-sm text-ink/50">No one is waiting on admin approval right now.</p></Card>
+      ) : (
+        <div className="space-y-3">
+          {pending.map((item) => {
+            const isBusy = busyId === item.user_id;
+            return (
+              <Card key={item.user_id} className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <ShieldCheck size={16} className="text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium">{item.email}</p>
+                  <p className="text-xs text-ink/50 mt-1">
+                    Requested {item.requested_at ? formatDate(item.requested_at) : ""}
+                  </p>
+                  <div className="flex items-center gap-2 mt-3 flex-wrap">
+                    <button
+                      disabled={isBusy}
+                      onClick={() => setConfirmReject(item)}
+                      onMouseDown={addRipple}
+                      className="btn-animated flex items-center gap-1.5 text-xs font-medium border border-danger/30 text-danger rounded-lg px-3 py-1.5 hover:bg-danger/5 disabled:opacity-50"
+                    >
+                      <X size={13} /> Reject
+                    </button>
+                    <button
+                      disabled={isBusy}
+                      onClick={() => setStatus(item, "approved")}
+                      onMouseDown={addRipple}
+                      className="btn-animated flex items-center gap-1.5 text-xs font-medium bg-primary text-white rounded-lg px-3 py-1.5 hover:bg-primary-light disabled:opacity-50"
+                    >
+                      <Check size={13} /> {isBusy ? "Saving..." : "Approve as admin"}
+                    </button>
+                  </div>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      <ConfirmDialog
+        open={!!confirmReject}
+        title="Reject this admin request?"
+        body={`${confirmReject?.email || "This person"} will not be able to sign in to the Admin Portal.`}
+        confirmLabel="Reject request"
+        tone="danger"
+        onConfirm={() => setStatus(confirmReject, "rejected")}
+        onCancel={() => setConfirmReject(null)}
+      />
+    </section>
+  );
+}
+
+// ---- Farmer / Public / PDMA sign-ups from this website's Google login, with documents ----
+
+const websiteRoleLabel = { farmer: "Farmer", public: "General Public", pdma: "PDMA Officer" };
+
+function WebsiteSignupRequestsSection({ showToast }) {
+  const { data, loading, error } = useSupabaseTable("website_signup_requests", "submitted_at");
+  const [roleFilter, setRoleFilter] = useState("all");
+  const [busyId, setBusyId] = useState(null);
+  const [confirmReject, setConfirmReject] = useState(null);
+  const [docUrls, setDocUrls] = useState({}); // path -> signed url
+
+  const pending = data.filter((r) => (r.status || "pending").toLowerCase() === "pending");
+  const roleTabs = ["all", ...Array.from(new Set(pending.map((d) => d.role)))];
+  const filtered = roleFilter === "all" ? pending : pending.filter((d) => d.role === roleFilter);
+
+  async function openDocument(doc) {
+    if (docUrls[doc.path]) {
+      window.open(docUrls[doc.path], "_blank", "noopener,noreferrer");
+      return;
+    }
+    const { data: signed, error: signErr } = await supabase.storage
+      .from("verification-documents")
+      .createSignedUrl(doc.path, 60 * 5);
+    if (signErr) {
+      showToast(`Couldn't open document: ${signErr.message}`, "error");
+      return;
+    }
+    setDocUrls((prev) => ({ ...prev, [doc.path]: signed.signedUrl }));
+    window.open(signed.signedUrl, "_blank", "noopener,noreferrer");
+  }
+
+  async function setStatus(item, status) {
+    setBusyId(item.user_id);
+    try {
+      const { error: updErr } = await supabase
+        .from("website_signup_requests")
+        .update({ status, decided_at: new Date().toISOString() })
+        .eq("user_id", item.user_id);
+      if (updErr) throw updErr;
+      showToast(
+        status === "approved" ? `${item.full_name} approved as ${websiteRoleLabel[item.role] || item.role}` : `${item.full_name}'s request rejected`,
+        status === "approved" ? "success" : "info"
+      );
+    } catch (err) {
+      console.error("Failed to update website signup request:", err);
+      showToast(`Couldn't update: ${err.message}`, "error");
+    } finally {
+      setBusyId(null);
+      setConfirmReject(null);
+    }
+  }
+
+  return (
+    <section className="space-y-4">
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <h2 className="font-display font-semibold">Website sign-ups (Google)</h2>
+        <span className="text-xs text-ink/40 font-mono">website_signup_requests</span>
+      </div>
+
+      {error && (
+        <Card className="border-danger/30 bg-danger/5">
+          <div className="flex items-start gap-3">
+            <AlertTriangle size={18} className="text-danger shrink-0 mt-0.5" />
+            <p className="text-sm text-danger">Couldn't load website sign-ups: {error.message}</p>
+          </div>
+        </Card>
+      )}
+
+      {!error && roleTabs.length > 2 && (
+        <div className="flex gap-2 flex-wrap">
+          {roleTabs.map((r) => (
+            <button
+              key={r}
+              onClick={() => setRoleFilter(r)}
+              onMouseDown={addRipple}
+              className={`btn-animated px-3 py-1.5 rounded-lg text-xs font-medium border capitalize transition-colors ${
+                roleFilter === r ? "bg-forest text-white border-forest" : "bg-surface text-ink/60 border-line hover:bg-paper-dim"
+              }`}
+            >
+              {r === "all" ? "All" : websiteRoleLabel[r] || r}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {loading ? (
+        <SkeletonCardList count={2} />
+      ) : filtered.length === 0 && !error ? (
+        <Card><p className="text-sm text-ink/50">No pending website sign-ups right now.</p></Card>
+      ) : (
+        <div className="space-y-3">
+          {filtered.map((item) => {
+            const RoleIcon = roleIcon[item.role] || HelpCircle;
+            const isBusy = busyId === item.user_id;
+            return (
+              <Card key={item.user_id} className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <RoleIcon size={16} className="text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium">
+                    {item.full_name} <span className="text-ink/40 font-normal">· {websiteRoleLabel[item.role] || item.role}</span>
+                  </p>
+                  <p className="text-xs text-ink/50 mt-1">
+                    {[item.email, item.phone, item.district].filter(Boolean).join(" · ")}
+                    {item.submitted_at && <span className="text-ink/35"> · {formatDate(item.submitted_at)}</span>}
+                  </p>
+                  {(item.tehsil || item.crop || item.farm_size || item.designation) && (
+                    <p className="text-xs text-ink/45 mt-1">
+                      {[item.designation, item.tehsil, item.crop, item.farm_size].filter(Boolean).join(" · ")}
+                    </p>
+                  )}
+
+                  {Array.isArray(item.documents) && item.documents.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {item.documents.map((doc, i) => (
+                        <button
+                          key={i}
+                          onClick={() => openDocument(doc)}
+                          onMouseDown={addRipple}
+                          className="btn-animated text-xs font-medium border border-line rounded-lg px-2.5 py-1 hover:bg-paper-dim flex items-center gap-1"
+                        >
+                          <Eye size={12} /> {doc.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-2 mt-3 flex-wrap">
+                    <button
+                      disabled={isBusy}
+                      onClick={() => setConfirmReject(item)}
+                      onMouseDown={addRipple}
+                      className="btn-animated flex items-center gap-1.5 text-xs font-medium border border-danger/30 text-danger rounded-lg px-3 py-1.5 hover:bg-danger/5 disabled:opacity-50"
+                    >
+                      <X size={13} /> Reject
+                    </button>
+                    <button
+                      disabled={isBusy}
+                      onClick={() => setStatus(item, "approved")}
+                      onMouseDown={addRipple}
+                      className="btn-animated flex items-center gap-1.5 text-xs font-medium bg-primary text-white rounded-lg px-3 py-1.5 hover:bg-primary-light disabled:opacity-50"
+                    >
+                      <Check size={13} /> {isBusy ? "Saving..." : "Approve"}
+                    </button>
+                  </div>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      <ConfirmDialog
+        open={!!confirmReject}
+        title="Reject this sign-up?"
+        body={`${confirmReject?.full_name || "This applicant"} will not be able to access their ${websiteRoleLabel[confirmReject?.role] || ""} account.`}
+        confirmLabel="Reject request"
+        tone="danger"
+        onConfirm={() => setStatus(confirmReject, "rejected")}
+        onCancel={() => setConfirmReject(null)}
+      />
+    </section>
+  );
+}
+
+// ---- Live requests from the mobile app, via Supabase (mostly PDMA officer sign-ups) ----
+
+function SupabaseRequestsSection({ showToast }) {
+  const { data, loading, error } = useSupabaseTable(TABLE_NAME, ORDER_BY_FIELD);
   const [roleFilter, setRoleFilter] = useState("all");
   const [confirmReject, setConfirmReject] = useState(null);
   const [busyId, setBusyId] = useState(null);
@@ -72,12 +341,13 @@ function FirestoreRequestsSection({ showToast }) {
   async function setStatus(item, status) {
     setBusyId(item.id);
     try {
-      await updateDoc(doc(db, COLLECTION_NAME, item.id), { status });
-      showToast(status === STATUS.APPROVED ? "Request approved — written to Firestore" : "Request rejected — written to Firestore", status === STATUS.APPROVED ? "success" : "info");
+      const { error } = await supabase.from(TABLE_NAME).update({ status }).eq("id", item.id);
+      if (error) throw error;
+      showToast(status === STATUS.APPROVED ? "Request approved — written to Supabase" : "Request rejected — written to Supabase", status === STATUS.APPROVED ? "success" : "info");
       setDetailItem(null);
     } catch (err) {
       console.error("Failed to update request status:", err);
-      showToast(`Couldn't update Firestore: ${err.message}`, "error");
+      showToast(`Couldn't update Supabase: ${err.message}`, "error");
     } finally {
       setBusyId(null);
     }
@@ -92,7 +362,7 @@ function FirestoreRequestsSection({ showToast }) {
     <section className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h2 className="font-display font-semibold">Mobile app requests</h2>
-        <span className="text-xs text-ink/40 font-mono">{COLLECTION_NAME}</span>
+        <span className="text-xs text-ink/40 font-mono">{TABLE_NAME}</span>
       </div>
 
       {error && (
@@ -100,10 +370,10 @@ function FirestoreRequestsSection({ showToast }) {
           <div className="flex items-start gap-3">
             <AlertTriangle size={18} className="text-danger shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-medium text-danger">Couldn't load data from Firestore</p>
+              <p className="text-sm font-medium text-danger">Couldn't load data from Supabase</p>
               <p className="text-xs text-ink/60 mt-1 font-mono break-all">{error.message}</p>
               <p className="text-xs text-ink/50 mt-2">
-                This is most likely a Firestore Security Rules issue specific to your account — confirm your
+                This is most likely a Row Level Security (RLS) policy issue specific to your account — confirm your
                 account's <code className="font-mono">user_profiles</code> role is set to <code className="font-mono">admin</code>.
               </p>
             </div>
@@ -208,7 +478,7 @@ function FirestoreRequestsSection({ showToast }) {
       <ConfirmDialog
         open={!!confirmReject}
         title="Reject this request?"
-        body="This writes the rejected status back to Firestore immediately — the applicant's app will see it too."
+        body="This writes the rejected status back to Supabase immediately — the applicant's app will see it too."
         confirmLabel="Reject request"
         tone="danger"
         onConfirm={confirmRejectAction}

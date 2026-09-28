@@ -2,7 +2,7 @@ import { Outlet } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import { MobileNavProvider } from "../components/MobileNavContext";
 import {
-  LayoutDashboard, Sprout, Droplets, TrendingDown, Bell, FileWarning, CalendarDays, Settings,
+  LayoutDashboard, Sprout, Droplets, TrendingDown, Bell, FileWarning, CalendarDays, Settings, Bug,
 } from "lucide-react";
 
 const navItems = [
@@ -12,6 +12,7 @@ const navItems = [
   { to: "/yield-risk", labelKey: "navYieldRisk", icon: TrendingDown },
   { to: "/alerts", labelKey: "navAlerts", icon: Bell },
   { to: "/complaints", labelKey: "navComplaints", icon: FileWarning },
+  { to: "/report-issue", labelKey: "navReportIssue", icon: Bug },
   { to: "/calendar", labelKey: "navCropCalendar", icon: CalendarDays },
   { to: "/settings", labelKey: "navSettings", icon: Settings },
 ];

@@ -1,13 +1,15 @@
+import { Link } from "react-router-dom";
 import Topbar from "../../components/Topbar";
 import Card from "../../components/Card";
+import OfflineNotice from "../../components/OfflineNotice";
 import { useComplaints } from "../../store/ComplaintsContext";
 import { useLanguage } from "../../i18n/LanguageContext";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
-import { CheckCircle2, Clock, Send } from "lucide-react";
+import { CheckCircle2, Clock, Send, MessageSquarePlus, Bug, ArrowRight } from "lucide-react";
 
 export default function CommunityReports() {
   const { t } = useLanguage();
-  const { complaints } = useComplaints();
+  const { complaints, offline, error } = useComplaints();
 
   const underReview = complaints.filter((c) => c.status === "Under Review").length;
   const forwarded = complaints.filter((c) => c.status === "Forwarded").length;
@@ -28,6 +30,42 @@ export default function CommunityReports() {
         subtitle="Aggregate view of farmer damage reports and PDMA response — no personal details shown"
       />
       <main className="p-4 sm:p-8 space-y-6" dir="ltr">
+        {offline && <OfflineNotice what="reports" error={error} />}
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Link to="/public/complaint" className="block">
+            <Card className="h-full hover:border-primary/40 transition-colors flex items-start gap-3">
+              <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                <MessageSquarePlus size={16} className="text-primary" />
+              </div>
+              <div>
+                <p className="font-display font-semibold text-sm flex items-center gap-1.5">
+                  Submit a report <ArrowRight size={13} className="text-primary" />
+                </p>
+                <p className="text-xs text-ink/50 mt-0.5">
+                  Water shortage, crop damage or relief problems in your area — goes to your district
+                  PDMA officer.
+                </p>
+              </div>
+            </Card>
+          </Link>
+          <Link to="/public/report-issue" className="block">
+            <Card className="h-full hover:border-danger/40 transition-colors flex items-start gap-3">
+              <div className="w-9 h-9 rounded-lg bg-danger/10 flex items-center justify-center shrink-0">
+                <Bug size={16} className="text-danger" />
+              </div>
+              <div>
+                <p className="font-display font-semibold text-sm flex items-center gap-1.5">
+                  Report a software issue <ArrowRight size={13} className="text-danger" />
+                </p>
+                <p className="text-xs text-ink/50 mt-0.5">
+                  Something broken on the website or app? The AgriWatch admin team picks these up.
+                </p>
+              </div>
+            </Card>
+          </Link>
+        </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Card className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-warn/10 flex items-center justify-center shrink-0">

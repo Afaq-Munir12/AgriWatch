@@ -5,18 +5,24 @@ import Card, { StatusBadge } from "../../components/Card";
 import { SkeletonTableRows } from "../../components/Skeleton";
 import SortableHeader from "../../components/SortableHeader";
 import ConfirmDialog from "../../components/ConfirmDialog";
-import { useSimulatedLoading } from "../../utils/useSimulatedLoading";
 import { useSortableData } from "../../utils/useSortableData";
 import { useComplaints } from "../../store/ComplaintsContext";
-import { Image as ImageIcon, X, CheckCircle2 } from "lucide-react";
+import OfflineNotice from "../../components/OfflineNotice";
+import { useSupabaseAuth } from "../../supabase/useSupabaseAuth";
+import { Image as ImageIcon, X, CheckCircle2, Bug, Sprout, Users2 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { addRipple } from "../../utils/ripple";
 import { useToast } from "../../components/ToastContext";
 
+const roleLabel = { farmer: "Farmer", public: "Public" };
+const roleIcon = { farmer: Sprout, public: Users2 };
+
 export default function Complaints() {
   const { t } = useLanguage();
-  const { complaints, updateStatus } = useComplaints();
+  const { complaints, updateStatus, loading, offline, error } = useComplaints();
+  const { user } = useSupabaseAuth();
   const { showToast } = useToast();
-  const loading = useSimulatedLoading(600);
+  const [busy, setBusy] = useState(false);
   const [open, setOpen] = useState(null); // complaint object being viewed
   const [note, setNote] = useState("");
   const [confirmResolve, setConfirmResolve] = useState(null); // complaint id pending resolve confirm
@@ -33,13 +39,22 @@ export default function Complaints() {
     setNote("");
   }
 
-  function setStatus(id, status) {
-    updateStatus(id, status, status === "Resolved" ? note : undefined);
-    if (open?.id === id) setOpen({ ...open, status, resolutionNote: status === "Resolved" ? note : open.resolutionNote });
-    showToast(
-      status === "Resolved" ? `Complaint ${id} marked resolved` : `Complaint ${id} status set to ${status}`,
-      "success"
-    );
+  async function setStatus(id, status) {
+    setBusy(true);
+    try {
+      // The note is saved on every status change, so an officer can leave a
+      // "forwarded to district office" remark too, not just on resolve.
+      await updateStatus(id, status, note, user?.email || "");
+      if (open?.id === id) setOpen({ ...open, status, resolutionNote: note });
+      showToast(
+        status === "Resolved" ? `Complaint ${id} marked resolved` : `Complaint ${id} status set to ${status}`,
+        "success"
+      );
+    } catch (err) {
+      showToast(err.message || "Couldn't update that complaint in Supabase.", "error");
+    } finally {
+      setBusy(false);
+    }
   }
 
   function confirmMarkResolved() {
@@ -51,6 +66,22 @@ export default function Complaints() {
     <>
       <Topbar title={t("ptAdminComplaintsTitle")} subtitle={t("ptAdminComplaintsSub")} />
       <main className="p-4 sm:p-8 space-y-6" dir="ltr">
+        {offline && <OfflineNotice what="complaints" error={error} />}
+
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <p className="text-xs text-ink/45">
+            {offline
+              ? "Showing locally stored complaints while Supabase is unreachable."
+              : "Live from Supabase — complaints filed on the farmer and public portals appear here automatically."}
+          </p>
+          <Link
+            to="/pdma/report-issue"
+            className="flex items-center gap-1.5 text-xs font-medium text-danger border border-danger/30 rounded-lg px-3 py-1.5 hover:bg-danger/5"
+          >
+            <Bug size={13} /> Report a software issue
+          </Link>
+        </div>
+
         <div className="grid grid-cols-3 gap-4">
           {["Under Review", "Forwarded", "Resolved"].map((s) => (
             <Card key={s}>
@@ -69,7 +100,8 @@ export default function Complaints() {
               <thead>
                 <tr className="text-left text-xs uppercase text-ink/40 border-b border-line">
                   <SortableHeader label="ID" sortKey="id" sortConfig={sortConfig} onSort={requestSort} />
-                  <SortableHeader label="Farmer" sortKey="farmer" sortConfig={sortConfig} onSort={requestSort} />
+                  <SortableHeader label="Submitted by" sortKey="farmer" sortConfig={sortConfig} onSort={requestSort} />
+                  <th className="pb-2 font-medium">From</th>
                   <SortableHeader label="District" sortKey="district" sortConfig={sortConfig} onSort={requestSort} />
                   <SortableHeader label="Category" sortKey="category" sortConfig={sortConfig} onSort={requestSort} />
                   <th className="pb-2 font-medium">Photo</th>
@@ -80,12 +112,21 @@ export default function Complaints() {
               </thead>
               <tbody>
                 {loading ? (
-                  <SkeletonTableRows rows={5} cols={8} />
+                  <SkeletonTableRows rows={5} cols={9} />
                 ) : (
                   sorted.map((c) => (
                     <tr key={c.id} className="border-b border-line last:border-0 hover:bg-paper-dim/60">
                       <td className="py-2.5 font-mono text-xs text-ink/50">{c.id}</td>
                       <td className="py-2.5 font-medium">{c.farmer}</td>
+                      <td className="py-2.5 text-ink/60">
+                        <span className="inline-flex items-center gap-1.5 text-xs">
+                          {(() => {
+                            const Icon = roleIcon[c.role] || Sprout;
+                            return <Icon size={12} className="text-ink/35" />;
+                          })()}
+                          {roleLabel[c.role] || c.role}
+                        </span>
+                      </td>
                       <td className="py-2.5 text-ink/60">{c.district}</td>
                       <td className="py-2.5 text-ink/60">{c.category}</td>
                       <td className="py-2.5">
@@ -189,6 +230,7 @@ export default function Complaints() {
 
               <div className="flex flex-wrap gap-2 pt-1">
                 <button
+                  disabled={busy}
                   onClick={() => setStatus(open.id, "Under Review")}
                   onMouseDown={addRipple}
                   className="btn-animated text-xs font-medium border border-line rounded-lg px-3 py-2 hover:bg-paper-dim"
@@ -196,6 +238,7 @@ export default function Complaints() {
                   Under Review
                 </button>
                 <button
+                  disabled={busy}
                   onClick={() => setStatus(open.id, "Forwarded")}
                   onMouseDown={addRipple}
                   className="btn-animated text-xs font-medium border border-line rounded-lg px-3 py-2 hover:bg-paper-dim"
@@ -203,6 +246,7 @@ export default function Complaints() {
                   Forward
                 </button>
                 <button
+                  disabled={busy}
                   onClick={() => setConfirmResolve(open.id)}
                   onMouseDown={addRipple}
                   className="btn-animated flex items-center gap-1.5 text-xs font-medium bg-primary text-white rounded-lg px-3 py-2 hover:bg-primary-light"

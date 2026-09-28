@@ -1,7 +1,7 @@
 import { Outlet } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import { MobileNavProvider } from "../components/MobileNavContext";
-import { LayoutDashboard, Map, GitCompare, Bell, BookOpen, CalendarDays, FileWarning, Settings } from "lucide-react";
+import { LayoutDashboard, Map, GitCompare, Bell, BookOpen, CalendarDays, FileWarning, Settings, MessageSquarePlus, Bug } from "lucide-react";
 
 const navItems = [
   { to: "", labelKey: "navHome", icon: LayoutDashboard },
@@ -9,6 +9,8 @@ const navItems = [
   { to: "/compare", labelKey: "navCompare", icon: GitCompare },
   { to: "/alerts", labelKey: "navAlerts", icon: Bell },
   { to: "/reports", labelKey: "navCommunityReports", icon: FileWarning },
+  { to: "/complaint", labelKey: "navSubmitReport", icon: MessageSquarePlus },
+  { to: "/report-issue", labelKey: "navReportIssue", icon: Bug },
   { to: "/awareness", labelKey: "navAwareness", icon: BookOpen },
   { to: "/calendar", labelKey: "navCropCalendar", icon: CalendarDays },
   { to: "/settings", labelKey: "navSettings", icon: Settings },

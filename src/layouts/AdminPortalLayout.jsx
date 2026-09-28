@@ -1,20 +1,24 @@
 import { Outlet, NavLink, Link } from "react-router-dom";
 import { useState } from "react";
 import logo from "../assets/logo.jpeg";
-import { useGoogleAuth } from "../firebase/useGoogleAuth";
+import { useSupabaseAuth } from "../supabase/useSupabaseAuth";
 import {
-  LayoutDashboard, ClipboardCheck, Users, FileBarChart, LogOut, Menu, X,
+  LayoutDashboard, ClipboardCheck, Users, FileBarChart, LogOut, Menu, X, FileWarning, Bug,
 } from "lucide-react";
 
 const navItems = [
   { to: "", label: "Overview", icon: LayoutDashboard },
   { to: "/requests", label: "Access Requests", icon: ClipboardCheck },
+  { to: "/complaints", label: "Field Complaints", icon: FileWarning },
+  { to: "/issues", label: "Software Issues", icon: Bug },
   { to: "/users", label: "Users & Officers", icon: Users },
   { to: "/reports", label: "Reports", icon: FileBarChart },
 ];
 
 export default function AdminPortalLayout() {
-  const { user, signOut } = useGoogleAuth();
+  const { user, signOut } = useSupabaseAuth();
+  const avatarUrl = user?.user_metadata?.avatar_url;
+  const displayName = user?.user_metadata?.full_name || user?.user_metadata?.name;
   const [open, setOpen] = useState(false);
 
   return (
@@ -67,15 +71,15 @@ export default function AdminPortalLayout() {
 
         <div className="px-5 py-4 border-t border-white/10 space-y-3">
           <div className="flex items-center gap-2.5">
-            {user?.photoURL ? (
-              <img src={user.photoURL} alt="" className="w-8 h-8 rounded-full shrink-0" referrerPolicy="no-referrer" />
+            {avatarUrl ? (
+              <img src={avatarUrl} alt="" className="w-8 h-8 rounded-full shrink-0" referrerPolicy="no-referrer" />
             ) : (
               <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-xs font-semibold shrink-0">
                 {user?.email?.[0]?.toUpperCase() || "A"}
               </div>
             )}
             <div className="min-w-0">
-              <p className="text-xs font-medium truncate">{user?.displayName || "Admin"}</p>
+              <p className="text-xs font-medium truncate">{displayName || "Admin"}</p>
               <p className="text-[10px] text-mist/45 truncate">{user?.email}</p>
             </div>
           </div>

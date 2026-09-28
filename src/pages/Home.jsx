@@ -26,7 +26,7 @@ const dataSources = ["Sentinel-2 (NDVI)", "CHIRPS (SPI-3)", "NASA SMAP (Soil Moi
 export default function Home() {
   const { t, lang } = useLanguage();
   return (
-    <div className={`min-h-screen bg-paper ${lang === "ur" ? "i18n-ur" : ""}`}>
+    <div dir={lang === "ur" ? "rtl" : undefined} className={`min-h-screen bg-paper ${lang === "ur" ? "i18n-ur" : ""}`}>
       {/* Nav */}
       <nav className="sticky top-0 z-20 bg-paper/90 backdrop-blur border-b border-line px-6 sm:px-10 py-4 flex items-center justify-between">
         <div className="flex items-center gap-2.5">

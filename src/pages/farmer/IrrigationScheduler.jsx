@@ -1,53 +1,1135 @@
+import { useEffect, useMemo, useState, useCallback } from "react";
+
 import Topbar from "../../components/Topbar";
-import { useLanguage } from "../../i18n/LanguageContext";
 import Card from "../../components/Card";
-import { irrigationForecast } from "../../data/dummyData";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell } from "recharts";
-import { Droplets, CloudRain } from "lucide-react";
+import { useLanguage } from "../../i18n/LanguageContext";
+import { getMyFields } from "../../services/farmerFieldService";
+import { useMyProfile } from "../../hooks/useMyProfile";
+
+import {
+  Droplets,
+  CloudRain,
+  Sprout,
+  MapPin,
+  RefreshCw,
+  AlertTriangle,
+  CheckCircle2,
+} from "lucide-react";
+
+import { API_BASE_URL } from "../../config/api";
+
+const API_URL = API_BASE_URL;
+
+// ============================================================
+// HELPERS
+// ============================================================
+
+function safeNumber(value, fallback = 0) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function getSeverityFromPrediction(data) {
+  if (!data) return "Normal";
+
+  const raw =
+    data.risk_level ||
+    data.severity ||
+    data.prediction_status ||
+    data.status ||
+    "";
+
+  const value = String(raw).toLowerCase();
+
+  if (
+    value.includes("extreme") ||
+    value === "severe"
+  ) {
+    return "Extreme";
+  }
+
+  if (value.includes("high")) {
+    return "Severe";
+  }
+
+  if (value.includes("moderate")) {
+    return "Moderate";
+  }
+
+  return "Normal";
+}
+
+function severityClasses(severity) {
+  switch (severity) {
+    case "Extreme":
+      return "bg-red-100 text-red-700";
+
+    case "Severe":
+      return "bg-orange-100 text-orange-700";
+
+    case "Moderate":
+      return "bg-yellow-100 text-yellow-700";
+
+    default:
+      return "bg-green-100 text-green-700";
+  }
+}
+
+function getIrrigationStatus(schedule) {
+  const status = String(
+    schedule?.status ||
+      schedule?.recommendation_status ||
+      schedule?.irrigation_status ||
+      ""
+  ).toLowerCase();
+
+  if (
+    status.includes("urgent") ||
+    status.includes("immediate") ||
+    status.includes("required")
+  ) {
+    return {
+      label: "Irrigation Required",
+      tone: "danger",
+    };
+  }
+
+  if (status.includes("monitor")) {
+    return {
+      label: "Monitor Field",
+      tone: "warn",
+    };
+  }
+
+  if (
+    status.includes("not required") ||
+    status.includes("no irrigation") ||
+    status.includes("sufficient")
+  ) {
+    return {
+      label: "No Irrigation Required",
+      tone: "ok",
+    };
+  }
+
+  return {
+    label: "Irrigation Recommendation",
+    tone: "normal",
+  };
+}
+
+// ============================================================
+// COMPONENT
+// ============================================================
 
 export default function IrrigationScheduler() {
   const { t } = useLanguage();
+
+  // ============================================================
+  // REAL LOGGED-IN FARMER PROFILE
+  // Same source already working in FarmerHome.jsx
+  // ============================================================
+
+  const {
+    user,
+    profile,
+    loading: profileLoading,
+    error: profileError,
+  } = useMyProfile();
+
+  const district = profile?.district?.trim() || "";
+
+  // ============================================================
+  // FARMER FIELDS
+  // ============================================================
+
+  const [fields, setFields] = useState([]);
+  const [selectedFieldId, setSelectedFieldId] = useState("");
+
+  const [fieldsLoading, setFieldsLoading] = useState(true);
+  const [fieldsError, setFieldsError] = useState("");
+
+  // ============================================================
+  // ML DISTRICT PREDICTION
+  // ============================================================
+
+  const [prediction, setPrediction] = useState(null);
+  const [predictionLoading, setPredictionLoading] =
+    useState(false);
+
+  const [predictionError, setPredictionError] =
+    useState("");
+
+  // ============================================================
+  // IRRIGATION RESULT
+  // ============================================================
+
+  const [schedule, setSchedule] = useState(null);
+
+  const [scheduleLoading, setScheduleLoading] =
+    useState(false);
+
+  const [scheduleError, setScheduleError] =
+    useState("");
+
+  // ============================================================
+  // SELECTED FIELD
+  // ============================================================
+
+  const selectedField = useMemo(() => {
+    if (!selectedFieldId) return null;
+
+    return (
+      fields.find(
+        (field) =>
+          String(field.id) ===
+          String(selectedFieldId)
+      ) || null
+    );
+  }, [fields, selectedFieldId]);
+
+  // ============================================================
+  // LOAD FARMER'S REAL FIELDS
+  // ============================================================
+
+  useEffect(() => {
+    if (profileLoading) {
+      return;
+    }
+
+    if (!user?.id) {
+      setFields([]);
+      setSelectedFieldId("");
+      setFieldsLoading(false);
+
+      setFieldsError(
+        "No logged-in farmer was found."
+      );
+
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadFields() {
+      try {
+        setFieldsLoading(true);
+        setFieldsError("");
+
+        console.log(
+          "LOADING FIELDS FOR FARMER:",
+          user.id
+        );
+
+        const data = await getMyFields(user.id);
+
+        if (cancelled) return;
+
+        const loadedFields = Array.isArray(data)
+          ? data
+          : [];
+
+        console.log(
+          "REAL FARMER FIELDS:",
+          loadedFields
+        );
+
+        setFields(loadedFields);
+
+        if (loadedFields.length > 0) {
+          setSelectedFieldId((current) => {
+            const stillExists =
+              current &&
+              loadedFields.some(
+                (field) =>
+                  String(field.id) ===
+                  String(current)
+              );
+
+            if (stillExists) {
+              return current;
+            }
+
+            return String(loadedFields[0].id);
+          });
+        } else {
+          setSelectedFieldId("");
+        }
+      } catch (error) {
+        if (cancelled) return;
+
+        console.error(
+          "FARMER FIELD LOAD ERROR:",
+          error
+        );
+
+        setFields([]);
+        setSelectedFieldId("");
+
+        setFieldsError(
+          error?.message ||
+            "Unable to load your farm fields."
+        );
+      } finally {
+        if (!cancelled) {
+          setFieldsLoading(false);
+        }
+      }
+    }
+
+    loadFields();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, profileLoading]);
+
+  // ============================================================
+  // LOAD REAL ML DISTRICT PREDICTION
+  // ============================================================
+
+  useEffect(() => {
+    if (profileLoading) {
+      return;
+    }
+
+    if (!district) {
+      setPrediction(null);
+      setPredictionLoading(false);
+
+      setPredictionError(
+        "No district is assigned to your farmer profile."
+      );
+
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadPrediction() {
+      try {
+        setPredictionLoading(true);
+        setPredictionError("");
+
+        console.log(
+          "LOADING IRRIGATION ML DATA FOR:",
+          district
+        );
+
+        const response = await fetch(
+          `${API_URL}/predict-district/${encodeURIComponent(
+            district
+          )}`
+        );
+
+        if (!response.ok) {
+          let message = "";
+
+          try {
+            const errorData = await response.json();
+
+            message =
+              errorData?.detail ||
+              errorData?.message ||
+              "";
+          } catch {
+            // ignore JSON error
+          }
+
+          throw new Error(
+            message ||
+              `Prediction failed: ${response.status}`
+          );
+        }
+
+        const data = await response.json();
+
+        if (cancelled) return;
+
+        console.log(
+          "IRRIGATION ML PREDICTION:",
+          data
+        );
+
+        setPrediction(data);
+      } catch (error) {
+        if (cancelled) return;
+
+        console.error(
+          "IRRIGATION ML ERROR:",
+          error
+        );
+
+        setPrediction(null);
+
+        setPredictionError(
+          error?.message ||
+            "Unable to load district ML data."
+        );
+      } finally {
+        if (!cancelled) {
+          setPredictionLoading(false);
+        }
+      }
+    }
+
+    loadPrediction();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [district, profileLoading]);
+
+  // ============================================================
+  // GET IRRIGATION RECOMMENDATION
+  // ============================================================
+
+  const loadIrrigationRecommendation =
+    useCallback(async () => {
+      if (!selectedField) {
+        return;
+      }
+
+      if (!district) {
+        setScheduleError(
+          "Farmer district is not available."
+        );
+
+        return;
+      }
+
+      try {
+        setScheduleLoading(true);
+        setScheduleError("");
+        setSchedule(null);
+
+        const payload = {
+          district,
+
+          field_id: selectedField.id,
+
+          field_name:
+            selectedField.field_name ||
+            "Field",
+
+          crop:
+            selectedField.crop || "",
+
+          area_acres: safeNumber(
+            selectedField.area_acres
+          ),
+        };
+
+        console.log(
+          "IRRIGATION REQUEST:",
+          payload
+        );
+
+        const response = await fetch(
+          `${API_URL}/irrigation-recommendation`,
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type": "application/json",
+            },
+
+            body: JSON.stringify(payload),
+          }
+        );
+
+        if (!response.ok) {
+          let errorMessage = "";
+
+          try {
+            const errorData =
+              await response.json();
+
+            errorMessage =
+              errorData?.detail ||
+              errorData?.message ||
+              "";
+          } catch {
+            // ignore JSON parsing error
+          }
+
+          throw new Error(
+            errorMessage ||
+              `Irrigation request failed: ${response.status}`
+          );
+        }
+
+        const data = await response.json();
+
+        console.log(
+          "REAL AGRIWATCH IRRIGATION RESULT:",
+          data
+        );
+
+        setSchedule(data);
+      } catch (error) {
+        console.error(
+          "IRRIGATION RECOMMENDATION ERROR:",
+          error
+        );
+
+        setScheduleError(
+          error?.message ||
+            "Unable to calculate irrigation recommendation."
+        );
+      } finally {
+        setScheduleLoading(false);
+      }
+    }, [district, selectedField]);
+
+  // ============================================================
+  // AUTO LOAD WHEN FIELD/DISTRICT CHANGES
+  // ============================================================
+
+  useEffect(() => {
+    if (
+      profileLoading ||
+      predictionLoading ||
+      !district ||
+      !selectedField
+    ) {
+      return;
+    }
+
+    loadIrrigationRecommendation();
+  }, [
+    district,
+    selectedField,
+    profileLoading,
+    predictionLoading,
+    loadIrrigationRecommendation,
+  ]);
+
+  // ============================================================
+  // ML VALUES
+  // ============================================================
+
+  const environmental =
+    prediction?.environmental_data || {};
+
+  const severity =
+    getSeverityFromPrediction(prediction);
+
+  const droughtProbability = safeNumber(
+    prediction?.drought_probability_percent ??
+      prediction?.drought_probability
+  );
+
+  const rawSoilMoisture = safeNumber(
+    environmental.soil_moisture ??
+      prediction?.soil_moisture
+  );
+
+  // API may return 0.274 or 27.4
+  const soilMoisturePercent =
+    rawSoilMoisture <= 1
+      ? rawSoilMoisture * 100
+      : rawSoilMoisture;
+
+  const rainfall = safeNumber(
+    environmental.rainfall_mm ??
+      environmental.rainfall ??
+      prediction?.rainfall_mm ??
+      prediction?.rainfall
+  );
+
+  const ndvi = safeNumber(
+    environmental.ndvi ??
+      prediction?.ndvi
+  );
+
+  // ============================================================
+  // IRRIGATION RESULT VALUES
+  // ============================================================
+
+  const irrigationAmount = safeNumber(
+    schedule?.irrigation_mm ??
+      schedule?.recommended_irrigation_mm ??
+      schedule?.water_required_mm ??
+      schedule?.water_mm
+  );
+
+  const waterLitres = safeNumber(
+    schedule?.water_litres ??
+      schedule?.water_liters ??
+      schedule?.estimated_water_litres
+  );
+
+  const nextIrrigation =
+    schedule?.next_irrigation ||
+    schedule?.next_irrigation_date ||
+    schedule?.recommended_date ||
+    schedule?.schedule_date ||
+    "—";
+
+  const recommendation =
+    schedule?.recommendation ||
+    schedule?.message ||
+    schedule?.advice ||
+    schedule?.irrigation_advice ||
+    "";
+
+  const irrigationStatus =
+    getIrrigationStatus(schedule);
+
+  // ============================================================
+  // UI
+  // ============================================================
+
   return (
     <>
-      <Topbar title={t("ptFarmerIrrigationTitle")} subtitle={t("ptFarmerIrrigationSub")} />
-      <main className="p-4 sm:p-8 space-y-6" dir="ltr">
-        <Card scan>
-          <p className="font-display font-semibold mb-4">7-Day Forecast &amp; Irrigation Plan</p>
-          <ResponsiveContainer width="100%" height={240}>
-            <BarChart data={irrigationForecast}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#DCE1D3" vertical={false} />
-              <XAxis dataKey="day" tick={{ fontSize: 12, fill: "#12160F99" }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 12, fill: "#12160F99" }} axisLine={false} tickLine={false} unit="mm" />
-              <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid #DCE1D3", fontSize: 12 }} />
-              <Bar dataKey="rainfallMm" radius={[6, 6, 0, 0]} name="Rainfall (mm)">
-                {irrigationForecast.map((d, i) => (
-                  <Cell key={i} fill={d.action === "Irrigate" ? "#C1442D" : "#3F8C2C"} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-          <div className="flex items-center gap-4 mt-3 text-xs text-ink/50">
-            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-danger inline-block" /> Irrigate</span>
-            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-primary inline-block" /> Hold (rain expected / sufficient moisture)</span>
+      <Topbar
+        title={
+          t?.("ptFarmerIrrigationTitle") ||
+          "Irrigation Scheduler"
+        }
+        subtitle={
+          district
+            ? `Smart irrigation guidance · ${district}`
+            : "Smart irrigation guidance"
+        }
+      />
+
+      <main
+        className="p-4 sm:p-8 space-y-6"
+        dir="ltr"
+      >
+        {/* PROFILE ERROR */}
+
+        {profileError && (
+          <Card>
+            <div className="flex items-start gap-3 text-red-600">
+              <AlertTriangle
+                size={18}
+                className="mt-0.5 shrink-0"
+              />
+
+              <div>
+                <p className="font-medium text-sm">
+                  Unable to load farmer profile
+                </p>
+
+                <p className="text-xs mt-1">
+                  {profileError?.message ||
+                    "Please refresh the page or sign in again."}
+                </p>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {/* NO DISTRICT */}
+
+        {!profileLoading &&
+          !profileError &&
+          !district && (
+            <Card>
+              <div className="flex items-start gap-3">
+                <AlertTriangle
+                  size={18}
+                  className="text-orange-500 mt-0.5"
+                />
+
+                <div>
+                  <p className="font-medium">
+                    District not configured
+                  </p>
+
+                  <p className="text-sm text-ink/50 mt-1">
+                    Add your district to your
+                    farmer profile before using
+                    irrigation recommendations.
+                  </p>
+                </div>
+              </div>
+            </Card>
+          )}
+
+        {/* FIELD SELECTOR */}
+
+        <Card>
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <p className="font-display font-semibold text-lg">
+                Select Your Field
+              </p>
+
+              <p className="text-sm text-ink/45 mt-1">
+                Irrigation guidance is
+                calculated separately for each
+                registered field.
+              </p>
+            </div>
+
+            {!fieldsLoading &&
+              fields.length > 0 && (
+                <select
+                  value={selectedFieldId}
+                  onChange={(e) =>
+                    setSelectedFieldId(
+                      e.target.value
+                    )
+                  }
+                  className="border border-line rounded-lg px-4 py-2.5 text-sm bg-surface min-w-[250px]"
+                >
+                  {fields.map((field) => (
+                    <option
+                      key={field.id}
+                      value={String(field.id)}
+                    >
+                      {field.field_name} —{" "}
+                      {field.crop}
+                    </option>
+                  ))}
+                </select>
+              )}
           </div>
+
+          {(profileLoading ||
+            fieldsLoading) && (
+            <p className="text-sm text-ink/45 mt-5">
+              Loading your farm fields...
+            </p>
+          )}
+
+          {fieldsError && (
+            <div className="flex items-start gap-2 mt-5 text-red-600">
+              <AlertTriangle
+                size={17}
+                className="mt-0.5"
+              />
+
+              <p className="text-sm">
+                {fieldsError}
+              </p>
+            </div>
+          )}
+
+          {!profileLoading &&
+            !fieldsLoading &&
+            !fieldsError &&
+            fields.length === 0 && (
+              <div className="flex items-start gap-2 mt-5">
+                <AlertTriangle
+                  size={17}
+                  className="text-orange-500 mt-0.5"
+                />
+
+                <p className="text-sm text-ink/55">
+                  You do not have any registered
+                  fields. Add a farm field first
+                  to generate irrigation
+                  recommendations.
+                </p>
+              </div>
+            )}
         </Card>
 
-        <div className="grid grid-cols-1 md:grid-cols-7 gap-3">
-          {irrigationForecast.map((d) => (
-            <Card key={d.day} className="text-center">
-              <p className="text-xs font-medium text-ink/50">{d.day}</p>
-              <div className="flex items-center justify-center gap-1 my-2">
-                <CloudRain size={14} className="text-ink/40" />
-                <span className="text-xs font-mono">{d.rainfallMm}mm</span>
+        {/* FIELD DETAILS */}
+
+        {selectedField && (
+          <Card>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              <div>
+                <p className="text-xs uppercase text-ink/40">
+                  Field
+                </p>
+
+                <p className="font-semibold mt-1">
+                  {selectedField.field_name}
+                </p>
               </div>
-              <p className="text-xs font-mono text-ink/50 mb-2">{d.temp}°C</p>
-              <span className={`text-[11px] font-medium px-2 py-1 rounded-full ${d.action === "Irrigate" ? "bg-danger/10 text-danger" : "bg-primary/10 text-primary"}`}>
-                {d.action === "Irrigate" ? <Droplets size={11} className="inline mr-1" /> : null}
-                {d.action}
-              </span>
+
+              <div>
+                <p className="text-xs uppercase text-ink/40">
+                  Crop
+                </p>
+
+                <div className="flex items-center gap-2 mt-1">
+                  <Sprout
+                    size={16}
+                    className="text-primary"
+                  />
+
+                  <p className="font-semibold capitalize">
+                    {selectedField.crop}
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-xs uppercase text-ink/40">
+                  Area
+                </p>
+
+                <p className="font-semibold mt-1">
+                  {safeNumber(
+                    selectedField.area_acres
+                  )}{" "}
+                  acres
+                </p>
+              </div>
+
+              <div>
+                <p className="text-xs uppercase text-ink/40">
+                  District
+                </p>
+
+                <div className="flex items-center gap-2 mt-1">
+                  <MapPin
+                    size={16}
+                    className="text-primary"
+                  />
+
+                  <p className="font-semibold">
+                    {district ||
+                      "Not available"}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {/* ML ERROR */}
+
+        {selectedField &&
+          predictionError && (
+            <Card>
+              <div className="flex items-start gap-3 text-red-600">
+                <AlertTriangle
+                  size={18}
+                  className="mt-0.5"
+                />
+
+                <div>
+                  <p className="font-medium text-sm">
+                    District ML data could not
+                    be loaded
+                  </p>
+
+                  <p className="text-xs mt-1">
+                    {predictionError}
+                  </p>
+                </div>
+              </div>
             </Card>
-          ))}
-        </div>
+          )}
+
+        {/* ML CONDITIONS */}
+
+        {selectedField &&
+          !predictionError && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* DROUGHT */}
+
+              <Card>
+                <p className="text-xs uppercase text-ink/40">
+                  Drought Status
+                </p>
+
+                {predictionLoading ||
+                profileLoading ? (
+                  <p className="text-sm text-ink/40 mt-4">
+                    Loading...
+                  </p>
+                ) : (
+                  <>
+                    <span
+                      className={`inline-flex px-3 py-1 rounded-full text-xs font-medium mt-3 ${severityClasses(
+                        severity
+                      )}`}
+                    >
+                      {severity}
+                    </span>
+
+                    <p className="text-xs text-ink/45 mt-3">
+                      ML probability:{" "}
+                      {droughtProbability.toFixed(
+                        1
+                      )}
+                      %
+                    </p>
+                  </>
+                )}
+              </Card>
+
+              {/* SOIL */}
+
+              <Card>
+                <div className="flex justify-between">
+                  <p className="text-xs uppercase text-ink/40">
+                    Soil Moisture
+                  </p>
+
+                  <Droplets
+                    size={18}
+                    className="text-primary"
+                  />
+                </div>
+
+                {predictionLoading ? (
+                  <p className="text-sm text-ink/40 mt-4">
+                    Loading...
+                  </p>
+                ) : (
+                  <>
+                    <p className="font-display text-2xl font-semibold mt-3">
+                      {soilMoisturePercent.toFixed(
+                        1
+                      )}
+
+                      <span className="text-sm ml-1 text-ink/45">
+                        %
+                      </span>
+                    </p>
+
+                    <p className="text-xs text-ink/40 mt-2">
+                      Current soil moisture
+                    </p>
+                  </>
+                )}
+              </Card>
+
+              {/* RAINFALL */}
+
+              <Card>
+                <div className="flex justify-between">
+                  <p className="text-xs uppercase text-ink/40">
+                    Rainfall
+                  </p>
+
+                  <CloudRain
+                    size={18}
+                    className="text-primary"
+                  />
+                </div>
+
+                {predictionLoading ? (
+                  <p className="text-sm text-ink/40 mt-4">
+                    Loading...
+                  </p>
+                ) : (
+                  <>
+                    <p className="font-display text-2xl font-semibold mt-3">
+                      {rainfall.toFixed(1)}
+
+                      <span className="text-sm ml-1 text-ink/45">
+                        mm
+                      </span>
+                    </p>
+
+                    <p className="text-xs text-ink/40 mt-2">
+                      Current monthly rainfall
+                    </p>
+                  </>
+                )}
+              </Card>
+
+              {/* NDVI */}
+
+              <Card>
+                <div className="flex justify-between">
+                  <p className="text-xs uppercase text-ink/40">
+                    NDVI
+                  </p>
+
+                  <Sprout
+                    size={18}
+                    className="text-primary"
+                  />
+                </div>
+
+                {predictionLoading ? (
+                  <p className="text-sm text-ink/40 mt-4">
+                    Loading...
+                  </p>
+                ) : (
+                  <>
+                    <p className="font-display text-2xl font-semibold mt-3">
+                      {ndvi.toFixed(3)}
+                    </p>
+
+                    <p className="text-xs text-ink/40 mt-2">
+                      Current vegetation index
+                    </p>
+                  </>
+                )}
+              </Card>
+            </div>
+          )}
+
+        {/* IRRIGATION RECOMMENDATION */}
+
+        {selectedField && district && (
+          <Card>
+            <div className="flex items-start justify-between gap-4 flex-wrap">
+              <div>
+                <p className="font-display font-semibold text-lg">
+                  Irrigation Recommendation
+                </p>
+
+                <p className="text-sm text-ink/45 mt-1">
+                  {selectedField.field_name} ·{" "}
+                  {selectedField.crop} ·{" "}
+                  {selectedField.area_acres} acres
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={
+                  loadIrrigationRecommendation
+                }
+                disabled={
+                  scheduleLoading ||
+                  predictionLoading
+                }
+                className="flex items-center gap-2 border border-line rounded-lg px-4 py-2 text-sm hover:bg-paper-dim disabled:opacity-50"
+              >
+                <RefreshCw
+                  size={15}
+                  className={
+                    scheduleLoading
+                      ? "animate-spin"
+                      : ""
+                  }
+                />
+
+                Refresh
+              </button>
+            </div>
+
+            {scheduleLoading && (
+              <div className="py-12 text-center text-sm text-ink/45">
+                Calculating irrigation
+                requirement...
+              </div>
+            )}
+
+            {!scheduleLoading &&
+              scheduleError && (
+                <div className="mt-6 bg-red-50 border border-red-200 rounded-xl p-4">
+                  <div className="flex gap-2">
+                    <AlertTriangle
+                      size={18}
+                      className="text-red-600 shrink-0"
+                    />
+
+                    <div>
+                      <p className="font-medium text-sm text-red-700">
+                        Irrigation calculation
+                        failed
+                      </p>
+
+                      <p className="text-xs text-red-600 mt-1">
+                        {scheduleError}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+            {!scheduleLoading &&
+              !scheduleError &&
+              schedule && (
+                <div className="mt-6 space-y-5">
+                  {/* RESULT */}
+
+                  <div
+                    className={`rounded-xl p-4 ${
+                      irrigationStatus.tone ===
+                      "danger"
+                        ? "bg-red-50"
+                        : irrigationStatus.tone ===
+                          "warn"
+                        ? "bg-yellow-50"
+                        : irrigationStatus.tone ===
+                          "ok"
+                        ? "bg-green-50"
+                        : "bg-paper-dim"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2
+                        size={18}
+                        className="text-primary"
+                      />
+
+                      <p className="font-semibold">
+                        {
+                          irrigationStatus.label
+                        }
+                      </p>
+                    </div>
+
+                    {recommendation && (
+                      <p className="text-sm text-ink/60 mt-2">
+                        {recommendation}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* VALUES */}
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="border border-line rounded-xl p-4">
+                      <p className="text-xs uppercase text-ink/40">
+                        Recommended Water
+                      </p>
+
+                      <p className="text-xl font-semibold mt-2">
+                        {irrigationAmount > 0
+                          ? `${irrigationAmount.toFixed(
+                              1
+                            )} mm`
+                          : "—"}
+                      </p>
+                    </div>
+
+                    <div className="border border-line rounded-xl p-4">
+                      <p className="text-xs uppercase text-ink/40">
+                        Estimated Water
+                      </p>
+
+                      <p className="text-xl font-semibold mt-2">
+                        {waterLitres > 0
+                          ? `${Math.round(
+                              waterLitres
+                            ).toLocaleString()} L`
+                          : "—"}
+                      </p>
+                    </div>
+
+                    <div className="border border-line rounded-xl p-4">
+                      <p className="text-xs uppercase text-ink/40">
+                        Next Irrigation
+                      </p>
+
+                      <p className="text-xl font-semibold mt-2">
+                        {nextIrrigation}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+            {!scheduleLoading &&
+              !scheduleError &&
+              !schedule &&
+              !predictionLoading && (
+                <div className="py-8 text-center text-sm text-ink/40">
+                  Waiting for irrigation
+                  recommendation...
+                </div>
+              )}
+          </Card>
+        )}
       </main>
     </>
   );

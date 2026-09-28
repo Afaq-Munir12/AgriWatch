@@ -1,6 +1,6 @@
 import Topbar from "../../components/Topbar";
 import { useLanguage } from "../../i18n/LanguageContext";
-import Card from "../../components/Card";
+import ProfileEditor from "../../components/ProfileEditor";
 
 export default function PublicSettings() {
   const { t } = useLanguage();
@@ -8,13 +8,7 @@ export default function PublicSettings() {
     <>
       <Topbar title={t("ptPublicSettingsTitle")} subtitle={t("ptPublicSettingsSub")} />
       <main className="p-4 sm:p-8" dir="ltr">
-        <Card className="max-w-lg">
-          <p className="font-display font-semibold mb-4">Profile</p>
-          <div className="space-y-3 text-sm">
-            <div className="flex justify-between border-b border-line pb-2"><span className="text-ink/45">District</span><span className="font-medium">Peshawar</span></div>
-            <div className="flex justify-between"><span className="text-ink/45">Language</span><span className="font-medium">English</span></div>
-          </div>
-        </Card>
+        <ProfileEditor role="public" />
       </main>
     </>
   );

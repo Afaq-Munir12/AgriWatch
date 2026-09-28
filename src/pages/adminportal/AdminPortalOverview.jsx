@@ -1,16 +1,27 @@
 import { Link } from "react-router-dom";
 import Card, { StatCard } from "../../components/Card";
-import { users, complaints, publicRegByDistrict } from "../../data/dummyData";
+import { users, publicRegByDistrict } from "../../data/dummyData";
 import { useRegistrations } from "../../store/RegistrationsContext";
-import { useFirestoreCollection } from "../../firebase/useFirestoreCollection";
-import { Users2, Sprout, ShieldCheck, ClipboardCheck, ArrowRight, CheckCircle2, XCircle } from "lucide-react";
+import { useSupabaseTable } from "../../supabase/useSupabaseTable";
+import { useComplaints } from "../../store/ComplaintsContext";
+import { useIssueReports } from "../../store/IssueReportsContext";
+import { Users2, Sprout, ShieldCheck, ClipboardCheck, ArrowRight, CheckCircle2, XCircle, Bug, FileWarning } from "lucide-react";
 
-const COLLECTION_NAME = "access_requests";
-const ORDER_BY_FIELD = "submittedAt";
+const TABLE_NAME = "access_requests";
+const ORDER_BY_FIELD = "submitted_at";
 
 export default function AdminPortalOverview() {
   const { registrations } = useRegistrations();
-  const { data: firestoreRequests } = useFirestoreCollection(COLLECTION_NAME, ORDER_BY_FIELD);
+  const { data: supabaseRequests } = useSupabaseTable(TABLE_NAME, ORDER_BY_FIELD);
+  // Live from Supabase — the same rows the farmer/public/PDMA portals write to.
+  const { complaints } = useComplaints();
+  const { issues } = useIssueReports();
+
+  const openComplaints = complaints.filter((c) => c.status !== "Resolved").length;
+  const openIssues = issues.filter((i) => i.status === "Open" || i.status === "In Progress").length;
+  const criticalIssues = issues.filter(
+    (i) => i.severity === "Critical" && i.status !== "Resolved" && i.status !== "Closed"
+  ).length;
 
   const totalUsers = users.length;
   const totalFarmers = users.filter((u) => u.role === "Farmer").length;
@@ -18,13 +29,13 @@ export default function AdminPortalOverview() {
   const totalOfficers = users.filter((u) => u.role === "Admin / PDMA").length;
 
   const localPending = registrations.filter((r) => r.status === "Pending").length;
-  const firestorePending = firestoreRequests.filter((r) => (r.status || "pending").toLowerCase() === "pending").length;
-  const totalPending = localPending + firestorePending;
+  const supabasePending = supabaseRequests.filter((r) => (r.status || "pending").toLowerCase() === "pending").length;
+  const totalPending = localPending + supabasePending;
 
   const localApproved = registrations.filter((r) => r.status === "Approved").length;
-  const firestoreApproved = firestoreRequests.filter((r) => (r.status || "").toLowerCase() === "approved").length;
+  const supabaseApproved = supabaseRequests.filter((r) => (r.status || "").toLowerCase() === "approved").length;
   const localRejected = registrations.filter((r) => r.status === "Rejected").length;
-  const firestoreRejected = firestoreRequests.filter((r) => (r.status || "").toLowerCase() === "rejected").length;
+  const supabaseRejected = supabaseRequests.filter((r) => (r.status || "").toLowerCase() === "rejected").length;
 
   const totalRegistrations = publicRegByDistrict.reduce((s, d) => s + d.count, 0);
 
@@ -51,6 +62,24 @@ export default function AdminPortalOverview() {
         </Card>
       )}
 
+      {openIssues > 0 && (
+        <Card className="border-danger/30 bg-danger/5 flex items-center justify-between flex-wrap gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-danger/15 flex items-center justify-center shrink-0">
+              <Bug size={16} className="text-danger" />
+            </div>
+            <p className="text-sm">
+              <span className="font-semibold">{openIssues}</span> software issue{openIssues === 1 ? "" : "s"} reported
+              from the farmer, public and PDMA portals
+              {criticalIssues > 0 && <span className="text-danger font-medium"> · {criticalIssues} critical</span>}.
+            </p>
+          </div>
+          <Link to="/admin-portal/issues" className="flex items-center gap-1.5 text-xs font-medium text-danger hover:underline shrink-0">
+            Triage issues <ArrowRight size={13} />
+          </Link>
+        </Card>
+      )}
+
       <div>
         <p className="text-xs uppercase tracking-wide text-ink/40 font-medium mb-3">Accounts</p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -65,8 +94,8 @@ export default function AdminPortalOverview() {
         <p className="text-xs uppercase tracking-wide text-ink/40 font-medium mb-3">Access requests (website + mobile app)</p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <StatCard label="Pending" value={totalPending} icon={ClipboardCheck} delta="Awaiting your review" deltaTone={totalPending > 0 ? "warn" : "ok"} />
-          <StatCard label="Approved" value={localApproved + firestoreApproved} icon={CheckCircle2} delta="All time" deltaTone="ok" />
-          <StatCard label="Rejected" value={localRejected + firestoreRejected} icon={XCircle} delta="All time" deltaTone="danger" />
+          <StatCard label="Approved" value={localApproved + supabaseApproved} icon={CheckCircle2} delta="All time" deltaTone="ok" />
+          <StatCard label="Rejected" value={localRejected + supabaseRejected} icon={XCircle} delta="All time" deltaTone="danger" />
         </div>
       </div>
 
@@ -74,7 +103,13 @@ export default function AdminPortalOverview() {
         <p className="text-xs uppercase tracking-wide text-ink/40 font-medium mb-3">Activity</p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <StatCard label="Public Registrations" value={totalRegistrations} icon={Users2} delta="Across 5 districts" deltaTone="ok" />
-          <StatCard label="Farmer Complaints" value={complaints.length} icon={ClipboardCheck} delta={`${complaints.filter((c) => c.status === "Resolved").length} resolved`} deltaTone="ok" />
+          <StatCard
+            label="Field Complaints"
+            value={complaints.length}
+            icon={FileWarning}
+            delta={`${openComplaints} still open`}
+            deltaTone={openComplaints > 0 ? "warn" : "ok"}
+          />
           <StatCard label="PDMA Districts Covered" value={new Set(users.filter((u) => u.role === "Admin / PDMA").map((u) => u.district)).size || 1} icon={ShieldCheck} delta="With an assigned officer" deltaTone="ok" />
         </div>
       </div>
@@ -86,6 +121,28 @@ export default function AdminPortalOverview() {
               <div>
                 <p className="font-display font-semibold">Review access requests</p>
                 <p className="text-sm text-ink/50 mt-1">Approve or reject new PDMA officer and farmer/public sign-ups.</p>
+              </div>
+              <ArrowRight size={18} className="text-ink/30 shrink-0" />
+            </div>
+          </Card>
+        </Link>
+        <Link to="/admin-portal/complaints" className="block">
+          <Card className="hover:border-primary/40 transition-colors h-full">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-display font-semibold">Field complaints</p>
+                <p className="text-sm text-ink/50 mt-1">Farmer and public damage reports from every district.</p>
+              </div>
+              <ArrowRight size={18} className="text-ink/30 shrink-0" />
+            </div>
+          </Card>
+        </Link>
+        <Link to="/admin-portal/issues" className="block">
+          <Card className="hover:border-danger/40 transition-colors h-full">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-display font-semibold">Software issues</p>
+                <p className="text-sm text-ink/50 mt-1">Glitches reported by farmers, public users and PDMA officers.</p>
               </div>
               <ArrowRight size={18} className="text-ink/30 shrink-0" />
             </div>

@@ -74,6 +74,7 @@ export default function DistrictSearch() {
           onFocus={() => setOpen(true)}
           onKeyDown={onKeyDown}
           placeholder={t("searchDistrict")}
+          dir={lang === "ur" ? "rtl" : undefined}
           className={`bg-transparent outline-none text-sm w-full placeholder:text-ink/30 ${urduClass}`}
         />
       </div>

@@ -2,7 +2,7 @@ import { Outlet } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import { MobileNavProvider } from "../components/MobileNavContext";
 import {
-  LayoutDashboard, Map, TrendingUp, Bell, FileWarning, FileText, GitCompare, Settings,
+  LayoutDashboard, Map, TrendingUp, Bell, FileWarning, FileText, GitCompare, Settings, Bug,
 } from "lucide-react";
 
 // PDMA Officer portal — a signed-in officer's day-to-day tools: drought
@@ -17,6 +17,7 @@ const navItems = [
   { to: "/alerts", labelKey: "navAlerts", icon: Bell },
   { to: "/complaints", labelKey: "navComplaints", icon: FileWarning },
   { to: "/reports", labelKey: "navReports", icon: FileText },
+  { to: "/report-issue", labelKey: "navReportIssue", icon: Bug },
   { to: "/settings", labelKey: "navSettings", icon: Settings },
 ];
 

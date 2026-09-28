@@ -1,13 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import logo from "../assets/logo.jpeg";
 import {
-  Phone, Shield, Sprout, Users2, ShieldCheck, MapPin, Clock, CheckCircle2, ArrowLeft,
+  Phone, Shield, Sprout, Users2, ShieldCheck, MapPin, Clock, ArrowLeft, Plus, Trash2,
 } from "lucide-react";
 import { useLanguage } from "../i18n/LanguageContext";
 import LanguageToggle from "../components/LanguageToggle";
 import ThemeToggle from "../components/ThemeToggle";
-import { districts } from "../data/dummyData";
+import { getDistricts } from "../services/droughtService";
 import { addRipple } from "../utils/ripple";
 import { useRegistrations } from "../store/RegistrationsContext";
 
@@ -34,9 +34,27 @@ export default function Signup() {
   const [step, setStep] = useState("phone"); // phone -> otp -> details -> processing -> pending
   const [phone, setPhone] = useState("");
 
-  const [farmerForm, setFarmerForm] = useState({ district: "", tehsil: "", crop: "", farmSize: "", language: lang });
+  const [farmerForm, setFarmerForm] = useState({ district: "", tehsil: "", language: lang, fields: [{ fieldName: "Field 1", crop: "", areaAcres: "" }] });
+  const [districts, setDistricts] = useState([]);
   const [publicForm, setPublicForm] = useState({ district: "", name: "", language: lang });
   const [adminForm, setAdminForm] = useState({ designation: "", district: "" });
+
+  useEffect(() => {
+    getDistricts().then((result) => {
+      const list = Array.isArray(result) ? result : result?.districts || [];
+      setDistricts(list.map((d, i) => ({ id: d.id ?? i, name: d.name || d.district })).filter((d) => d.name));
+    }).catch(console.error);
+  }, []);
+
+  function updateFarmerField(index, key, value) {
+    setFarmerForm((prev) => ({ ...prev, fields: prev.fields.map((f, i) => i === index ? { ...f, [key]: value } : f) }));
+  }
+  function addFarmerField() {
+    setFarmerForm((prev) => ({ ...prev, fields: [...prev.fields, { fieldName: `Field ${prev.fields.length + 1}`, crop: "", areaAcres: "" }] }));
+  }
+  function removeFarmerField(index) {
+    setFarmerForm((prev) => ({ ...prev, fields: prev.fields.filter((_, i) => i !== index) }));
+  }
 
   function requestOtp(e) {
     e.preventDefault();
@@ -58,7 +76,7 @@ export default function Signup() {
 
     const record =
       role === "farmer"
-        ? { role, phone, district: farmerForm.district, tehsil: farmerForm.tehsil, crop: farmerForm.crop, farmSize: farmerForm.farmSize }
+        ? { role, phone, district: farmerForm.district, tehsil: farmerForm.tehsil, fields: farmerForm.fields, crop: farmerForm.fields[0]?.crop || "", farmSize: `${farmerForm.fields.reduce((sum, f) => sum + Number(f.areaAcres || 0), 0)} acres` }
         : role === "public"
         ? { role, phone, district: publicForm.district, name: publicForm.name || "—" }
         : { role, phone, designation: adminForm.designation, district: adminForm.district };
@@ -77,7 +95,7 @@ export default function Signup() {
   const urduClass = lang === "ur" ? "i18n-ur" : "";
 
   return (
-    <div className={`min-h-screen bg-forest flex items-center justify-center p-6 ${urduClass}`}>
+    <div dir={lang === "ur" ? "rtl" : undefined} className={`min-h-screen bg-forest flex items-center justify-center p-6 ${urduClass}`}>
       <div className="w-full max-w-md">
         <div className="flex justify-end gap-2 mb-3">
           <ThemeToggle className="!bg-white/10 !border-white/10 !text-mist hover:!bg-white/15" />
@@ -190,16 +208,20 @@ export default function Signup() {
                 <input required value={farmerForm.tehsil} onChange={(e) => setFarmerForm({ ...farmerForm, tehsil: e.target.value })} placeholder={t("fieldTehsilPlaceholder")} className="form-input" />
               </Field>
 
-              <Field label={t("fieldPrimaryCrop")}>
-                <select required value={farmerForm.crop} onChange={(e) => setFarmerForm({ ...farmerForm, crop: e.target.value })} className="form-select">
-                  <option value="">{t("selectOption")}</option>
-                  {crops.map((c) => <option key={c.value} value={c.value}>{t(c.labelKey)}</option>)}
-                </select>
-              </Field>
-
-              <Field label={t("fieldFarmSize")}>
-                <input required value={farmerForm.farmSize} onChange={(e) => setFarmerForm({ ...farmerForm, farmSize: e.target.value })} placeholder={t("fieldFarmSizePlaceholder")} className="form-input" />
-              </Field>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-medium text-ink/50 uppercase tracking-wide">Your fields</p>
+                  <button type="button" onClick={addFarmerField} className="text-xs text-primary font-medium flex items-center gap-1"><Plus size={13}/> Add field</button>
+                </div>
+                {farmerForm.fields.map((field, index) => (
+                  <div key={index} className="border border-line rounded-lg p-3 bg-surface space-y-2">
+                    <div className="flex justify-between"><span className="text-sm font-medium">Field {index + 1}</span>{farmerForm.fields.length > 1 && <button type="button" onClick={() => removeFarmerField(index)} className="text-xs text-danger flex gap-1 items-center"><Trash2 size={12}/>Remove</button>}</div>
+                    <input required value={field.fieldName} onChange={(e) => updateFarmerField(index, "fieldName", e.target.value)} placeholder="Field name" className="form-input" />
+                    <select required value={field.crop} onChange={(e) => updateFarmerField(index, "crop", e.target.value)} className="form-select"><option value="">{t("selectOption")}</option>{crops.map((c) => <option key={c.value} value={c.value}>{t(c.labelKey)}</option>)}</select>
+                    <div className="flex gap-2 items-center"><input required type="number" min="0.01" step="0.01" value={field.areaAcres} onChange={(e) => updateFarmerField(index, "areaAcres", e.target.value)} placeholder="Area" className="form-input"/><span className="text-xs text-ink/50">acres</span></div>
+                  </div>
+                ))}
+              </div>
 
               <Field label={t("fieldLanguagePref")}>
                 <div className="grid grid-cols-2 gap-2">
