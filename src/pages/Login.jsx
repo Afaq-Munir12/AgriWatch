@@ -353,12 +353,6 @@ export default function Login() {
                     Continue with Google
                   </button>
 
-                  <div className="mt-6 pt-5 border-t border-line flex flex-wrap items-center justify-center gap-x-2 gap-y-2 text-xs">
-                    <span className="text-ink/50">{t("newHereSignUp")}</span>
-                    <Link to="/signup" className="font-semibold text-primary hover:underline">{t("signUp")}</Link>
-                    <span className="text-ink/25">•</span>
-                    <Link to="/guest" className="inline-flex items-center gap-1 font-medium text-ink/55 hover:text-ink"><Eye size={13} /> {t("continueAsGuest")}</Link>
-                  </div>
                 </>
               ) : (
                 <form onSubmit={verifyOtp} className="space-y-5 animate-fade-in">
@@ -396,6 +390,15 @@ export default function Login() {
                 </form>
               )}
               </div>
+
+              {step === "phone" && (
+                <div className="auth-card-footer mt-3 pt-3 border-t border-line flex flex-wrap items-center justify-center gap-x-2 gap-y-2 text-xs">
+                  <span className="text-ink/50">{t("newHereSignUp")}</span>
+                  <Link to="/signup" className="font-semibold text-primary hover:underline">{t("signUp")}</Link>
+                  <span className="text-ink/25">•</span>
+                  <Link to="/guest" className="inline-flex items-center gap-1 font-medium text-ink/55 hover:text-ink"><Eye size={13} /> {t("continueAsGuest")}</Link>
+                </div>
+              )}
             </div>
 
             <Link to="/admin-portal/login" className="auth-portal-link">

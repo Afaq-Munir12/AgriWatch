@@ -58,15 +58,17 @@ export default function Topbar({ title, subtitle }) {
         </div>
       </div>
 
-      <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
         <DistrictSearch />
 
-        <NotificationDropdown viewAllHref={alertsHref} />
+        <NotificationDropdown viewAllHref={alertsHref} label={t("navAlerts")} />
 
         <ProfileDropdown
           displayName={displayName}
           subtitle={displaySubtitle}
           initials={initials}
+          avatarUrl={profile.avatarUrl}
+          email={profile.email}
           profileHref={profileHref}
         />
       </div>

@@ -10,6 +10,7 @@ import LanguageToggle from "../components/LanguageToggle";
 import ThemeToggle from "../components/ThemeToggle";
 import { addRipple } from "../utils/ripple";
 import { clearPortalAccess } from "../utils/authAccess";
+import pakistanOutline from "../assets/pakistan-outline.png";
 import "./home.css";
 
 const platformKeys = [
@@ -100,13 +101,12 @@ function useCardFx() {
 /* ---------- hero visual: animated Pakistan scan ---------- */
 
 const scanPoints = [
-  // Approximate monitoring locations plotted against the real Pakistan silhouette.
-  { x: 289, y: 83, c: "var(--color-primary-light)", d: 450, label: "GB" },
-  { x: 245, y: 119, c: "var(--color-accent)", d: 700, label: "KPK" },
-  { x: 269, y: 125, c: "var(--color-primary-light)", d: 900, label: "ISB" },
-  { x: 290, y: 165, c: "var(--color-primary-light)", d: 1080, label: "Punjab" },
-  { x: 172, y: 190, c: "var(--color-danger)", d: 1260, label: "Balochistan" },
-  { x: 173, y: 288, c: "var(--color-accent)", d: 1440, label: "Sindh" },
+  { left: "59%", top: "25%", c: "var(--color-primary-light)", d: 450, label: "GB" },
+  { left: "51%", top: "38%", c: "var(--color-accent)", d: 700, label: "KPK" },
+  { left: "58%", top: "43%", c: "var(--color-primary-light)", d: 900, label: "ISB" },
+  { left: "62%", top: "56%", c: "var(--color-primary-light)", d: 1080, label: "Punjab" },
+  { left: "37%", top: "58%", c: "var(--color-danger)", d: 1260, label: "Balochistan" },
+  { left: "46%", top: "77%", c: "var(--color-accent)", d: 1440, label: "Sindh" },
 ];
 
 function PakistanScanCard({ t }) {
@@ -130,38 +130,27 @@ function PakistanScanCard({ t }) {
         <div className="hm-satellite-orbit">
           <div className="hm-satellite"><Satellite size={16} /></div>
         </div>
-
-        <svg viewBox="0 0 420 340" className="hm-pak-svg" role="img" aria-label="Animated Pakistan drought monitoring map">
-          <defs>
-            <linearGradient id="pakFill" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="rgba(141,193,82,.30)" />
-              <stop offset="100%" stopColor="rgba(32,106,63,.08)" />
-            </linearGradient>
-            <filter id="softGlow">
-              <feGaussianBlur stdDeviation="3" result="blur" />
-              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-            </filter>
-          </defs>
-
-          <path
-            className="hm-pak-outline"
-            d="M 345.0 91.3 L 329.6 106.9 L 311.9 109.7 L 287.7 105.1 L 279.9 113.1 L 285.6 129.4 L 291.1 141.9 L 304.0 151.0 L 290.4 161.8 L 290.6 175.0 L 275.2 193.6 L 265.2 212.4 L 248.5 231.8 L 230.1 230.4 L 212.5 249.8 L 222.9 258.1 L 224.8 272.4 L 233.7 281.8 L 236.9 297.7 L 201.8 297.6 L 191.2 310.0 L 179.6 305.3 L 174.8 292.0 L 162.5 277.9 L 133.2 281.4 L 107.3 281.7 L 84.9 284.3 L 90.9 262.8 L 113.9 253.2 L 112.6 244.7 L 104.9 241.7 L 104.5 225.4 L 89.3 217.2 L 82.9 206.0 L 75.0 196.3 L 101.7 205.7 L 117.6 203.0 L 127.1 205.3 L 130.3 201.3 L 141.4 202.9 L 162.1 195.2 L 162.7 179.4 L 171.5 168.9 L 183.4 169.0 L 185.1 163.8 L 197.3 161.4 L 203.2 163.1 L 209.4 157.9 L 208.5 146.8 L 215.3 135.6 L 225.4 130.9 L 219.1 118.6 L 234.3 119.2 L 238.7 112.5 L 238.0 105.4 L 245.9 97.6 L 244.1 88.4 L 240.3 80.6 L 249.6 72.5 L 266.7 68.6 L 285.0 66.5 L 293.1 63.0 L 302.4 61.0 L 314.1 69.6 L 318.8 83.8 L 345.0 91.3 Z"
-            fill="url(#pakFill)"
-            stroke="var(--color-leaf)"
-            strokeWidth="2.2"
-            strokeLinejoin="round"
-            filter="url(#softGlow)"
+        <div className="hm-pak-map-wrap" role="img" aria-label="Pakistan drought monitoring map">
+          <img
+            src={pakistanOutline}
+            alt=""
+            aria-hidden="true"
+            className="hm-pak-outline-img"
           />
-
-
+          <div className="hm-pak-map-fill" />
           {scanPoints.map((p, i) => (
-            <g key={p.label} className="hm-map-point" style={{ "--d": `${p.d}ms` }}>
-              <circle className="hm-pulse-ring" cx={p.x} cy={p.y} r="5" fill="none" stroke={p.c} strokeWidth="1.6" />
-              <circle className="hm-pin" cx={p.x} cy={p.y} r="4.8" fill={p.c} />
-              {i === 2 && <circle cx={p.x} cy={p.y} r="10" fill="none" stroke={p.c} opacity=".35" />}
-            </g>
+            <span
+              key={p.label}
+              className="hm-map-point hm-map-point-html"
+              title={p.label}
+              style={{ left: p.left, top: p.top, "--d": `${p.d}ms`, "--point-color": p.c }}
+            >
+              <i className="hm-pulse-ring-html" />
+              <i className="hm-pin-html" />
+              {i === 2 && <i className="hm-point-halo" />}
+            </span>
           ))}
-        </svg>
+        </div>
 
         <div className="hm-scan-status hm-scan-status-a">
           <Leaf size={13} /> <span>NDVI</span><b>0.61</b>

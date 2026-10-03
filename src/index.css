@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&family=Noto+Nastaliq+Urdu:wght@500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Outfit:wght@500;600;700&family=IBM+Plex+Mono:wght@500;600&family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 @theme {
@@ -26,8 +26,8 @@
      being light. */
   --color-mist: #F7F8F2;
 
-  --font-display: 'Space Grotesk', sans-serif;
-  --font-body: 'Inter', sans-serif;
+  --font-display: 'Outfit', sans-serif;
+  --font-body: 'Manrope', sans-serif;
   --font-mono: 'IBM Plex Mono', monospace;
 }
 
@@ -72,23 +72,35 @@ body {
    still-English page content and garbling it. Components that are fully
    translated (Sidebar, Login, Home, Guest view, Topbar, badges) opt in
    explicitly via this class. */
-.i18n-ur, .i18n-ur .font-display {
-  font-family: 'Noto Nastaliq Urdu', var(--font-body);
+.i18n-ur,
+.i18n-ur .font-display,
+.i18n-ur button,
+.i18n-ur input,
+.i18n-ur select,
+.i18n-ur textarea {
+  font-family: 'Noto Sans Arabic', var(--font-body) !important;
 }
 
-/* Nastaliq's loops and diacritics overlap the line below at normal Latin
-   leading, and letter-spacing breaks the cursive joins between Urdu
-   letters — both are normalized here so the script renders cleanly. */
+/* Urdu UI uses a clean Naskh-style font instead of Nastaliq for
+   dashboards and long headings. It stays connected naturally while
+   providing enough vertical space for dots/diacritics. */
 .i18n-ur {
-  line-height: 2;
+  line-height: 1.9;
+  word-spacing: .08em;
 }
 .i18n-ur .leading-tight,
 .i18n-ur .leading-snug,
 .i18n-ur .leading-none {
-  line-height: 2 !important;
+  line-height: 1.75 !important;
 }
 .i18n-ur [class*="tracking-"] {
-  letter-spacing: normal !important;
+  letter-spacing: 0 !important;
+}
+.i18n-ur h1,
+.i18n-ur h2,
+.i18n-ur h3,
+.i18n-ur .font-display {
+  font-weight: 700;
 }
 
 .font-display { font-family: var(--font-display); }
@@ -1028,3 +1040,316 @@ html[dir="rtl"] .sidebar-polished nav a:hover { transform:translateX(-3px); }
 .pdma-page .farmer-page-hero::before { border-color:rgba(139,207,91,.17); box-shadow:0 0 0 52px rgba(139,207,91,.055),0 0 0 104px rgba(139,207,91,.025); }
 .pdma-page .farmer-hero-eyebrow { color:#cceeb7; }
 .pdma-page .farmer-form-card,.pdma-page .farmer-data-card { border-radius:1.2rem; }
+
+
+/* ============================================================
+   Auth compact + typography refinement — latest master
+   ============================================================ */
+.auth-page {
+  padding: 1rem;
+}
+
+.auth-layout {
+  --auth-panel-h: 630px;
+  width: min(1120px, 100%);
+  min-height: calc(100vh - 2rem);
+  padding: .5rem 0;
+  gap: 1.5rem;
+}
+
+.auth-form-card,
+.auth-status-card {
+  border-radius: 1.55rem;
+  padding: 1.55rem;
+}
+
+.auth-card-header {
+  margin-bottom: .95rem;
+  gap: .75rem;
+}
+
+.auth-card-header h1 {
+  line-height: 1.12;
+}
+
+.auth-card-body-scroll {
+  padding-inline-end: .3rem;
+}
+
+.role-choice {
+  min-height: 62px;
+  padding: .62rem .4rem;
+  border-radius: .82rem;
+}
+
+.phone-control,
+.auth-primary-btn,
+.auth-google-btn {
+  min-height: 46px;
+}
+
+.auth-divider {
+  margin: .82rem 0;
+}
+
+.signup-progress {
+  margin-bottom: 1rem;
+}
+
+@media (min-width: 1024px) {
+  .auth-layout {
+    grid-template-columns: minmax(0, 1.03fr) minmax(440px, .97fr);
+    align-items: center;
+  }
+
+  .auth-equal-panel {
+    height: var(--auth-panel-h);
+    min-height: var(--auth-panel-h);
+    max-height: var(--auth-panel-h);
+  }
+
+  .auth-form-column {
+    min-height: var(--auth-panel-h);
+  }
+
+  .auth-form-wrap {
+    width: 100%;
+    max-width: 520px;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    margin-inline: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: .8rem;
+  }
+
+  .auth-equal-card,
+  .auth-login-card,
+  .auth-scroll-card {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: 610px !important;
+  }
+
+  .auth-login-card {
+    max-height: none !important;
+  }
+
+  .auth-scroll-card {
+    overflow: hidden;
+  }
+
+  .auth-card-body-scroll {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .auth-visual-panel {
+    padding: 2.2rem 2.5rem !important;
+  }
+
+  .auth-visual-panel .mt-20 {
+    margin-top: 3.4rem !important;
+  }
+
+  .auth-visual-panel h2 {
+    font-size: clamp(2.35rem, 3.1vw, 3.25rem) !important;
+    line-height: 1.14 !important;
+  }
+}
+
+@media (max-width: 1023px) {
+  .auth-layout {
+    width: min(540px, 100%);
+    min-height: calc(100vh - 2rem);
+    padding: .5rem 0 1rem;
+  }
+
+  .auth-form-wrap {
+    max-width: 500px;
+  }
+
+  .auth-form-card {
+    padding: 1.35rem;
+  }
+
+  .auth-card-header {
+    align-items: flex-start;
+  }
+
+  .auth-card-tools {
+    flex-direction: column;
+  }
+}
+
+/* Urdu homepage / auth readability */
+.i18n-ur .hm-hero-item.font-display {
+  font-size: clamp(2.15rem, 5vw, 3.65rem) !important;
+  line-height: 1.55 !important;
+}
+
+.i18n-ur .hm-hero-item.text-ink\/60,
+.i18n-ur .hm-hero-item p,
+.i18n-ur .home-hero p {
+  line-height: 2 !important;
+}
+
+.i18n-ur .auth-card-header h1,
+.i18n-ur .auth-visual-panel h2 {
+  line-height: 1.6 !important;
+}
+
+.i18n-ur .auth-label {
+  letter-spacing: 0 !important;
+  font-size: .75rem;
+}
+
+.i18n-ur .role-choice {
+  line-height: 1.55;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-page *,
+  .i18n-ur * {
+    scroll-behavior: auto;
+  }
+}
+
+
+/* ============================================================
+   Topbar + auth sizing refinement — user/profile/alerts
+   ============================================================ */
+.dashboard-topbar {
+  min-height: 78px;
+}
+.topbar-alert-button {
+  box-shadow: 0 5px 16px -14px rgba(0,0,0,.42);
+  white-space: nowrap;
+}
+.topbar-profile-trigger {
+  max-width: 245px;
+}
+.topbar-profile-trigger:hover {
+  box-shadow: 0 7px 20px -18px rgba(0,0,0,.5);
+}
+@media (max-width: 639px) {
+  .dashboard-topbar { min-height: 68px; padding-inline: .85rem; }
+  .topbar-profile-trigger { border-left: 0; padding-left: .25rem; padding-right: .25rem; }
+  .topbar-alert-button { padding-inline: .7rem; }
+}
+
+/* Login, signup and Google complete-profile use one identical card frame.
+   Longer forms scroll inside instead of changing the card height. */
+:root {
+  --auth-card-unified-h: 590px;
+}
+@media (min-width: 1024px) {
+  .auth-form-wrap > .auth-equal-card,
+  .auth-form-wrap > .auth-login-card,
+  .auth-form-wrap > .auth-scroll-card {
+    height: var(--auth-card-unified-h) !important;
+    min-height: var(--auth-card-unified-h) !important;
+    max-height: var(--auth-card-unified-h) !important;
+    overflow: hidden !important;
+  }
+  .auth-form-wrap > .auth-equal-card .auth-card-body-scroll,
+  .auth-form-wrap > .auth-login-card .auth-card-body-scroll,
+  .auth-form-wrap > .auth-scroll-card .auth-card-body-scroll {
+    min-height: 0;
+    flex: 1 1 auto;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
+
+
+/* ============================================================
+   Final auth/topbar alignment fix
+   ============================================================ */
+.topbar-alert-button {
+  overflow: visible !important;
+  position: relative;
+  transform: none;
+}
+.topbar-alert-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 22px -18px rgba(0,0,0,.55);
+}
+.topbar-alert-badge {
+  min-width: 19px;
+  line-height: 1;
+  box-shadow: 0 3px 8px rgba(193,68,45,.35);
+}
+
+.auth-card-footer {
+  flex: 0 0 auto;
+}
+
+@media (min-width: 1024px) {
+  .auth-layout {
+    --auth-panel-h: 620px;
+    width: min(1120px, 100%);
+    min-height: 100vh;
+    padding: max(1.25rem, calc((100vh - var(--auth-panel-h)) / 2)) 0 2rem;
+    align-items: start !important;
+  }
+
+  .auth-equal-panel {
+    height: var(--auth-panel-h) !important;
+    min-height: var(--auth-panel-h) !important;
+    max-height: var(--auth-panel-h) !important;
+  }
+
+  .auth-form-column {
+    align-items: flex-start !important;
+    min-height: 0 !important;
+  }
+
+  .auth-form-wrap {
+    width: 100%;
+    max-width: 520px;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    margin-inline: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start !important;
+    gap: .75rem;
+  }
+
+  /* Login, Signup and Complete Profile: same main-card height and same top line. */
+  .auth-form-wrap > .auth-equal-card,
+  .auth-form-wrap > .auth-login-card,
+  .auth-form-wrap > .auth-scroll-card {
+    height: var(--auth-panel-h) !important;
+    min-height: var(--auth-panel-h) !important;
+    max-height: var(--auth-panel-h) !important;
+    overflow: hidden !important;
+  }
+
+  .auth-form-wrap > .auth-equal-card .auth-card-body-scroll,
+  .auth-form-wrap > .auth-login-card .auth-card-body-scroll,
+  .auth-form-wrap > .auth-scroll-card .auth-card-body-scroll {
+    min-height: 0;
+    flex: 1 1 auto;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  /* Admin Portal access stays beneath the white login card and never shifts it upward. */
+  .auth-form-wrap > .auth-portal-link {
+    width: 100%;
+    margin-top: 0 !important;
+    flex: 0 0 auto;
+  }
+}
+
+@media (max-width: 639px) {
+  .topbar-alert-badge {
+    top: -7px !important;
+    right: -7px !important;
+  }
+}

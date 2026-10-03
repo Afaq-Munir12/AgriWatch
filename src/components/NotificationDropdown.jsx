@@ -22,7 +22,7 @@ const toneFor = {
 
 const PANEL_WIDTH = 320;
 
-export default function NotificationDropdown({ viewAllHref = "/pdma/alerts" }) {
+export default function NotificationDropdown({ viewAllHref = "/pdma/alerts", label = "Alerts" }) {
   const [open, setOpen] = useState(false);
   const [readIds, setReadIds] = useState([]);
   const [pos, setPos] = useState({ top: 0, left: 0 });
@@ -83,13 +83,14 @@ export default function NotificationDropdown({ viewAllHref = "/pdma/alerts" }) {
         onClick={toggle}
         onMouseDown={addRipple}
         data-tour="notifications"
-        className="btn-animated relative p-2 rounded-lg border border-line bg-surface hover:bg-paper-dim transition-colors"
-        aria-label="Notifications"
+        className="topbar-alert-button relative min-h-10 px-3 rounded-xl border border-line bg-surface hover:bg-paper-dim transition-colors flex items-center gap-2"
+        aria-label={label}
       >
-        <Bell size={17} className="text-ink/70" />
+        <Bell size={17} className="text-ink/70 shrink-0" />
+        <span className="hidden lg:inline text-sm font-semibold text-ink/75">{label}</span>
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-danger text-white text-[9px] flex items-center justify-center font-mono">
-            {unreadCount}
+          <span className="topbar-alert-badge absolute -top-2 -right-2 w-[19px] h-[19px] rounded-full bg-danger text-white text-[10px] flex items-center justify-center font-mono font-semibold ring-2 ring-paper z-20">
+            {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
       </button>
