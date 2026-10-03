@@ -10,6 +10,8 @@ import {
   Droplets,
   Leaf,
   ShieldAlert,
+  Sparkles,
+  MapPin,
 } from "lucide-react";
 
 // ============================================================
@@ -188,7 +190,29 @@ export default function CropCalendar() {
         subtitle={`${USER_DISTRICT} — ${USER_PROVINCE}`}
       />
 
-      <main className="p-4 sm:p-8 space-y-5">
+      <main className="farmer-page p-4 sm:p-8 space-y-6">
+        <section className="farmer-page-hero" dir="ltr">
+          <div className="farmer-hero-content">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <span className="farmer-hero-eyebrow"><Sparkles size={13} /> Seasonal crop planning</span>
+                <h2 className="farmer-hero-title">Crop calendar for {USER_DISTRICT}</h2>
+                <p className="farmer-hero-copy">Use regional sowing and harvest windows as a planning reference alongside AgriWatch drought and irrigation guidance.</p>
+                <div className="farmer-hero-actions">
+                  <span className="farmer-hero-button"><MapPin size={14} /> {USER_PROVINCE}</span>
+                  <span className="farmer-hero-button"><CalendarDays size={14} /> {currentMonthName}</span>
+                </div>
+              </div>
+              <div className="w-12 h-12 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center"><Sprout size={22} /></div>
+            </div>
+            <div className="farmer-hero-stats">
+              <div className="farmer-hero-stat"><span>Calendar crops</span><strong>{crops.length}</strong></div>
+              <div className="farmer-hero-stat"><span>Sowing now</span><strong>{crops.filter((crop) => crop.sowingMonths.includes(currentMonth)).length}</strong></div>
+              <div className="farmer-hero-stat"><span>Current month</span><strong>{currentMonthName}</strong></div>
+            </div>
+          </div>
+        </section>
+
         {/* ====================================================
             REGIONAL INFORMATION
         ==================================================== */}
@@ -282,6 +306,7 @@ export default function CropCalendar() {
             <Card
               key={crop.crop}
               dir="ltr"
+              className="farmer-form-card"
             >
               {/* HEADER */}
 

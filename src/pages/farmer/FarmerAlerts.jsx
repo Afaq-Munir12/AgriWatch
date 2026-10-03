@@ -14,6 +14,9 @@ import {
   Bell,
   AlertTriangle,
   RefreshCw,
+  MapPin,
+  Radio,
+  Sparkles,
 } from "lucide-react";
 
 
@@ -319,7 +322,7 @@ export default function FarmerAlerts() {
       />
 
       <main
-        className="p-4 sm:p-8 space-y-5"
+        className="farmer-page p-4 sm:p-8 space-y-6"
         dir="ltr"
       >
 
@@ -350,63 +353,37 @@ export default function FarmerAlerts() {
         )}
 
 
-        {/* ================================================ */}
-        {/* HEADER CARD */}
-        {/* ================================================ */}
-
-        <Card>
-          <div className="flex items-center justify-between gap-4 flex-wrap">
-
-            <div className="flex items-center gap-3">
-
-              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                <Bell
-                  size={19}
-                  className="text-primary"
-                />
-              </div>
-
+        <section className="farmer-page-hero">
+          <div className="farmer-hero-content">
+            <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <p className="font-display font-semibold">
-                  District Drought Alerts
-                </p>
-
-                <p className="text-xs text-ink/45 mt-1">
-                  {profileLoading
-                    ? "Loading farmer district..."
-                    : farmerDistrict
-                    ? `Official alerts for ${farmerDistrict}`
-                    : "No district assigned"}
-                </p>
+                <span className="farmer-hero-eyebrow"><Sparkles size={13} /> PDMA district alerts</span>
+                <h2 className="farmer-hero-title">Official drought alerts for your area</h2>
+                <p className="farmer-hero-copy">Stay aware of district warnings, severity changes and official action messages sent through AgriWatch.</p>
+                <div className="farmer-hero-actions">
+                  <span className="farmer-hero-button"><MapPin size={14} /> {farmerDistrict || "District not assigned"}</span>
+                  <button
+                    type="button"
+                    onClick={handleRefresh}
+                    disabled={loadingAlerts || profileLoading || !farmerDistrict}
+                    className="farmer-hero-button disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <RefreshCw size={14} className={loadingAlerts ? "animate-spin" : ""} /> Refresh alerts
+                  </button>
+                </div>
               </div>
-
+              <div className="w-12 h-12 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center"><Bell size={22} /></div>
             </div>
 
-
-            <button
-              type="button"
-              onClick={handleRefresh}
-              disabled={
-                loadingAlerts ||
-                profileLoading ||
-                !farmerDistrict
-              }
-              className="flex items-center gap-2 border border-line rounded-lg px-3 py-2 text-xs font-medium hover:bg-paper-dim disabled:opacity-50 disabled:cursor-not-allowed transition"
-            >
-              <RefreshCw
-                size={14}
-                className={
-                  loadingAlerts
-                    ? "animate-spin"
-                    : ""
-                }
-              />
-
-              Refresh
-            </button>
-
+            {!profileLoading && !loadingAlerts && !alertsError && (
+              <div className="farmer-hero-stats">
+                <div className="farmer-hero-stat"><span>Total alerts</span><strong>{statistics.total}</strong></div>
+                <div className="farmer-hero-stat"><span>Severe + extreme</span><strong>{statistics.severe + statistics.extreme}</strong></div>
+                <div className="farmer-hero-stat"><span>Monitoring</span><strong><Radio size={16} className="inline me-2" />Live</strong></div>
+              </div>
+            )}
           </div>
-        </Card>
+        </section>
 
 
         {/* ================================================ */}
@@ -418,8 +395,8 @@ export default function FarmerAlerts() {
           !alertsError && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
 
-              <Card>
-                <p className="text-xs uppercase text-ink/40">
+              <Card className="farmer-data-card">
+                <p className="farmer-card-label">
                   Total Alerts
                 </p>
 
@@ -429,8 +406,8 @@ export default function FarmerAlerts() {
               </Card>
 
 
-              <Card>
-                <p className="text-xs uppercase text-ink/40">
+              <Card className="farmer-data-card">
+                <p className="farmer-card-label">
                   Extreme
                 </p>
 
@@ -440,8 +417,8 @@ export default function FarmerAlerts() {
               </Card>
 
 
-              <Card>
-                <p className="text-xs uppercase text-ink/40">
+              <Card className="farmer-data-card">
+                <p className="farmer-card-label">
                   Severe
                 </p>
 
@@ -451,8 +428,8 @@ export default function FarmerAlerts() {
               </Card>
 
 
-              <Card>
-                <p className="text-xs uppercase text-ink/40">
+              <Card className="farmer-data-card">
+                <p className="farmer-card-label">
                   Moderate
                 </p>
 
@@ -592,7 +569,7 @@ export default function FarmerAlerts() {
                 return (
                   <Card
                     key={alertId}
-                    className="hover:shadow-sm transition-shadow"
+                    className="farmer-list-row !p-5"
                   >
 
                     <div className="flex items-start justify-between gap-4">

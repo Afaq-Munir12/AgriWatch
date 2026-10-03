@@ -17,6 +17,7 @@ import Predictions from "./pages/admin/Predictions";
 import Alerts from "./pages/admin/Alerts";
 import Complaints from "./pages/admin/Complaints";
 import RequireAdminAuth from "./components/RequireAdminAuth";
+import RequirePortalAuth from "./components/RequirePortalAuth";
 import AdminPortalLayout from "./layouts/AdminPortalLayout";
 import AdminPortalLogin from "./pages/adminportal/AdminPortalLogin";
 import AdminPortalOverview from "./pages/adminportal/AdminPortalOverview";
@@ -71,45 +72,50 @@ export default function App() {
           </Route>
         </Route>
 
-        {/* PDMA Officer portal — day-to-day drought monitoring & farmer complaints for a signed-in PDMA officer */}
-        <Route element={<AdminLayout />}>
-          <Route path="/pdma" element={<Dashboard />} />
-          <Route path="/pdma/district/:id" element={<DistrictDetail />} />
-          <Route path="/pdma/compare" element={<DistrictCompare />} />
-          <Route path="/pdma/map" element={<DroughtMap />} />
-          <Route path="/pdma/predictions" element={<Predictions />} />
-          <Route path="/pdma/alerts" element={<Alerts />} />
-          <Route path="/pdma/complaints" element={<Complaints />} />
-          <Route path="/pdma/report-issue" element={<ReportIssue role="pdma" />} />
-          <Route path="/pdma/reports" element={<Reports />} />
-          <Route path="/pdma/settings" element={<AdminSettings />} />
+        {/* PDMA Officer portal — protected by an approved PDMA session + fresh portal access grant. */}
+        <Route element={<RequirePortalAuth role="pdma" />}>
+          <Route element={<AdminLayout />}>
+            <Route path="/pdma" element={<Dashboard />} />
+            <Route path="/pdma/district/:id" element={<DistrictDetail />} />
+            <Route path="/pdma/compare" element={<DistrictCompare />} />
+            <Route path="/pdma/map" element={<DroughtMap />} />
+            <Route path="/pdma/predictions" element={<Predictions />} />
+            <Route path="/pdma/alerts" element={<Alerts />} />
+            <Route path="/pdma/complaints" element={<Complaints />} />
+            <Route path="/pdma/report-issue" element={<ReportIssue role="pdma" />} />
+            <Route path="/pdma/reports" element={<Reports />} />
+            <Route path="/pdma/settings" element={<AdminSettings />} />
+          </Route>
         </Route>
 
-        <Route element={<FarmerLayout />}>
-          <Route path="/farmer" element={<FarmerHome />} />
-          <Route path="/farmer/district/:id" element={<DistrictDetail />} />
-          <Route path="/farmer/crops" element={<CropRecommendations />} />
-          <Route path="/farmer/irrigation" element={<IrrigationScheduler />} />
-          <Route path="/farmer/yield-risk" element={<YieldRisk />} />
-          <Route path="/farmer/alerts" element={<FarmerAlerts />} />
-          <Route path="/farmer/complaints" element={<FarmerComplaints />} />
-          <Route path="/farmer/report-issue" element={<ReportIssue role="farmer" />} />
-          <Route path="/farmer/calendar" element={<CropCalendar />} />
-          <Route path="/farmer/settings" element={<FarmerSettings />} />
+        <Route element={<RequirePortalAuth role="farmer" />}>
+          <Route element={<FarmerLayout />}>
+            <Route path="/farmer" element={<FarmerHome />} />
+            <Route path="/farmer/district/:id" element={<DistrictDetail />} />
+            <Route path="/farmer/crops" element={<CropRecommendations />} />
+            <Route path="/farmer/irrigation" element={<IrrigationScheduler />} />
+            <Route path="/farmer/yield-risk" element={<YieldRisk />} />
+            <Route path="/farmer/alerts" element={<FarmerAlerts />} />
+            <Route path="/farmer/complaints" element={<FarmerComplaints />} />
+            <Route path="/farmer/report-issue" element={<ReportIssue role="farmer" />} />
+            <Route path="/farmer/calendar" element={<CropCalendar />} />
+            <Route path="/farmer/settings" element={<FarmerSettings />} />
+          </Route>
         </Route>
 
-        <Route element={<PublicLayout />}>
-          <Route path="/public" element={<PublicHome />} />
-          <Route path="/public/district/:id" element={<DistrictDetail />} />
-          <Route path="/public/compare" element={<DistrictCompare />} />
-          <Route path="/public/map" element={<RegionalMap />} />
-          <Route path="/public/alerts" element={<PublicAlerts />} />
-          <Route path="/public/reports" element={<CommunityReports />} />
-          <Route path="/public/complaint" element={<PublicComplaint />} />
-          <Route path="/public/report-issue" element={<ReportIssue role="public" />} />
-          <Route path="/public/awareness" element={<Awareness />} />
-          <Route path="/public/calendar" element={<CropCalendar />} />
-          <Route path="/public/settings" element={<PublicSettings />} />
+        <Route element={<RequirePortalAuth role="public" />}>
+          <Route element={<PublicLayout />}>
+            <Route path="/public" element={<PublicHome />} />
+            <Route path="/public/district/:id" element={<DistrictDetail />} />
+            <Route path="/public/map" element={<RegionalMap />} />
+            <Route path="/public/alerts" element={<PublicAlerts />} />
+            <Route path="/public/reports" element={<CommunityReports />} />
+            <Route path="/public/complaint" element={<PublicComplaint />} />
+            <Route path="/public/report-issue" element={<ReportIssue role="public" />} />
+            <Route path="/public/awareness" element={<Awareness />} />
+            <Route path="/public/calendar" element={<CropCalendar />} />
+            <Route path="/public/settings" element={<PublicSettings />} />
+          </Route>
         </Route>
       </Routes>
     </BrowserRouter>

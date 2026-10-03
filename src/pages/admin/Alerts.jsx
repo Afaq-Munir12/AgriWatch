@@ -9,6 +9,7 @@ import {
 } from "react-router-dom";
 
 import Topbar from "../../components/Topbar";
+import PdmaPageHero from "../../components/PdmaPageHero";
 
 import {
   useLanguage,
@@ -734,10 +735,18 @@ export default function Alerts() {
 
 
       <main
-        className="p-4 sm:p-8 space-y-6"
+        className="p-4 sm:p-8 space-y-6 pdma-page"
         dir="ltr"
       >
-
+        <PdmaPageHero
+          title="Alert command center"
+          copy="Create district-targeted drought alerts from the current ML severity and review the messages already dispatched to farmers and the public."
+          stats={[
+            { label: "Districts available", value: districts.length },
+            { label: "Alerts recorded", value: alerts.length },
+            { label: "Selected severity", value: form.severity },
+          ]}
+        />
 
         {/* ==================================================
             ERROR
@@ -764,7 +773,7 @@ export default function Alerts() {
             CREATE ALERT
         ================================================== */}
 
-        <Card>
+        <Card className="pdma-form-card pdma-data-card">
 
           <div className="flex items-center justify-between mb-4">
 

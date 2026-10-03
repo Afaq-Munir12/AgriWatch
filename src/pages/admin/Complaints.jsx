@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Topbar from "../../components/Topbar";
+import PdmaPageHero from "../../components/PdmaPageHero";
 import { useLanguage } from "../../i18n/LanguageContext";
 import Card, { StatusBadge } from "../../components/Card";
 import { SkeletonTableRows } from "../../components/Skeleton";
@@ -65,7 +66,16 @@ export default function Complaints() {
   return (
     <>
       <Topbar title={t("ptAdminComplaintsTitle")} subtitle={t("ptAdminComplaintsSub")} />
-      <main className="p-4 sm:p-8 space-y-6" dir="ltr">
+      <main className="p-4 sm:p-8 space-y-6 pdma-page" dir="ltr">
+        <PdmaPageHero
+          title="Complaint operations desk"
+          copy="Review farmer and public damage reports, move cases through the PDMA workflow and keep resolution notes attached to each complaint."
+          stats={[
+            { label: "Total complaints", value: complaints.length },
+            { label: "Under review", value: complaints.filter((c) => c.status === "Under Review").length },
+            { label: "Resolved", value: complaints.filter((c) => c.status === "Resolved").length },
+          ]}
+        />
         {offline && <OfflineNotice what="complaints" error={error} />}
 
         <div className="flex items-center justify-between gap-3 flex-wrap">

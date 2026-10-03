@@ -12,8 +12,9 @@ const FIELDS_BY_ROLE = {
   public: ["name", "phone", "district"],
 };
 
-export default function ProfileEditor({ role }) {
+export default function ProfileEditor({ role, className = "" }) {
   const { t } = useLanguage();
+  const widthClass = /(^|\s)max-w-/.test(className) ? "" : "max-w-lg";
   const profile = useCurrentProfile(role);
   const { showToast } = useToast();
   const fields = FIELDS_BY_ROLE[role] || FIELDS_BY_ROLE.public;
@@ -63,7 +64,7 @@ export default function ProfileEditor({ role }) {
 
   if (profile.loading) {
     return (
-      <Card className="max-w-lg">
+      <Card className={`${widthClass} ${className}`}>
         <div className="flex items-center gap-2 text-sm text-ink/50">
           <Loader2 size={15} className="animate-spin" /> Loading…
         </div>
@@ -72,7 +73,7 @@ export default function ProfileEditor({ role }) {
   }
 
   return (
-    <Card className="max-w-lg">
+    <Card className={`${widthClass} ${className}`}>
       <div className="flex items-center justify-between mb-4 gap-3">
         <div>
           <p className="font-display font-semibold">{t("yourProfile")}</p>

@@ -4,9 +4,7 @@ import Topbar from "../../components/Topbar";
 import { useLanguage } from "../../i18n/LanguageContext";
 import Card, { SeverityBadge } from "../../components/Card";
 
-import { API_BASE_URL } from "../../config/api";
-
-const API_BASE = API_BASE_URL;
+const API_BASE = "http://127.0.0.1:8000";
 
 // ============================================================
 // PUBLIC USER DISTRICT
@@ -219,7 +217,7 @@ export default function PublicAlerts() {
         />
 
         <main
-          className="p-4 sm:p-8"
+          className="p-4 sm:p-8 public-page"
           dir="ltr"
         >
           <Card>
@@ -248,7 +246,7 @@ export default function PublicAlerts() {
         />
 
         <main
-          className="p-4 sm:p-8"
+          className="p-4 sm:p-8 public-page"
           dir="ltr"
         >
           <Card>
@@ -279,14 +277,27 @@ export default function PublicAlerts() {
       />
 
       <main
-        className="p-4 sm:p-8 space-y-4"
+        className="p-4 sm:p-8 space-y-6 public-page"
         dir="ltr"
       >
+        <section className="public-page-hero">
+          <div className="public-hero-content">
+            <span className="public-hero-eyebrow">PDMA alert center</span>
+            <h2 className="public-hero-title">Regional drought alerts for {USER_DISTRICT}</h2>
+            <p className="public-hero-copy">Official drought messages and actionable guidance for the public, ordered with the newest alert first.</p>
+          </div>
+          <div className="public-hero-stats">
+            <div className="public-hero-stat"><span>Active alerts</span><strong>{districtAlerts.length}</strong></div>
+            <div className="public-hero-stat"><span>Latest severity</span><strong>{districtAlerts[0]?.severity || districtAlerts[0]?.risk_level || "No alert"}</strong></div>
+            <div className="public-hero-stat"><span>Audience</span><strong>Public</strong></div>
+          </div>
+        </section>
+
         {/* ====================================================
             PAGE SUMMARY
         ==================================================== */}
 
-        <Card scan>
+        <Card scan className="public-data-card">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <p className="text-xs uppercase text-ink/40 font-medium">
@@ -322,7 +333,7 @@ export default function PublicAlerts() {
 
         {districtAlerts.length === 0 && (
           <Card>
-            <div className="py-6 text-center">
+            <div className="public-empty-state">
               <div
                 className="
                   w-12
@@ -389,6 +400,7 @@ export default function PublicAlerts() {
                   alert.id ||
                   `${district}-${date}-${index}`
                 }
+                className="public-alert-card"
               >
                 {/* ============================================
                     ALERT HEADER

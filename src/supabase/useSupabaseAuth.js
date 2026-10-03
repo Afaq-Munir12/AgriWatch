@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "./config";
+import { clearPortalAccess, clearLoginAttempt } from "../utils/authAccess";
 
 // Same shape as the old Firebase useGoogleAuth() hook — user / loading /
 // error / signIn / signOut — so the rest of the app barely had to change.
@@ -24,11 +25,14 @@ export function useSupabaseAuth() {
     return () => listener.subscription.unsubscribe();
   }, []);
 
-  async function signIn(redirectTo = `${window.location.origin}/admin-portal`) {
+  async function signIn(redirectTo = `${window.location.origin}/admin-portal`, { forceAccountChoice = false } = {}) {
     setError(null);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo },
+      options: {
+        redirectTo,
+        ...(forceAccountChoice ? { queryParams: { prompt: "select_account" } } : {}),
+      },
     });
     if (error) {
       console.error("Google sign-in failed:", error);
@@ -37,6 +41,8 @@ export function useSupabaseAuth() {
   }
 
   async function signOut() {
+    clearPortalAccess();
+    clearLoginAttempt();
     await supabase.auth.signOut();
   }
 

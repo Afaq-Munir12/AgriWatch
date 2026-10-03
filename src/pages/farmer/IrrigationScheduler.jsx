@@ -14,11 +14,10 @@ import {
   RefreshCw,
   AlertTriangle,
   CheckCircle2,
+  Sparkles,
 } from "lucide-react";
 
-import { API_BASE_URL } from "../../config/api";
-
-const API_URL = API_BASE_URL;
+const API_URL = "http://127.0.0.1:8000";
 
 // ============================================================
 // HELPERS
@@ -596,9 +595,32 @@ export default function IrrigationScheduler() {
       />
 
       <main
-        className="p-4 sm:p-8 space-y-6"
+        className="farmer-page p-4 sm:p-8 space-y-6"
         dir="ltr"
       >
+        <section className="farmer-page-hero">
+          <div className="farmer-hero-content">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <span className="farmer-hero-eyebrow"><Sparkles size={13} /> Smart irrigation assistant</span>
+                <h2 className="farmer-hero-title">Water guidance for your registered fields</h2>
+                <p className="farmer-hero-copy">AgriWatch combines field size, crop information and district environmental conditions to produce a practical irrigation recommendation.</p>
+                <div className="farmer-hero-actions">
+                  <span className="farmer-hero-button"><MapPin size={14} /> {district || "District not configured"}</span>
+                  {selectedField && <span className="farmer-hero-button"><Sprout size={14} /> {selectedField.field_name}</span>}
+                </div>
+              </div>
+              <div className="w-12 h-12 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center"><Droplets size={23} /></div>
+            </div>
+
+            <div className="farmer-hero-stats">
+              <div className="farmer-hero-stat"><span>Drought status</span><strong>{predictionLoading ? "Scanning…" : severity}</strong></div>
+              <div className="farmer-hero-stat"><span>Soil moisture</span><strong>{predictionLoading ? "—" : `${soilMoisturePercent.toFixed(1)}%`}</strong></div>
+              <div className="farmer-hero-stat"><span>Recommendation</span><strong>{scheduleLoading ? "Calculating…" : irrigationStatus.label}</strong></div>
+            </div>
+          </div>
+        </section>
+
         {/* PROFILE ERROR */}
 
         {profileError && (
@@ -652,7 +674,7 @@ export default function IrrigationScheduler() {
 
         {/* FIELD SELECTOR */}
 
-        <Card>
+        <Card className="farmer-form-card">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
               <p className="font-display font-semibold text-lg">
@@ -733,10 +755,10 @@ export default function IrrigationScheduler() {
         {/* FIELD DETAILS */}
 
         {selectedField && (
-          <Card>
+          <Card className="farmer-form-card">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
               <div>
-                <p className="text-xs uppercase text-ink/40">
+                <p className="farmer-card-label">
                   Field
                 </p>
 
@@ -746,7 +768,7 @@ export default function IrrigationScheduler() {
               </div>
 
               <div>
-                <p className="text-xs uppercase text-ink/40">
+                <p className="farmer-card-label">
                   Crop
                 </p>
 
@@ -763,7 +785,7 @@ export default function IrrigationScheduler() {
               </div>
 
               <div>
-                <p className="text-xs uppercase text-ink/40">
+                <p className="farmer-card-label">
                   Area
                 </p>
 
@@ -776,7 +798,7 @@ export default function IrrigationScheduler() {
               </div>
 
               <div>
-                <p className="text-xs uppercase text-ink/40">
+                <p className="farmer-card-label">
                   District
                 </p>
 
@@ -828,8 +850,8 @@ export default function IrrigationScheduler() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* DROUGHT */}
 
-              <Card>
-                <p className="text-xs uppercase text-ink/40">
+              <Card className="farmer-data-card">
+                <p className="farmer-card-label">
                   Drought Status
                 </p>
 
@@ -861,9 +883,9 @@ export default function IrrigationScheduler() {
 
               {/* SOIL */}
 
-              <Card>
+              <Card className="farmer-data-card">
                 <div className="flex justify-between">
-                  <p className="text-xs uppercase text-ink/40">
+                  <p className="farmer-card-label">
                     Soil Moisture
                   </p>
 
@@ -898,9 +920,9 @@ export default function IrrigationScheduler() {
 
               {/* RAINFALL */}
 
-              <Card>
+              <Card className="farmer-data-card">
                 <div className="flex justify-between">
-                  <p className="text-xs uppercase text-ink/40">
+                  <p className="farmer-card-label">
                     Rainfall
                   </p>
 
@@ -933,9 +955,9 @@ export default function IrrigationScheduler() {
 
               {/* NDVI */}
 
-              <Card>
+              <Card className="farmer-data-card">
                 <div className="flex justify-between">
-                  <p className="text-xs uppercase text-ink/40">
+                  <p className="farmer-card-label">
                     NDVI
                   </p>
 
@@ -967,7 +989,7 @@ export default function IrrigationScheduler() {
         {/* IRRIGATION RECOMMENDATION */}
 
         {selectedField && district && (
-          <Card>
+          <Card className="farmer-form-card">
             <div className="flex items-start justify-between gap-4 flex-wrap">
               <div>
                 <p className="font-display font-semibold text-lg">
@@ -990,7 +1012,7 @@ export default function IrrigationScheduler() {
                   scheduleLoading ||
                   predictionLoading
                 }
-                className="flex items-center gap-2 border border-line rounded-lg px-4 py-2 text-sm hover:bg-paper-dim disabled:opacity-50"
+                className="btn-animated flex items-center gap-2 border border-line rounded-xl px-4 py-2.5 text-sm font-medium bg-surface hover:bg-paper-dim disabled:opacity-50"
               >
                 <RefreshCw
                   size={15}
@@ -1014,20 +1036,20 @@ export default function IrrigationScheduler() {
 
             {!scheduleLoading &&
               scheduleError && (
-                <div className="mt-6 bg-red-50 border border-red-200 rounded-xl p-4">
+                <div className="mt-6 bg-danger/5 border border-danger/20 rounded-xl p-4">
                   <div className="flex gap-2">
                     <AlertTriangle
                       size={18}
-                      className="text-red-600 shrink-0"
+                      className="text-danger shrink-0"
                     />
 
                     <div>
-                      <p className="font-medium text-sm text-red-700">
+                      <p className="font-medium text-sm text-danger">
                         Irrigation calculation
                         failed
                       </p>
 
-                      <p className="text-xs text-red-600 mt-1">
+                      <p className="text-xs text-danger mt-1">
                         {scheduleError}
                       </p>
                     </div>
@@ -1045,14 +1067,14 @@ export default function IrrigationScheduler() {
                     className={`rounded-xl p-4 ${
                       irrigationStatus.tone ===
                       "danger"
-                        ? "bg-red-50"
+                        ? "bg-danger/5 border border-danger/15"
                         : irrigationStatus.tone ===
                           "warn"
-                        ? "bg-yellow-50"
+                        ? "bg-warn/5 border border-warn/15"
                         : irrigationStatus.tone ===
                           "ok"
-                        ? "bg-green-50"
-                        : "bg-paper-dim"
+                        ? "bg-primary/5 border border-primary/15"
+                        : "bg-paper-dim border border-line"
                     }`}
                   >
                     <div className="flex items-center gap-2">
@@ -1078,8 +1100,8 @@ export default function IrrigationScheduler() {
                   {/* VALUES */}
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="border border-line rounded-xl p-4">
-                      <p className="text-xs uppercase text-ink/40">
+                    <div className="farmer-field-panel">
+                      <p className="farmer-card-label">
                         Recommended Water
                       </p>
 
@@ -1092,8 +1114,8 @@ export default function IrrigationScheduler() {
                       </p>
                     </div>
 
-                    <div className="border border-line rounded-xl p-4">
-                      <p className="text-xs uppercase text-ink/40">
+                    <div className="farmer-field-panel">
+                      <p className="farmer-card-label">
                         Estimated Water
                       </p>
 
@@ -1106,8 +1128,8 @@ export default function IrrigationScheduler() {
                       </p>
                     </div>
 
-                    <div className="border border-line rounded-xl p-4">
-                      <p className="text-xs uppercase text-ink/40">
+                    <div className="farmer-field-panel">
+                      <p className="farmer-card-label">
                         Next Irrigation
                       </p>
 

@@ -59,6 +59,7 @@ export function useCurrentProfile(fallbackRole = "farmer") {
       .from("website_signup_requests")
       .select("full_name, role, district, phone, crop, farm_size")
       .eq("user_id", user.id)
+      .eq("role", fallbackRole)
       .maybeSingle()
       .then(({ data, error }) => {
         if (cancelled) return;
@@ -70,7 +71,7 @@ export function useCurrentProfile(fallbackRole = "farmer") {
     return () => {
       cancelled = true;
     };
-  }, [user, authLoading]);
+  }, [user, authLoading, fallbackRole]);
 
   const isFarmerish = fallbackRole === "farmer";
   const fallback = fallbackProfiles[fallbackRole] || null;
@@ -105,7 +106,7 @@ export function useCurrentProfile(fallbackRole = "farmer") {
         if (rest.crop !== undefined) payload.crop = rest.crop;
         if (rest.farmSize !== undefined) payload.farm_size = rest.farmSize;
 
-        const res = await supabase.from("website_signup_requests").update(payload).eq("user_id", user.id);
+        const res = await supabase.from("website_signup_requests").update(payload).eq("user_id", user.id).eq("role", fallbackRole);
         error = res.error || null;
         if (!error) setProfile((p) => ({ ...(p || {}), ...payload }));
       }

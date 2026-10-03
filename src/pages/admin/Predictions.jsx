@@ -1,4 +1,5 @@
 import Topbar from "../../components/Topbar";
+import PdmaPageHero from "../../components/PdmaPageHero";
 import { useLanguage } from "../../i18n/LanguageContext";
 import Card from "../../components/Card";
 
@@ -338,15 +339,24 @@ export default function Predictions() {
       />
 
       <main
-        className="p-4 sm:p-8 space-y-6"
+        className="p-4 sm:p-8 space-y-6 pdma-page"
         dir="ltr"
       >
+        <PdmaPageHero
+          title="District drought prediction"
+          copy="Inspect the latest Random Forest output and historical environmental pattern for any monitored district before taking operational action."
+          stats={[
+            { label: "Selected district", value: district || "Loading" },
+            { label: "Risk level", value: mlResult?.risk_level || "—" },
+            { label: "Drought probability", value: mlResult?.drought_probability_percent != null ? `${Number(mlResult.drought_probability_percent).toFixed(1)}%` : "—" },
+          ]}
+        />
 
         {/* =====================================================
             DISTRICT SELECTOR
         ===================================================== */}
 
-        <Card className="flex flex-wrap items-center gap-4">
+        <Card className="pdma-control-strip flex flex-wrap items-center gap-4">
           <label className="text-sm text-ink/50">
             District
           </label>

@@ -4,9 +4,7 @@ import Topbar from "../../components/Topbar";
 import { useLanguage } from "../../i18n/LanguageContext";
 import Card, { SeverityBadge } from "../../components/Card";
 
-import { API_BASE_URL } from "../../config/api";
-
-const API_BASE = API_BASE_URL;
+const API_BASE = "http://127.0.0.1:8000";
 
 // ------------------------------------------------------------
 // PUBLIC USER DISTRICT
@@ -184,7 +182,7 @@ export default function PublicHome() {
         />
 
         <main
-          className="p-4 sm:p-8 space-y-6"
+          className="p-4 sm:p-8 space-y-6 public-page"
           dir="ltr"
         >
           <Card scan>
@@ -210,7 +208,7 @@ export default function PublicHome() {
         />
 
         <main
-          className="p-4 sm:p-8 space-y-6"
+          className="p-4 sm:p-8 space-y-6 public-page"
           dir="ltr"
         >
           <Card scan>
@@ -282,9 +280,27 @@ export default function PublicHome() {
       />
 
       <main
-        className="p-4 sm:p-8 space-y-6"
+        className="p-4 sm:p-8 space-y-6 public-page"
         dir="ltr"
       >
+        <section className="public-page-hero">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <span className="public-hero-eyebrow">Public drought intelligence</span>
+              <h2 className="public-hero-title">{district} regional outlook</h2>
+              <p className="public-hero-copy">Live district conditions for citizens and communities, powered by AgriWatch machine-learning drought monitoring.</p>
+            </div>
+            <div className="text-left sm:text-right">
+              <p className="text-white/60 text-xs uppercase tracking-[0.18em]">Current severity</p>
+              <div className="mt-2"><SeverityBadge level={severity} /></div>
+            </div>
+          </div>
+          <div className="public-hero-stats">
+            <div className="public-hero-stat"><span>Drought risk</span><strong>{droughtRisk.toFixed(1)}%</strong></div>
+            <div className="public-hero-stat"><span>NDVI</span><strong>{ndvi.toFixed(2)}</strong></div>
+            <div className="public-hero-stat"><span>Rainfall</span><strong>{rainfall.toFixed(1)} mm</strong></div>
+          </div>
+        </section>
         {/* ====================================================
             CURRENT ML STATUS
         ==================================================== */}
@@ -323,8 +339,8 @@ export default function PublicHome() {
         ==================================================== */}
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Card>
-            <p className="text-xs uppercase text-ink/40 font-medium">
+          <Card className="public-data-card">
+            <p className="public-card-label">
               NDVI
             </p>
 
@@ -338,8 +354,8 @@ export default function PublicHome() {
               We show real ML drought risk instead.
           */}
 
-          <Card>
-            <p className="text-xs uppercase text-ink/40 font-medium">
+          <Card className="public-data-card">
+            <p className="public-card-label">
               Drought Risk
             </p>
 
@@ -348,8 +364,8 @@ export default function PublicHome() {
             </p>
           </Card>
 
-          <Card>
-            <p className="text-xs uppercase text-ink/40 font-medium">
+          <Card className="public-data-card">
+            <p className="public-card-label">
               Soil Moisture
             </p>
 
@@ -364,8 +380,8 @@ export default function PublicHome() {
         ==================================================== */}
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Card>
-            <p className="text-xs uppercase text-ink/40 font-medium">
+          <Card className="public-data-card">
+            <p className="public-card-label">
               Rainfall
             </p>
 
@@ -377,8 +393,8 @@ export default function PublicHome() {
             </p>
           </Card>
 
-          <Card>
-            <p className="text-xs uppercase text-ink/40 font-medium">
+          <Card className="public-data-card">
+            <p className="public-card-label">
               Temperature
             </p>
 
@@ -390,8 +406,8 @@ export default function PublicHome() {
             </p>
           </Card>
 
-          <Card>
-            <p className="text-xs uppercase text-ink/40 font-medium">
+          <Card className="public-data-card">
+            <p className="public-card-label">
               Evaporation
             </p>
 

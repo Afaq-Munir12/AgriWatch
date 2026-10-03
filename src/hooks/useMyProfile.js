@@ -25,6 +25,7 @@ export function useMyProfile() {
       .from("website_signup_requests")
       .select("*")
       .eq("user_id", user.id)
+      .eq("role", "farmer")
       .maybeSingle()
       .then(({ data, error: readErr }) => {
         if (readErr) {
@@ -54,6 +55,7 @@ export function useMyProfile() {
         .from("website_signup_requests")
         .update(safeFields)
         .eq("user_id", user.id)
+        .eq("role", "farmer")
         .select()
         .single();
       if (updateErr) throw updateErr;

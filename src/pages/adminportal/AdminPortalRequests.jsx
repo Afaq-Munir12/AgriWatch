@@ -68,12 +68,13 @@ function AdminRequestsSection({ showToast }) {
   const pending = data.filter((r) => (r.status || "pending").toLowerCase() === "pending");
 
   async function setStatus(item, status) {
-    setBusyId(item.user_id);
+    setBusyId(`${item.user_id}:${item.role}`);
     try {
       const { error: updErr } = await supabase
         .from("admin_access_requests")
         .update({ status, decided_at: new Date().toISOString() })
-        .eq("user_id", item.user_id);
+        .eq("user_id", item.user_id)
+        .eq("role", item.role);
       if (updErr) throw updErr;
       showToast(
         status === "approved" ? `${item.email} approved as admin` : `${item.email}'s request rejected`,
@@ -111,9 +112,10 @@ function AdminRequestsSection({ showToast }) {
       ) : (
         <div className="space-y-3">
           {pending.map((item) => {
-            const isBusy = busyId === item.user_id;
+            const rowKey = `${item.user_id}:${item.role}`;
+            const isBusy = busyId === rowKey;
             return (
-              <Card key={item.user_id} className="flex items-start gap-3">
+              <Card key={rowKey} className="flex items-start gap-3">
                 <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                   <ShieldCheck size={16} className="text-primary" />
                 </div>
@@ -192,12 +194,14 @@ function WebsiteSignupRequestsSection({ showToast }) {
   }
 
   async function setStatus(item, status) {
-    setBusyId(item.user_id);
+    const requestKey = `${item.user_id}:${item.role}`;
+    setBusyId(requestKey);
     try {
       const { error: updErr } = await supabase
         .from("website_signup_requests")
         .update({ status, decided_at: new Date().toISOString() })
-        .eq("user_id", item.user_id);
+        .eq("user_id", item.user_id)
+        .eq("role", item.role);
       if (updErr) throw updErr;
       showToast(
         status === "approved" ? `${item.full_name} approved as ${websiteRoleLabel[item.role] || item.role}` : `${item.full_name}'s request rejected`,
@@ -253,9 +257,10 @@ function WebsiteSignupRequestsSection({ showToast }) {
         <div className="space-y-3">
           {filtered.map((item) => {
             const RoleIcon = roleIcon[item.role] || HelpCircle;
-            const isBusy = busyId === item.user_id;
+            const rowKey = `${item.user_id}:${item.role}`;
+            const isBusy = busyId === rowKey;
             return (
-              <Card key={item.user_id} className="flex items-start gap-3">
+              <Card key={rowKey} className="flex items-start gap-3">
                 <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                   <RoleIcon size={16} className="text-primary" />
                 </div>

@@ -8,6 +8,7 @@ import {
 import "leaflet/dist/leaflet.css";
 
 import Topbar from "../../components/Topbar";
+import PdmaPageHero from "../../components/PdmaPageHero";
 import { Link } from "react-router-dom";
 import Card, { SeverityBadge } from "../../components/Card";
 
@@ -515,7 +516,7 @@ export default function DroughtMap() {
 
               <p className="text-xs text-ink/40 mt-3">
                 Make sure the FastAPI backend is running on
-                https://agri-watch-backend.vercel.app
+                http://127.0.0.1:8000
               </p>
 
             </div>
@@ -543,16 +544,24 @@ export default function DroughtMap() {
 
 
       <main
-        className="p-4 sm:p-8 space-y-4"
+        className="p-4 sm:p-8 space-y-5 pdma-page"
         dir="ltr"
       >
-
+        <PdmaPageHero
+          title="Operational drought map"
+          copy="Explore district-level drought conditions across Pakistan and switch between severity, NDVI and soil-moisture views without leaving the PDMA workspace."
+          stats={[
+            { label: "Mapped districts", value: districts.length },
+            { label: "High risk", value: districts.filter((d) => d.severity === "Severe" || d.severity === "Extreme").length },
+            { label: "Active layer", value: layer === "soilMoisture" ? "Soil moisture" : layer.toUpperCase() },
+          ]}
+        />
 
         {/* ====================================================
             LAYER CONTROLS
         ==================================================== */}
 
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div className="pdma-control-strip flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
 
 
           <div className="flex flex-wrap gap-2">
@@ -712,7 +721,7 @@ export default function DroughtMap() {
             MAP
         ==================================================== */}
 
-        <Card className="p-0 overflow-hidden">
+        <Card className="pdma-map-shell p-0 overflow-hidden">
 
           <MapContainer
 

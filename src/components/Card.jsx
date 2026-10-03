@@ -8,7 +8,7 @@ export default function Card({ children, className = "", scan = false, ...rest }
   const hasCustomBg = /(^|\s)bg-/.test(className);
   return (
     <div
-      className={`${hasCustomBg ? "" : "bg-surface"} border border-line rounded-xl p-5 ${scan ? "scan-line" : ""} ${className}`}
+      className={`${hasCustomBg ? "" : "bg-surface"} dashboard-card border border-line rounded-xl p-5 ${scan ? "scan-line" : ""} ${className}`}
       {...rest}
     >
       {children}

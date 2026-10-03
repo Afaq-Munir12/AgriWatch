@@ -8,7 +8,7 @@ import { useCurrentProfile } from "../../supabase/useCurrentProfile";
 import { useToast } from "../../components/ToastContext";
 import { addRipple } from "../../utils/ripple";
 import { ISSUE_AREAS, ISSUE_SEVERITY } from "../../supabase/complaintsApi";
-import { Bug, Paperclip, Send, X, CheckCircle2, ShieldCheck } from "lucide-react";
+import { Bug, Paperclip, Send, X, CheckCircle2, ShieldCheck, Sparkles } from "lucide-react";
 
 const MAX_MB = 3;
 
@@ -134,7 +134,25 @@ export default function ReportIssue({ role = "farmer" }) {
   return (
     <>
       <Topbar title="Report a Software Issue" subtitle={subtitle} />
-      <main className="p-4 sm:p-8 space-y-6" dir="ltr">
+      <main className={`${role === "pdma" ? "pdma-page" : "farmer-page"} p-4 sm:p-8 space-y-6`} dir="ltr">
+        <section className="farmer-page-hero">
+          <div className="farmer-hero-content">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <span className="farmer-hero-eyebrow"><Sparkles size={13} /> AgriWatch support channel</span>
+                <h2 className="farmer-hero-title">Report a software or data problem</h2>
+                <p className="farmer-hero-copy">Send a clear description and optional screenshot directly to the AgriWatch admin team so the issue can be tracked and resolved.</p>
+              </div>
+              <div className="w-12 h-12 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center"><Bug size={22} /></div>
+            </div>
+            <div className="farmer-hero-stats">
+              <div className="farmer-hero-stat"><span>Reporter</span><strong>{reporterName || "User"}</strong></div>
+              <div className="farmer-hero-stat"><span>Portal</span><strong>{role === "pdma" ? "PDMA" : role === "public" ? "Public" : "Farmer"}</strong></div>
+              <div className="farmer-hero-stat"><span>Your reports</span><strong>{mine.length}</strong></div>
+            </div>
+          </div>
+        </section>
+
         {offline && <OfflineNotice what="issue reports" error={error} />}
 
         {submittedId && (
@@ -144,7 +162,7 @@ export default function ReportIssue({ role = "farmer" }) {
           </div>
         )}
 
-        <Card>
+        <Card className="farmer-form-card">
           <div className="flex items-center gap-2 mb-1">
             <div className="w-8 h-8 rounded-lg bg-danger/10 flex items-center justify-center shrink-0">
               <Bug size={15} className="text-danger" />
@@ -256,7 +274,7 @@ export default function ReportIssue({ role = "farmer" }) {
           </form>
         </Card>
 
-        <Card>
+        <Card className="farmer-form-card">
           <p className="font-display font-semibold mb-4">Issues you've reported</p>
           {loading ? (
             <SkeletonCardList count={2} />
@@ -265,7 +283,7 @@ export default function ReportIssue({ role = "farmer" }) {
           ) : (
             <div className="space-y-3">
               {mine.map((i) => (
-                <div key={i.id} className="border border-line rounded-lg px-4 py-3 flex items-start gap-3">
+                <div key={i.id} className="farmer-list-row flex items-start gap-3">
                   {i.screenshot && <img src={i.screenshot} alt="" className="w-12 h-12 rounded-md object-cover shrink-0" />}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2 flex-wrap">

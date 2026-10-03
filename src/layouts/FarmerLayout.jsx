@@ -20,9 +20,9 @@ const navItems = [
 export default function FarmerLayout() {
   return (
     <MobileNavProvider>
-    <div className="flex min-h-screen bg-paper">
+    <div className="dashboard-shell flex min-h-screen bg-paper">
       <Sidebar navItems={navItems} roleLabelKey="roleFarmer" basePath="/farmer" />
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 dashboard-content">
         <Outlet />
       </div>
     </div>

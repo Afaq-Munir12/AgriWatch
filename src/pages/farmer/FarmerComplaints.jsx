@@ -7,7 +7,18 @@ import OfflineNotice from "../../components/OfflineNotice";
 import { SkeletonCardList } from "../../components/Skeleton";
 import { useComplaints } from "../../store/ComplaintsContext";
 import { useCurrentProfile } from "../../supabase/useCurrentProfile";
-import { Paperclip, Send, X, CheckCircle2, Bug } from "lucide-react";
+import {
+  Paperclip,
+  Send,
+  X,
+  CheckCircle2,
+  Bug,
+  FileWarning,
+  ShieldCheck,
+  Camera,
+  MapPin,
+  Sparkles,
+} from "lucide-react";
 import { addRipple } from "../../utils/ripple";
 import { useToast } from "../../components/ToastContext";
 
@@ -27,15 +38,13 @@ export default function FarmerComplaints() {
   const [busy, setBusy] = useState(false);
   const [justSubmittedId, setJustSubmittedId] = useState(null);
 
-  // Complaints this farmer filed — matched on their Supabase account where
-  // there is one, otherwise on the profile name.
   const mine = useMemo(
-    () =>
-      complaints.filter((c) =>
-        profile.userId ? c.userId === profile.userId : c.farmer === profile.name
-      ),
+    () => complaints.filter((c) => profile.userId ? c.userId === profile.userId : c.farmer === profile.name),
     [complaints, profile.userId, profile.name]
   );
+
+  const openCount = mine.filter((c) => c.status !== "Resolved").length;
+  const resolvedCount = mine.filter((c) => c.status === "Resolved").length;
 
   function handleFileChange(e) {
     const chosen = e.target.files?.[0];
@@ -93,114 +102,144 @@ export default function FarmerComplaints() {
   return (
     <>
       <Topbar title={t("ptFarmerComplaintsTitle")} subtitle={t("ptFarmerComplaintsSub")} />
-      <main className="p-4 sm:p-8 space-y-6" dir="ltr">
+      <main className="farmer-page p-4 sm:p-8 space-y-6" dir="ltr">
+        <section className="farmer-page-hero">
+          <div className="farmer-hero-content">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <span className="farmer-hero-eyebrow"><Sparkles size={13} /> Farmer-to-PDMA channel</span>
+                <h2 className="farmer-hero-title">Report crop damage directly to your district office</h2>
+                <p className="farmer-hero-copy">Submit a structured complaint, attach photo evidence, and follow the status as PDMA reviews your case.</p>
+              </div>
+              <span className="farmer-hero-button"><MapPin size={14} /> {profile.district || "District not set"}</span>
+            </div>
+            <div className="farmer-hero-stats">
+              <div className="farmer-hero-stat"><span>Total complaints</span><strong>{mine.length}</strong></div>
+              <div className="farmer-hero-stat"><span>Open cases</span><strong>{openCount}</strong></div>
+              <div className="farmer-hero-stat"><span>Resolved</span><strong>{resolvedCount}</strong></div>
+            </div>
+          </div>
+        </section>
+
         {offline && <OfflineNotice what="complaints" error={error} />}
 
         {justSubmittedId && (
-          <div className="flex items-center gap-2 bg-primary/10 text-primary text-sm font-medium rounded-lg px-4 py-3">
-            <CheckCircle2 size={16} />
+          <div className="farmer-callout flex items-center gap-2 text-primary text-sm font-medium">
+            <CheckCircle2 size={17} />
             Complaint {justSubmittedId} submitted — sent to your district PDMA office for review.
           </div>
         )}
 
-        <Card>
-          <p className="font-display font-semibold mb-1">New Complaint</p>
-          <p className="text-xs text-ink/45 mb-4">
-            Goes to the PDMA officer for {profile.district || "your district"}. Is the app itself
-            broken instead?{" "}
-            <Link to="/farmer/report-issue" className="text-primary hover:underline inline-flex items-center gap-1">
-              <Bug size={12} /> Report a software issue
-            </Link>
-            .
-          </p>
-          <form onSubmit={submit} className="space-y-3">
-            <select
-              value={form.category}
-              onChange={(e) => setForm({ ...form, category: e.target.value })}
-              className="border border-line rounded-lg px-3 py-2 text-sm bg-surface w-full sm:w-64"
-            >
-              {["Crop Failure", "Irrigation Shortage", "Livestock Loss", "Other"].map((c) => <option key={c}>{c}</option>)}
-            </select>
-            <textarea
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              placeholder="Describe the damage..."
-              rows={3}
-              className="border border-line rounded-lg px-3 py-2 text-sm bg-surface w-full"
-            />
-
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFileChange}
-              className="hidden"
-              id="complaint-photo-input"
-            />
-
-            {preview ? (
-              <div className="flex items-center gap-3 border border-line rounded-lg p-2 w-fit">
-                <img src={preview} alt="Attached" className="w-16 h-16 rounded-md object-cover" />
-                <div className="pr-2">
-                  <p className="text-xs font-medium max-w-[10rem] truncate">{file?.name}</p>
-                  <button type="button" onClick={removePhoto} className="flex items-center gap-1 text-xs text-danger hover:underline mt-1">
-                    <X size={12} /> Remove
-                  </button>
-                </div>
+        <div className="grid xl:grid-cols-[1.05fr_.95fr] gap-6 items-start">
+          <Card className="farmer-form-card">
+            <div className="flex items-start gap-3 mb-5">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0"><FileWarning size={18} className="text-primary" /></div>
+              <div>
+                <p className="font-display font-semibold">Create a new complaint</p>
+                <p className="text-xs text-ink/45 mt-1">This report goes to the PDMA officer assigned to {profile.district || "your district"}.</p>
               </div>
-            ) : (
-              <label
-                htmlFor="complaint-photo-input"
-                className="btn-animated inline-flex items-center gap-2 text-xs text-ink/50 border border-line rounded-lg px-3 py-2 hover:bg-paper-dim cursor-pointer w-fit"
-              >
-                <Paperclip size={14} /> Attach photo
-              </label>
-            )}
-            {photoError && <p className="text-xs text-danger">{photoError}</p>}
-
-            <div className="flex items-center justify-end pt-1">
-              <button
-                type="submit"
-                disabled={busy}
-                onMouseDown={addRipple}
-                className="btn-animated flex items-center gap-2 bg-primary text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-primary-light transition-colors disabled:opacity-50"
-              >
-                <Send size={14} /> {busy ? "Submitting..." : "Submit"}
-              </button>
             </div>
-          </form>
-        </Card>
 
-        <Card>
-          <p className="font-display font-semibold mb-4">Your Complaints</p>
-          {loading ? (
-            <SkeletonCardList count={2} />
-          ) : (
-            <div className="space-y-3">
-              {mine.length === 0 && <p className="text-sm text-ink/45">No complaints filed yet.</p>}
-              {mine.map((c) => (
-                <div key={c.id} className="border border-line rounded-lg px-4 py-3 flex items-start gap-3">
-                  {c.photo && (
-                    <img src={c.photo} alt="" className="w-12 h-12 rounded-md object-cover shrink-0" />
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-sm font-medium">{c.category}</p>
-                      <StatusBadge status={c.status} />
-                    </div>
-                    <p className="text-xs text-ink/40 font-mono mt-0.5">{c.id} · {c.date}</p>
-                    {c.description && <p className="text-xs text-ink/55 mt-1">{c.description}</p>}
-                    {c.status === "Resolved" && c.resolutionNote && (
-                      <p className="text-xs text-primary mt-2 bg-primary/5 rounded-md px-2 py-1.5">
-                        <span className="font-medium">PDMA response: </span>{c.resolutionNote}
-                      </p>
-                    )}
+            <form onSubmit={submit} className="space-y-4 farmer-form-card">
+              <label className="block">
+                <span className="farmer-card-label">Complaint category</span>
+                <select
+                  value={form.category}
+                  onChange={(e) => setForm({ ...form, category: e.target.value })}
+                  className="mt-1.5 border border-line rounded-xl px-3 py-2.5 text-sm bg-surface w-full"
+                >
+                  {["Crop Failure", "Irrigation Shortage", "Livestock Loss", "Other"].map((c) => <option key={c}>{c}</option>)}
+                </select>
+              </label>
+
+              <label className="block">
+                <span className="farmer-card-label">Describe the damage</span>
+                <textarea
+                  value={form.description}
+                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  placeholder="Tell PDMA what happened, which field was affected and how serious the damage is..."
+                  rows={5}
+                  className="mt-1.5 border border-line rounded-xl px-3 py-3 text-sm bg-surface w-full resize-y"
+                />
+              </label>
+
+              <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" id="complaint-photo-input" />
+
+              {preview ? (
+                <div className="farmer-field-panel flex items-center gap-3">
+                  <img src={preview} alt="Attached" className="w-20 h-20 rounded-xl object-cover" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-semibold truncate">{file?.name}</p>
+                    <p className="text-[11px] text-ink/40 mt-1">Photo evidence ready to upload</p>
+                    <button type="button" onClick={removePhoto} className="flex items-center gap-1 text-xs text-danger hover:underline mt-2"><X size={12} /> Remove photo</button>
                   </div>
                 </div>
+              ) : (
+                <label htmlFor="complaint-photo-input" className="farmer-field-panel cursor-pointer flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary"><Camera size={18} /></div>
+                  <div><p className="text-sm font-semibold">Attach photo evidence</p><p className="text-xs text-ink/45 mt-0.5">Optional image, maximum {MAX_PHOTO_MB}MB</p></div>
+                  <Paperclip size={16} className="ms-auto text-ink/35" />
+                </label>
+              )}
+              {photoError && <p className="text-xs text-danger">{photoError}</p>}
+
+              <button
+                type="submit"
+                disabled={busy || !form.description.trim()}
+                onMouseDown={addRipple}
+                className="btn-animated auth-primary-btn"
+              >
+                <Send size={15} /> {busy ? "Submitting..." : "Submit complaint"}
+              </button>
+            </form>
+
+            <p className="text-xs text-ink/45 mt-4 text-center">
+              Is the app itself broken? <Link to="/farmer/report-issue" className="text-primary font-semibold hover:underline inline-flex items-center gap-1"><Bug size={12} /> Report a software issue</Link>
+            </p>
+          </Card>
+
+          <Card className="farmer-form-card">
+            <div className="flex items-start justify-between gap-3 mb-4">
+              <div>
+                <p className="font-display font-semibold">How the complaint flow works</p>
+                <p className="text-xs text-ink/45 mt-1">Your report stays linked to your farmer account.</p>
+              </div>
+              <ShieldCheck size={19} className="text-primary" />
+            </div>
+            <div className="farmer-advice-list">
+              {["Submit your damage report and optional photo evidence.", "The complaint is routed to the PDMA office for your district.", "Track status changes here until the complaint is resolved."].map((item, index) => (
+                <div key={item} className="farmer-advice-item"><span className="w-6 h-6 rounded-lg bg-primary text-white flex items-center justify-center text-[10px] font-bold shrink-0">0{index + 1}</span><span>{item}</span></div>
               ))}
             </div>
-          )}
-        </Card>
+          </Card>
+        </div>
+
+        <section>
+          <div className="farmer-section-title mb-3">
+            <div><h2>Your complaints</h2><p>Review submitted cases and PDMA responses.</p></div>
+          </div>
+          <Card className="farmer-form-card">
+            {loading ? (
+              <SkeletonCardList count={2} />
+            ) : mine.length === 0 ? (
+              <div className="farmer-empty-state"><FileWarning size={22} className="text-primary mx-auto" /><p className="font-display font-semibold mt-3">No complaints filed yet</p><p className="text-sm text-ink/45 mt-1">Your submitted complaints will appear here.</p></div>
+            ) : (
+              <div className="space-y-3">
+                {mine.map((c) => (
+                  <div key={c.id} className="farmer-list-row flex items-start gap-3">
+                    {c.photo && <img src={c.photo} alt="" className="w-14 h-14 rounded-xl object-cover shrink-0" />}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2 flex-wrap"><p className="text-sm font-semibold">{c.category}</p><StatusBadge status={c.status} /></div>
+                      <p className="text-[11px] text-ink/40 font-mono mt-1">{c.id} · {c.date}</p>
+                      {c.description && <p className="text-sm text-ink/55 mt-2 leading-relaxed">{c.description}</p>}
+                      {c.status === "Resolved" && c.resolutionNote && <p className="text-xs text-primary mt-2 bg-primary/5 rounded-lg px-3 py-2"><span className="font-semibold">PDMA response: </span>{c.resolutionNote}</p>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+        </section>
       </main>
     </>
   );

@@ -15,9 +15,7 @@ import {
   Activity,
 } from "lucide-react";
 
-import { API_BASE_URL } from "../../config/api";
-
-const API_BASE = API_BASE_URL;
+const API_BASE = "http://127.0.0.1:8000";
 const USER_DISTRICT = "Peshawar District";
 
 // ============================================================
@@ -221,12 +219,25 @@ export default function Awareness() {
       />
 
       <main
-        className="p-4 sm:p-8 space-y-6"
+        className="p-4 sm:p-8 space-y-6 public-page"
         dir="ltr"
       >
+        <section className="public-page-hero">
+          <div className="public-hero-content">
+            <span className="public-hero-eyebrow">Community preparedness</span>
+            <h2 className="public-hero-title">Drought awareness for {USER_DISTRICT}</h2>
+            <p className="public-hero-copy">Practical water-saving guidance, local risk context, and simple actions households can take before drought conditions worsen.</p>
+          </div>
+          <div className="public-hero-stats">
+            <div className="public-hero-stat"><span>Current risk</span><strong>{loading ? "Loading" : error ? "Unavailable" : riskLevel}</strong></div>
+            <div className="public-hero-stat"><span>30-day risk</span><strong>{loading || error ? "—" : `${probability.toFixed(1)}%`}</strong></div>
+            <div className="public-hero-stat"><span>Guidance</span><strong>6 key actions</strong></div>
+          </div>
+        </section>
+
         {/* CURRENT DISTRICT STATUS */}
 
-        <Card scan>
+        <Card scan className="public-data-card">
           {loading ? (
             <p className="text-sm text-ink/50">
               Loading current drought conditions...
@@ -274,7 +285,7 @@ export default function Awareness() {
         {/* RISK-SPECIFIC ADVICE */}
 
         {!loading && !error && (
-          <Card>
+          <Card className="public-callout">
             <div className="flex gap-4">
               <div className="w-11 h-11 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                 <RiskIcon
@@ -320,7 +331,7 @@ export default function Awareness() {
               return (
                 <Card
                   key={tip.id}
-                  className="flex gap-3"
+                  className="public-action-card"
                 >
                   <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                     <Icon

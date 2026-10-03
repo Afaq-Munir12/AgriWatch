@@ -43,7 +43,7 @@ export default function Topbar({ title, subtitle }) {
   const profileHref = `${base}/settings`;
 
   return (
-    <header className="sticky top-0 z-30 bg-paper/90 backdrop-blur border-b border-line px-4 sm:px-8 py-4 sm:py-5 flex items-center justify-between gap-3">
+    <header className="dashboard-topbar sticky top-0 z-30 bg-paper/88 backdrop-blur-xl border-b border-line/80 px-4 sm:px-8 py-4 sm:py-5 flex items-center justify-between gap-3 page-enter">
       <div className="flex items-center gap-3 min-w-0">
         <button
           onClick={toggle}

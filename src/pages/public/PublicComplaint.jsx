@@ -111,7 +111,20 @@ export default function PublicComplaint() {
         title="Submit a Report"
         subtitle="Tell your district PDMA office about drought damage or water shortage in your area"
       />
-      <main className="p-4 sm:p-8 space-y-6" dir="ltr">
+      <main className="p-4 sm:p-8 space-y-6 public-page" dir="ltr">
+        <section className="public-page-hero">
+          <div className="public-hero-content">
+            <span className="public-hero-eyebrow">Citizen reporting channel</span>
+            <h2 className="public-hero-title">Report drought damage or water shortage</h2>
+            <p className="public-hero-copy">Send a district-linked report to PDMA, attach photo evidence, and follow the resolution status from the same portal.</p>
+          </div>
+          <div className="public-hero-stats">
+            <div className="public-hero-stat"><span>Your district</span><strong>{district || "Select district"}</strong></div>
+            <div className="public-hero-stat"><span>Your reports</span><strong>{mine.length}</strong></div>
+            <div className="public-hero-stat"><span>Photo limit</span><strong>{MAX_PHOTO_MB} MB</strong></div>
+          </div>
+        </section>
+
         {offline && <OfflineNotice what="reports" error={error} />}
 
         {submittedId && (
@@ -121,7 +134,7 @@ export default function PublicComplaint() {
           </div>
         )}
 
-        <Card>
+        <Card className="public-form-card">
           <p className="font-display font-semibold mb-1">New report</p>
           <p className="text-xs text-ink/45 mb-4">
             Reports are reviewed by PDMA officers for your district. Found a bug in the website
@@ -233,7 +246,7 @@ export default function PublicComplaint() {
         </Card>
 
         <Card>
-          <p className="font-display font-semibold mb-4">Your reports</p>
+          <div className="public-section-title mb-4"><div><h2>Your reports</h2><p>Track the reports you have sent to PDMA.</p></div></div>
           {loading ? (
             <SkeletonCardList count={2} />
           ) : mine.length === 0 ? (
@@ -241,7 +254,7 @@ export default function PublicComplaint() {
           ) : (
             <div className="space-y-3">
               {mine.map((c) => (
-                <div key={c.id} className="border border-line rounded-lg px-4 py-3 flex items-start gap-3">
+                <div key={c.id} className="public-list-row flex items-start gap-3">
                   {c.photo && <img src={c.photo} alt="" className="w-12 h-12 rounded-md object-cover shrink-0" />}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">

@@ -29,12 +29,25 @@ export default function CommunityReports() {
         title="Community Reports"
         subtitle="Aggregate view of farmer damage reports and PDMA response — no personal details shown"
       />
-      <main className="p-4 sm:p-8 space-y-6" dir="ltr">
+      <main className="p-4 sm:p-8 space-y-6 public-page" dir="ltr">
+        <section className="public-page-hero">
+          <div className="public-hero-content">
+            <span className="public-hero-eyebrow">Community intelligence</span>
+            <h2 className="public-hero-title">See how drought reports are moving through PDMA</h2>
+            <p className="public-hero-copy">A privacy-safe community view of submitted drought damage reports and their response status across districts.</p>
+          </div>
+          <div className="public-hero-stats">
+            <div className="public-hero-stat"><span>Under review</span><strong>{underReview}</strong></div>
+            <div className="public-hero-stat"><span>Forwarded</span><strong>{forwarded}</strong></div>
+            <div className="public-hero-stat"><span>Resolved</span><strong>{resolved}</strong></div>
+          </div>
+        </section>
+
         {offline && <OfflineNotice what="reports" error={error} />}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Link to="/public/complaint" className="block">
-            <Card className="h-full hover:border-primary/40 transition-colors flex items-start gap-3">
+            <Card className="public-action-card">
               <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                 <MessageSquarePlus size={16} className="text-primary" />
               </div>
@@ -50,7 +63,7 @@ export default function CommunityReports() {
             </Card>
           </Link>
           <Link to="/public/report-issue" className="block">
-            <Card className="h-full hover:border-danger/40 transition-colors flex items-start gap-3">
+            <Card className="public-action-card">
               <div className="w-9 h-9 rounded-lg bg-danger/10 flex items-center justify-center shrink-0">
                 <Bug size={16} className="text-danger" />
               </div>
@@ -67,7 +80,7 @@ export default function CommunityReports() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Card className="flex items-center gap-3">
+          <Card className="public-data-card flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-warn/10 flex items-center justify-center shrink-0">
               <Clock size={16} className="text-warn" />
             </div>
@@ -76,7 +89,7 @@ export default function CommunityReports() {
               <p className="font-display text-xl font-semibold">{underReview}</p>
             </div>
           </Card>
-          <Card className="flex items-center gap-3">
+          <Card className="public-data-card flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
               <Send size={16} className="text-blue-600" />
             </div>
@@ -85,7 +98,7 @@ export default function CommunityReports() {
               <p className="font-display text-xl font-semibold">{forwarded}</p>
             </div>
           </Card>
-          <Card className="flex items-center gap-3">
+          <Card className="public-data-card flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
               <CheckCircle2 size={16} className="text-primary" />
             </div>
@@ -96,7 +109,7 @@ export default function CommunityReports() {
           </Card>
         </div>
 
-        <Card>
+        <Card className="public-chart-card">
           <p className="font-display font-semibold mb-4">Reports by District</p>
           <ResponsiveContainer width="100%" height={260}>
             <BarChart data={byDistrict}>

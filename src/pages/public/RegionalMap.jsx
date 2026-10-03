@@ -14,9 +14,7 @@ import Topbar from "../../components/Topbar";
 import Card, { SeverityBadge } from "../../components/Card";
 import { useLanguage } from "../../i18n/LanguageContext";
 
-import { API_BASE_URL } from "../../config/api";
-
-const API_BASE = API_BASE_URL;
+const API_BASE = "http://127.0.0.1:8000";
 
 // ============================================================
 // PUBLIC USER DISTRICT
@@ -388,7 +386,7 @@ export default function RegionalMap() {
         />
 
         <main
-          className="p-4 sm:p-8"
+          className="p-4 sm:p-8 public-page"
           dir="ltr"
         >
           <Card>
@@ -421,7 +419,7 @@ export default function RegionalMap() {
         />
 
         <main
-          className="p-4 sm:p-8"
+          className="p-4 sm:p-8 public-page"
           dir="ltr"
         >
           <Card>
@@ -463,14 +461,27 @@ export default function RegionalMap() {
       />
 
       <main
-        className="p-4 sm:p-8 space-y-4"
+        className="p-4 sm:p-8 space-y-6 public-page"
         dir="ltr"
       >
+        <section className="public-page-hero">
+          <div className="public-hero-content">
+            <span className="public-hero-eyebrow">Regional GIS monitoring</span>
+            <h2 className="public-hero-title">Explore drought conditions around {userDistrict.district}</h2>
+            <p className="public-hero-copy">Interactive regional monitoring using real AgriWatch Random Forest predictions and nearby-district context.</p>
+          </div>
+          <div className="public-hero-stats">
+            <div className="public-hero-stat"><span>Your district</span><strong>{userDistrict.district}</strong></div>
+            <div className="public-hero-stat"><span>Nearby districts</span><strong>{Math.max(regionalDistricts.length - 1, 0)}</strong></div>
+            <div className="public-hero-stat"><span>Province</span><strong>{displayProvince}</strong></div>
+          </div>
+        </section>
+
         {/* ====================================================
             REGIONAL COVERAGE
         ==================================================== */}
 
-        <Card>
+        <Card className="public-data-card">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <p className="text-xs uppercase text-ink/40 font-medium">
@@ -543,7 +554,7 @@ export default function RegionalMap() {
             REGIONAL MAP
         ==================================================== */}
 
-        <Card className="p-0 overflow-hidden">
+        <Card className="p-0 public-map-shell">
           <MapContainer
             center={mapCenter}
             zoom={8}
@@ -728,11 +739,7 @@ export default function RegionalMap() {
                 return (
                   <div
                     key={`${district.province}-${district.district}`}
-                    className={`border rounded-lg p-3 ${
-                      isUserDistrict
-                        ? "border-primary"
-                        : "border-line"
-                    }`}
+                    className={`public-district-tile ${isUserDistrict ? "is-current" : ""}`}
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div>

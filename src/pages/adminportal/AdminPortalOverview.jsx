@@ -40,11 +40,22 @@ export default function AdminPortalOverview() {
   const totalRegistrations = publicRegByDistrict.reduce((s, d) => s + d.count, 0);
 
   return (
-    <main className="p-4 sm:p-8 max-w-6xl mx-auto space-y-8">
-      <div>
-        <h1 className="font-display text-xl font-semibold">Admin overview</h1>
-        <p className="text-sm text-ink/50 mt-1">Full-system snapshot — users, PDMA officers, and pending approvals across AgriWatch.</p>
-      </div>
+    <main className="p-4 sm:p-8 max-w-6xl mx-auto space-y-8 page-enter">
+      <section className="portal-hero">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <span className="portal-chip">Administrative control</span>
+            <h2 className="font-display text-2xl sm:text-3xl font-semibold mt-3">System approvals and operations</h2>
+            <p className="text-white/72 mt-2 max-w-2xl">Review access requests, manage officers, and monitor platform-wide complaint and issue activity.</p>
+          </div>
+          <div className="portal-chip">AgriWatch admin center</div>
+        </div>
+        <div className="portal-hero-grid">
+          <div className="portal-metric"><p className="portal-metric-label">Pending requests</p><p className="portal-metric-value">{totalPending}</p></div>
+          <div className="portal-metric"><p className="portal-metric-label">Open complaints</p><p className="portal-metric-value">{openComplaints}</p></div>
+          <div className="portal-metric"><p className="portal-metric-label">Open issues</p><p className="portal-metric-value">{openIssues}</p></div>
+        </div>
+      </section>
 
       {totalPending > 0 && (
         <Card className="border-warn/30 bg-warn/5 flex items-center justify-between flex-wrap gap-3">

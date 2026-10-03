@@ -1,4 +1,5 @@
 import Topbar from "../../components/Topbar";
+import PdmaPageHero from "../../components/PdmaPageHero";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { useLanguage } from "../../i18n/LanguageContext";
@@ -552,9 +553,19 @@ export default function Dashboard() {
       />
 
       <main
-        className="p-4 sm:p-8 space-y-6"
+        className="p-4 sm:p-8 space-y-6 pdma-page"
         dir="ltr"
       >
+        <PdmaPageHero
+          title="National drought overview"
+          copy="Monitor Pakistan-wide ML drought severity, warning signals and environmental trends from one operational dashboard."
+          stats={!loading ? [
+            { label: "Districts monitored", value: districts.length },
+            { label: "Extreme districts", value: stats.extreme },
+            { label: "Active warnings", value: stats.activeWarnings },
+          ] : []}
+          right={<span className="pdma-hero-button">{range === "6mo" ? "Last 6 months" : "Last 12 months"}</span>}
+        />
 
         {/* ====================================================
             CURRENT ML DATA ERROR

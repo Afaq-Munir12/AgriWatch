@@ -14,8 +14,8 @@ export default function AdminPortalLogin() {
   }, [user, navigate]);
 
   return (
-    <div className="min-h-screen bg-forest flex items-center justify-center p-6">
-      <div className="w-full max-w-sm">
+    <div className="auth-page flex items-center justify-center">
+      <div className="w-full max-w-md page-enter">
         <div className="flex flex-col items-center mb-6">
           <Link to="/" className="flex flex-col items-center">
             <img src={logo} alt="AgriWatch Pakistan" className="w-16 h-16 rounded-full bg-white object-cover mb-3" />
@@ -24,7 +24,7 @@ export default function AdminPortalLogin() {
           <p className="text-primary-light text-xs tracking-widest uppercase mt-1">Admin Portal</p>
         </div>
 
-        <div className="bg-surface rounded-xl p-6 shadow-xl">
+        <div className="auth-form-card">
           <div className="flex items-center gap-3 mb-5">
             <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
               <ShieldCheck size={18} className="text-primary" />
@@ -42,7 +42,7 @@ export default function AdminPortalLogin() {
             className="btn-animated w-full flex items-center justify-center gap-3 bg-surface border border-line rounded-lg py-2.5 text-sm font-medium hover:bg-paper-dim transition-colors disabled:opacity-60"
           >
             <GoogleIcon />
-            Continue with Google
+            Continue with Google (Admin only)
           </button>
 
           {error && (

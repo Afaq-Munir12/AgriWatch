@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import Topbar from "../components/Topbar";
+import PdmaPageHero from "../components/PdmaPageHero";
 import Card, { SeverityBadge } from "../components/Card";
 import { getDistrictComparison } from "../services/droughtService";
 import {
@@ -252,7 +253,7 @@ export default function DistrictCompare() {
           subtitle="ML-powered district drought comparison"
         />
 
-        <main className="p-4 sm:p-8">
+        <main className="p-4 sm:p-8 pdma-page">
           <Card>
             <p className="text-sm text-ink/60">
               Loading real AgriWatch ML data...
@@ -275,7 +276,7 @@ export default function DistrictCompare() {
           subtitle="ML-powered district drought comparison"
         />
 
-        <main className="p-4 sm:p-8">
+        <main className="p-4 sm:p-8 pdma-page">
           <Card>
             <p className="text-sm text-red-600">
               {error}
@@ -299,14 +300,25 @@ export default function DistrictCompare() {
       />
 
       <main
-        className="p-4 sm:p-8 space-y-6"
+        className="p-4 sm:p-8 space-y-6 pdma-page"
         dir="ltr"
       >
+        <PdmaPageHero
+          eyebrow="PDMA district analysis"
+          title="Compare drought conditions side by side"
+          copy="Compare ML drought risk, vegetation, rainfall and soil moisture between two districts before prioritizing field response."
+          stats={[
+            { label: "District A", value: districtA || "Select" },
+            { label: "District B", value: districtB || "Select" },
+            { label: "Model", value: "Random Forest" },
+          ]}
+        />
+
         {/* =====================================================
             DISTRICT SELECTORS
         ===================================================== */}
 
-        <Card className="flex items-center gap-3 flex-wrap">
+        <Card className="pdma-control-strip flex items-center gap-3 flex-wrap">
 
           <select
             value={districtA}
@@ -355,7 +367,7 @@ export default function DistrictCompare() {
                 COMPARISON TABLE
             ================================================= */}
 
-            <Card className="overflow-x-auto">
+            <Card className="overflow-x-auto pdma-data-card">
 
               <div className="mb-4">
 
@@ -425,7 +437,7 @@ export default function DistrictCompare() {
                 ML RISK COMPARISON GRAPH
             ================================================= */}
 
-            <Card>
+            <Card className="pdma-data-card">
 
               <div className="flex items-center justify-between mb-5 flex-wrap gap-2">
 

@@ -22,13 +22,13 @@ export default function AdminPortalLayout() {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-paper flex" dir="ltr">
+    <div className="dashboard-shell min-h-screen bg-paper flex" dir="ltr">
       {open && (
         <div className="fixed inset-0 bg-black/40 z-40 lg:hidden" onClick={() => setOpen(false)} />
       )}
 
       <aside
-        className={`w-64 shrink-0 bg-forest text-mist flex flex-col h-screen fixed lg:sticky top-0 left-0 z-50
+        className={`sidebar-polished w-64 shrink-0 text-mist flex flex-col h-screen fixed lg:sticky top-0 left-0 z-50
           transition-transform duration-300 ease-out
           ${open ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
       >
@@ -95,8 +95,8 @@ export default function AdminPortalLayout() {
         </div>
       </aside>
 
-      <div className="flex-1 min-w-0">
-        <header className="sticky top-0 z-30 bg-paper/90 backdrop-blur border-b border-line px-4 py-3 flex items-center lg:hidden">
+      <div className="flex-1 min-w-0 dashboard-content">
+        <header className="dashboard-topbar sticky top-0 z-30 bg-paper/88 backdrop-blur-xl border-b border-line/80 px-4 py-3 flex items-center lg:hidden">
           <button
             onClick={() => setOpen(true)}
             className="p-2 rounded-lg border border-line bg-surface hover:bg-paper-dim transition-colors"

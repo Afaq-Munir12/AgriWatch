@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Topbar from "../../components/Topbar";
+import PdmaPageHero from "../../components/PdmaPageHero";
 import { useLanguage } from "../../i18n/LanguageContext";
 import Card from "../../components/Card";
 import { districts } from "../../data/dummyData";
@@ -27,8 +28,17 @@ export default function Reports() {
   return (
     <>
       <Topbar title={t("ptAdminReportsTitle")} subtitle={t("ptAdminReportsSub")} />
-      <main className="p-4 sm:p-8 space-y-6" dir="ltr">
-        <Card>
+      <main className="p-4 sm:p-8 space-y-6 pdma-page" dir="ltr">
+        <PdmaPageHero
+          title="Drought reporting workspace"
+          copy="Prepare district-level situation reports for PDMA review and keep a clear history of generated reporting periods."
+          stats={[
+            { label: "Generated reports", value: generated.length },
+            { label: "Current scope", value: district },
+            { label: "Reporting range", value: range },
+          ]}
+        />
+        <Card className="pdma-form-card pdma-data-card">
           <p className="font-display font-semibold mb-4">Generate New Report</p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <select value={district} onChange={(e) => setDistrict(e.target.value)} className="border border-line rounded-lg px-3 py-2 text-sm bg-surface">
@@ -51,7 +61,7 @@ export default function Reports() {
           <p className="font-display font-semibold mb-4">Generated Reports</p>
           <div className="space-y-2">
             {generated.map((r) => (
-              <div key={r.id} className="flex items-center justify-between border border-line rounded-lg px-4 py-3">
+              <div key={r.id} className="pdma-list-row flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <FileText size={18} className="text-primary" />
                   <div>

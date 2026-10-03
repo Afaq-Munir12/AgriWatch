@@ -9,7 +9,7 @@ import { addRecentDistrict } from "../utils/recentDistricts";
 import { districts, trendData, alerts } from "../data/dummyData";
 import { useComplaints } from "../store/ComplaintsContext";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
-import { ArrowLeft, Leaf, Droplets, ThermometerSun, Bell, FileWarning, Send } from "lucide-react";
+import { ArrowLeft, Leaf, Droplets, ThermometerSun, Bell, FileWarning, Send, MapPin, Sparkles } from "lucide-react";
 
 export default function DistrictDetail() {
   const { id } = useParams();
@@ -50,7 +50,7 @@ export default function DistrictDetail() {
   return (
     <>
       <Topbar title={district.name} subtitle={`${district.province} · District Detail`} />
-      <main className="p-4 sm:p-8 space-y-6" dir="ltr">
+      <main className={`${isAdmin ? "pdma-page" : "farmer-page"} p-4 sm:p-8 space-y-6`} dir="ltr">
         <button
           onClick={() => navigate(-1)}
           className="btn-animated flex items-center gap-1.5 text-sm font-medium text-ink/60 hover:text-ink"
@@ -58,7 +58,29 @@ export default function DistrictDetail() {
           <ArrowLeft size={15} /> Back
         </button>
 
-        <Card className="flex items-center justify-between flex-wrap gap-4" scan>
+        <section className="farmer-page-hero">
+          <div className="farmer-hero-content">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <span className="farmer-hero-eyebrow"><Sparkles size={13} /> District intelligence</span>
+                <h2 className="farmer-hero-title">{district.name}</h2>
+                <p className="farmer-hero-copy">A focused view of drought status, environmental indicators, trend data and district alerts.</p>
+                <div className="farmer-hero-actions">
+                  <span className="farmer-hero-button"><MapPin size={14} /> {district.province}</span>
+                  <span className="farmer-hero-button"><Bell size={14} /> {districtAlerts.length} alert{districtAlerts.length === 1 ? "" : "s"}</span>
+                </div>
+              </div>
+              <SeverityBadge level={district.severity} />
+            </div>
+            <div className="farmer-hero-stats">
+              <div className="farmer-hero-stat"><span>NDVI</span><strong>{district.ndvi.toFixed(2)}</strong></div>
+              <div className="farmer-hero-stat"><span>SPI-3</span><strong>{district.spi3.toFixed(1)}</strong></div>
+              <div className="farmer-hero-stat"><span>Soil moisture</span><strong>{district.soilMoisture}%</strong></div>
+            </div>
+          </div>
+        </section>
+
+        <Card className="farmer-form-card flex items-center justify-between flex-wrap gap-4" scan>
           <div>
             <p className="text-xs uppercase text-ink/40 font-medium">Current Status</p>
             <div className="flex items-center gap-3 mt-1">
@@ -82,7 +104,7 @@ export default function DistrictDetail() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <Card className="flex items-center gap-3">
+            <Card className="farmer-data-card flex items-center gap-3">
               <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                 <Leaf size={16} className="text-primary" />
               </div>
@@ -91,7 +113,7 @@ export default function DistrictDetail() {
                 <p className="font-display text-xl font-semibold">{district.ndvi.toFixed(2)}</p>
               </div>
             </Card>
-            <Card className="flex items-center gap-3">
+            <Card className="farmer-data-card flex items-center gap-3">
               <div className="w-9 h-9 rounded-lg bg-warn/10 flex items-center justify-center shrink-0">
                 <ThermometerSun size={16} className="text-warn" />
               </div>
@@ -100,7 +122,7 @@ export default function DistrictDetail() {
                 <p className="font-display text-xl font-semibold">{district.spi3.toFixed(1)}</p>
               </div>
             </Card>
-            <Card className="flex items-center gap-3">
+            <Card className="farmer-data-card flex items-center gap-3">
               <div className="w-9 h-9 rounded-lg bg-danger/10 flex items-center justify-center shrink-0">
                 <Droplets size={16} className="text-danger" />
               </div>
@@ -112,7 +134,7 @@ export default function DistrictDetail() {
           </div>
         )}
 
-        <Card>
+        <Card className="farmer-form-card">
           <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
             <p className="font-display font-semibold">Trend</p>
             <RangeToggle range={range} setRange={setRange} />
@@ -135,7 +157,7 @@ export default function DistrictDetail() {
           <p className="text-xs text-ink/35 mt-2">Shared demo trend data — will reflect this district's real satellite history once connected.</p>
         </Card>
 
-        <Card>
+        <Card className="farmer-form-card">
           <div className="flex items-center gap-2 mb-4">
             <Bell size={16} className="text-primary" />
             <p className="font-display font-semibold">Alerts for {district.name}</p>

@@ -22,7 +22,7 @@ export default function Sidebar({ navItems, roleLabelKey, basePath }) {
 
       <aside
         dir={lang === "ur" ? "rtl" : undefined}
-        className={`w-64 min-w-0 shrink-0 bg-forest text-mist flex flex-col h-screen fixed lg:sticky top-0 left-0 z-50
+        className={`sidebar-polished w-64 min-w-0 shrink-0 text-mist flex flex-col h-screen fixed lg:sticky top-0 left-0 z-50
           transition-transform duration-300 ease-out
           ${open ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
           ${lang === "ur" ? "i18n-ur" : ""}`}
@@ -82,13 +82,16 @@ export default function Sidebar({ navItems, roleLabelKey, basePath }) {
             <LanguageToggle className="!bg-white/10 !border-white/10 !text-mist hover:!bg-white/15 justify-center" />
             <ThemeToggle className="!bg-white/10 !border-white/10 !text-mist hover:!bg-white/15 justify-center" />
           </div>
-          <Link to="/" className="flex items-center gap-3 text-mist/60 hover:text-mist text-sm min-w-0">
+          <Link to="/" className="flex items-center gap-3 text-mist/70 hover:text-mist text-sm min-w-0">
             <LogOut size={16} className="shrink-0" /> <span className="min-w-0 truncate">{t("exitToHome")}</span>
           </Link>
           {basePath === "/pdma" && (
-            <Link to="/admin-portal/login" className="block text-[11px] text-mist/40 hover:text-mist/70">
-              Go to Admin Portal →
-            </Link>
+            <div className="space-y-1">
+              <Link to="/admin-portal/login" className="sidebar-footer-link">
+                <Command size={14} className="shrink-0" /> <span>Open Admin Portal login</span>
+              </Link>
+              <span className="sidebar-footer-link-subtle">User approvals and access requests</span>
+            </div>
           )}
           <p className="text-[10px] text-mist/40 font-mono">{t("tagline")}</p>
         </div>
