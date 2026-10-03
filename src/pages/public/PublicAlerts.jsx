@@ -4,7 +4,13 @@ import Topbar from "../../components/Topbar";
 import { useLanguage } from "../../i18n/LanguageContext";
 import Card, { SeverityBadge } from "../../components/Card";
 
-const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = (
+  import.meta.env.VITE_API_URL ||
+  (typeof window !== "undefined" &&
+  ["localhost", "127.0.0.1"].includes(window.location.hostname)
+    ? "http://127.0.0.1:8000"
+    : "https://agri-watch-backend.vercel.app")
+).replace(/\/$/, "");
 
 // ============================================================
 // PUBLIC USER DISTRICT

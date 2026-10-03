@@ -15,7 +15,13 @@ import {
   Activity,
 } from "lucide-react";
 
-const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = (
+  import.meta.env.VITE_API_URL ||
+  (typeof window !== "undefined" &&
+  ["localhost", "127.0.0.1"].includes(window.location.hostname)
+    ? "http://127.0.0.1:8000"
+    : "https://agri-watch-backend.vercel.app")
+).replace(/\/$/, "");
 const USER_DISTRICT = "Peshawar District";
 
 // ============================================================
