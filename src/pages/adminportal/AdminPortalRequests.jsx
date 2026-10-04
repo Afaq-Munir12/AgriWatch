@@ -5,6 +5,7 @@ import RequestDetailModal from "../../components/RequestDetailModal";
 import { SkeletonCardList } from "../../components/Skeleton";
 import { useSupabaseTable } from "../../supabase/useSupabaseTable";
 import { supabase } from "../../supabase/config";
+import { reviewAccessRequest } from "../../supabase/accessRequestApproval";
 import { useRegistrations } from "../../store/RegistrationsContext";
 import { useToast } from "../../components/ToastContext";
 import { addRipple } from "../../utils/ripple";
@@ -346,8 +347,10 @@ function SupabaseRequestsSection({ showToast }) {
   async function setStatus(item, status) {
     setBusyId(item.id);
     try {
-      const { error } = await supabase.from(TABLE_NAME).update({ status }).eq("id", item.id);
-      if (error) throw error;
+      await reviewAccessRequest({
+        requestId: item.id,
+        action: status === STATUS.APPROVED ? "approve" : "reject",
+      });
       showToast(status === STATUS.APPROVED ? "Request approved — written to Supabase" : "Request rejected — written to Supabase", status === STATUS.APPROVED ? "success" : "info");
       setDetailItem(null);
     } catch (err) {
