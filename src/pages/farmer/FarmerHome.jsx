@@ -55,7 +55,7 @@ const severityTheme = {
 
 export default function FarmerHome() {
   const { t } = useLanguage();
-  const { profile, loading: profileLoading, error: profileError } = useMyProfile();
+  const { user, profile, loading: profileLoading, error: profileError } = useMyProfile();
 
   const [prediction, setPrediction] = useState(null);
   const [history, setHistory] = useState([]);
@@ -67,8 +67,12 @@ export default function FarmerHome() {
   const [historyError, setHistoryError] = useState("");
   const [alertsError, setAlertsError] = useState("");
 
-  const farmerName = profile?.full_name || "Farmer";
-  const firstName = farmerName.split(" ")[0];
+  const farmerName =
+    profile?.full_name ||
+    user?.user_metadata?.full_name ||
+    user?.user_metadata?.name ||
+    "";
+  const firstName = farmerName ? farmerName.split(" ")[0] : "Farmer";
   const farmerDistrict = profile?.district?.trim() || "";
 
   const farmerCrops = useMemo(() => {
@@ -176,6 +180,56 @@ export default function FarmerHome() {
       .filter((alert) => String(alert.district || "").toLowerCase().replace(/\s+district$/i, "").trim() === normalized)
       .sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0))[0] || null;
   }, [alerts, farmerDistrict]);
+
+  if (profileLoading) {
+    return (
+      <>
+        <Topbar title="" subtitle="" contentLoading />
+        <main className="p-4 sm:p-6 lg:p-8 space-y-6 farmer-dashboard" dir="ltr" aria-busy="true">
+          <section className="bg-surface border border-line rounded-[28px] p-6 sm:p-8 min-h-[300px] shadow-sm">
+            <div className="grid lg:grid-cols-[1.15fr_.85fr] gap-7 h-full">
+              <div className="space-y-5">
+                <div className="skeleton h-7 w-56 rounded-full" />
+                <div className="space-y-3 pt-3">
+                  <div className="skeleton h-3 w-40" />
+                  <div className="skeleton h-11 w-52" />
+                  <div className="skeleton h-4 w-72 max-w-full" />
+                </div>
+                <div className="flex gap-3 pt-2">
+                  <div className="skeleton h-12 w-40 rounded-xl" />
+                  <div className="skeleton h-12 w-32 rounded-xl" />
+                </div>
+              </div>
+              <div className="border border-line rounded-2xl p-5 space-y-5">
+                <div className="skeleton h-3 w-40" />
+                <div className="skeleton h-9 w-24" />
+                <div className="skeleton h-2 w-full rounded-full" />
+                <div className="grid grid-cols-2 gap-3 pt-3">
+                  <div className="skeleton h-16 rounded-xl" />
+                  <div className="skeleton h-16 rounded-xl" />
+                </div>
+              </div>
+            </div>
+          </section>
+          <section className="grid grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
+            <SkeletonStatCard /><SkeletonStatCard /><SkeletonStatCard /><SkeletonStatCard />
+          </section>
+          <section className="grid xl:grid-cols-[1.65fr_.85fr] gap-4">
+            <div className="bg-surface border border-line rounded-xl p-5 h-[330px]">
+              <div className="skeleton h-5 w-48" />
+              <div className="skeleton h-3 w-64 mt-3" />
+              <div className="skeleton h-[230px] w-full mt-5 rounded-xl" />
+            </div>
+            <div className="bg-surface border border-line rounded-xl p-5 h-[330px]">
+              <div className="skeleton h-5 w-36" />
+              <div className="skeleton h-20 w-full mt-5 rounded-xl" />
+              <div className="skeleton h-20 w-full mt-3 rounded-xl" />
+            </div>
+          </section>
+        </main>
+      </>
+    );
+  }
 
   if (profileError) {
     return (

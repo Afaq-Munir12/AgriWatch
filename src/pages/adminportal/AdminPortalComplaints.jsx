@@ -8,7 +8,7 @@ import { useSupabaseAuth } from "../../supabase/useSupabaseAuth";
 import { useToast } from "../../components/ToastContext";
 import { addRipple } from "../../utils/ripple";
 import { COMPLAINT_STATUS, COMPLAINTS_TABLE } from "../../supabase/complaintsApi";
-import { Sprout, Users2, X, CheckCircle2, Image as ImageIcon, MapPin } from "lucide-react";
+import { Sprout, Users2, X, CheckCircle2, Image as ImageIcon, MapPin, Radio, FileWarning } from "lucide-react";
 
 const roleIcon = { farmer: Sprout, public: Users2 };
 const roleLabel = { farmer: "Farmer", public: "General Public" };
@@ -71,21 +71,32 @@ export default function AdminPortalComplaints() {
     }
   }
 
+  const openCount = complaints.filter((c) => c.status !== "Resolved").length;
+  const resolvedCount = complaints.filter((c) => c.status === "Resolved").length;
+
   return (
-    <main className="p-4 sm:p-8 max-w-5xl mx-auto space-y-6">
-      <div>
-        <h1 className="font-display text-xl font-semibold">Field complaints</h1>
-        <p className="text-sm text-ink/50 mt-1">
-          Every complaint submitted from the farmer and public portals, across all districts. PDMA
-          officers see the same list in their own portal.
-        </p>
-      </div>
+    <main className="p-4 sm:p-8 max-w-6xl mx-auto space-y-6 page-enter">
+      <section className="portal-hero">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <span className="portal-chip"><Radio size={12} /> Live complaint operations</span>
+            <h1 className="font-display text-2xl sm:text-3xl font-semibold mt-3">Field complaints</h1>
+            <p className="text-white/72 mt-2 max-w-2xl">Farmer and General Public reports stream here from Supabase in realtime. Review evidence, track status and write resolution notes.</p>
+          </div>
+          <div className="portal-chip"><FileWarning size={12} /> {openCount} need attention</div>
+        </div>
+        <div className="portal-hero-grid">
+          <div className="portal-metric"><p className="portal-metric-label">Total complaints</p><p className="portal-metric-value">{complaints.length}</p></div>
+          <div className="portal-metric"><p className="portal-metric-label">Open / active</p><p className="portal-metric-value">{openCount}</p></div>
+          <div className="portal-metric"><p className="portal-metric-label">Resolved</p><p className="portal-metric-value">{resolvedCount}</p></div>
+        </div>
+      </section>
 
       {offline && <OfflineNotice what="complaints" error={error} />}
 
       <div className="grid grid-cols-3 gap-4">
         {COMPLAINT_STATUS.map((s) => (
-          <Card key={s}>
+          <Card key={s} className="transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30">
             <p className="text-xs uppercase text-ink/40 font-medium">{s}</p>
             <p className="font-display text-2xl font-semibold mt-1">{counts[s] || 0}</p>
           </Card>
@@ -132,7 +143,7 @@ export default function AdminPortalComplaints() {
           {filtered.map((c) => {
             const Icon = roleIcon[c.role] || Sprout;
             return (
-              <Card key={c.id} className="flex items-start gap-3">
+              <Card key={c.id} className="flex items-start gap-3 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-lg">
                 {c.photo ? (
                   <img
                     src={c.photo}

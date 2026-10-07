@@ -2,47 +2,90 @@ import { useEffect, useState } from "react";
 import { supabase } from "./config";
 import { clearPortalAccess, clearLoginAttempt } from "../utils/authAccess";
 
+// Keep the resolved Supabase user in module memory. Route navigation remounts
+// page components, but it should NOT make every new page briefly behave as if
+// auth is unknown again. This prevents the "demo/default user" flash between
+// Farmer/Public/PDMA pages while still re-checking the real Supabase session.
+let cachedUser;
+let sessionResolved = false;
+let sessionPromise = null;
+
+function resolveSessionOnce() {
+  if (sessionResolved) return Promise.resolve(cachedUser ?? null);
+
+  if (!sessionPromise) {
+    sessionPromise = supabase.auth
+      .getSession()
+      .then(({ data, error }) => {
+        if (error) throw error;
+        cachedUser = data.session?.user ?? null;
+        sessionResolved = true;
+        return cachedUser;
+      })
+      .finally(() => {
+        sessionPromise = null;
+      });
+  }
+
+  return sessionPromise;
+}
+
 // Same shape as the old Firebase useGoogleAuth() hook — user / loading /
-// error / signIn / signOut — so the rest of the app barely had to change.
-//
-// Note: Supabase's OAuth flow redirects the whole page (it isn't a popup
-// like Firebase's signInWithPopup), so signIn() sends the browser to Google
-// and back to `redirectTo` below. Make sure that URL is added under
-// Supabase → Authentication → URL Configuration → Redirect URLs.
+// error / signIn / signOut — so the rest of the app barely has to change.
 export function useSupabaseAuth() {
-  const [user, setUser] = useState(undefined); // undefined = still checking, null = signed out
+  const [user, setUser] = useState(() => (sessionResolved ? cachedUser ?? null : undefined));
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setUser(data.session?.user ?? null);
-    });
+    let mounted = true;
+
+    resolveSessionOnce()
+      .then((resolvedUser) => {
+        if (mounted) setUser(resolvedUser);
+      })
+      .catch((err) => {
+        console.error("Couldn't read Supabase session:", err);
+        cachedUser = null;
+        sessionResolved = true;
+        if (mounted) {
+          setUser(null);
+          setError(err);
+        }
+      });
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+      cachedUser = session?.user ?? null;
+      sessionResolved = true;
+      if (mounted) setUser(cachedUser);
     });
 
-    return () => listener.subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      listener.subscription.unsubscribe();
+    };
   }, []);
 
   async function signIn(redirectTo = `${window.location.origin}/admin-portal`, { forceAccountChoice = false } = {}) {
     setError(null);
-    const { error } = await supabase.auth.signInWithOAuth({
+    const { error: signInError } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo,
         ...(forceAccountChoice ? { queryParams: { prompt: "select_account" } } : {}),
       },
     });
-    if (error) {
-      console.error("Google sign-in failed:", error);
-      setError(error);
+    if (signInError) {
+      console.error("Google sign-in failed:", signInError);
+      setError(signInError);
     }
   }
 
   async function signOut() {
     clearPortalAccess();
     clearLoginAttempt();
+    cachedUser = null;
+    sessionResolved = true;
+    setUser(null);
     await supabase.auth.signOut();
   }
 

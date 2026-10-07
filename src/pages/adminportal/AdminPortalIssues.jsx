@@ -9,7 +9,7 @@ import { useToast } from "../../components/ToastContext";
 import { addRipple } from "../../utils/ripple";
 import { ISSUE_STATUS, ISSUES_TABLE } from "../../supabase/complaintsApi";
 import { IssueStatusBadge, SeverityPill } from "../shared/ReportIssue";
-import { Bug, Sprout, Users2, ShieldCheck, X, CheckCircle2, Monitor } from "lucide-react";
+import { Bug, Sprout, Users2, ShieldCheck, X, CheckCircle2, Monitor, Radio, Activity } from "lucide-react";
 
 const roleIcon = { farmer: Sprout, public: Users2, pdma: ShieldCheck, admin: ShieldCheck };
 const roleLabel = { farmer: "Farmer", public: "General Public", pdma: "PDMA Officer" };
@@ -69,15 +69,24 @@ export default function AdminPortalIssues() {
     }
   }
 
+  const activeCount = issues.filter((i) => i.status === "Open" || i.status === "In Progress").length;
   return (
-    <main className="p-4 sm:p-8 max-w-5xl mx-auto space-y-6">
-      <div>
-        <h1 className="font-display text-xl font-semibold">Software issue reports</h1>
-        <p className="text-sm text-ink/50 mt-1">
-          Glitches reported by farmers, public users and PDMA officers from inside the app. Your reply
-          is shown back to whoever reported it.
-        </p>
-      </div>
+    <main className="p-4 sm:p-8 max-w-6xl mx-auto space-y-6 page-enter">
+      <section className="portal-hero">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <span className="portal-chip"><Radio size={12} /> Live software triage</span>
+            <h1 className="font-display text-2xl sm:text-3xl font-semibold mt-3">Software issue reports</h1>
+            <p className="text-white/72 mt-2 max-w-2xl">Glitches reported by Farmer, Public and PDMA portals appear here in realtime. Track severity, reply to reporters and close resolved issues.</p>
+          </div>
+          <div className="portal-chip"><Activity size={12} /> {activeCount} active</div>
+        </div>
+        <div className="portal-hero-grid">
+          <div className="portal-metric"><p className="portal-metric-label">Total reports</p><p className="portal-metric-value">{issues.length}</p></div>
+          <div className="portal-metric"><p className="portal-metric-label">Open / in progress</p><p className="portal-metric-value">{activeCount}</p></div>
+          <div className="portal-metric"><p className="portal-metric-label">Critical unresolved</p><p className="portal-metric-value">{critical}</p></div>
+        </div>
+      </section>
 
       {offline && <OfflineNotice what="issue reports" error={error} />}
 
@@ -95,7 +104,7 @@ export default function AdminPortalIssues() {
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {ISSUE_STATUS.map((s) => (
-          <Card key={s}>
+          <Card key={s} className="transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30">
             <p className="text-xs uppercase text-ink/40 font-medium">{s}</p>
             <p className="font-display text-2xl font-semibold mt-1">{counts[s] || 0}</p>
           </Card>
@@ -142,7 +151,7 @@ export default function AdminPortalIssues() {
           {filtered.map((i) => {
             const Icon = roleIcon[i.role] || Bug;
             return (
-              <Card key={i.id} className="flex items-start gap-3">
+              <Card key={i.id} className="flex items-start gap-3 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-lg">
                 <div className="w-9 h-9 rounded-lg bg-danger/10 flex items-center justify-center shrink-0">
                   <Icon size={16} className="text-danger" />
                 </div>
