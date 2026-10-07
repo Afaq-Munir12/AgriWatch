@@ -5,63 +5,31 @@ import { useLanguage } from "../../i18n/LanguageContext";
 import Card, { StatusBadge } from "../../components/Card";
 import { SkeletonTableRows } from "../../components/Skeleton";
 import SortableHeader from "../../components/SortableHeader";
-import ConfirmDialog from "../../components/ConfirmDialog";
+import DroughtReportReview from "../../components/DroughtReportReview";
+import { isPermittedAssignment } from "../../supabase/reportContract";
 import { useSortableData } from "../../utils/useSortableData";
 import { useComplaints } from "../../store/ComplaintsContext";
 import OfflineNotice from "../../components/OfflineNotice";
 import { useSupabaseAuth } from "../../supabase/useSupabaseAuth";
-import { Image as ImageIcon, X, CheckCircle2, Bug, Sprout, Users2 } from "lucide-react";
+import { Image as ImageIcon, X, Bug, Sprout, Users2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { addRipple } from "../../utils/ripple";
-import { useToast } from "../../components/ToastContext";
 
 const roleLabel = { farmer: "Farmer", public: "Public" };
 const roleIcon = { farmer: Sprout, public: Users2 };
 
 export default function Complaints() {
   const { t } = useLanguage();
-  const { complaints, updateStatus, loading, offline, error } = useComplaints();
+  const { complaints: rows, access, loading, offline, error } = useComplaints();
   const { user } = useSupabaseAuth();
-  const { showToast } = useToast();
-  const [busy, setBusy] = useState(false);
-  const [open, setOpen] = useState(null); // complaint object being viewed
-  const [note, setNote] = useState("");
-  const [confirmResolve, setConfirmResolve] = useState(null); // complaint id pending resolve confirm
+  const complaints = rows.filter(c => isPermittedAssignment(c, user?.id, access?.districts || []));
+  const [openId, setOpenId] = useState(null);
+  const open = complaints.find(c => c.dbId === openId);
 
   const { sorted, sortConfig, requestSort } = useSortableData(complaints);
 
-  function openReport(c) {
-    setOpen(c);
-    setNote(c.resolutionNote || "");
-  }
-
-  function closeReport() {
-    setOpen(null);
-    setNote("");
-  }
-
-  async function setStatus(id, status) {
-    setBusy(true);
-    try {
-      // The note is saved on every status change, so an officer can leave a
-      // "forwarded to district office" remark too, not just on resolve.
-      await updateStatus(id, status, note, user?.email || "");
-      if (open?.id === id) setOpen({ ...open, status, resolutionNote: note });
-      showToast(
-        status === "Resolved" ? `Complaint ${id} marked resolved` : `Complaint ${id} status set to ${status}`,
-        "success"
-      );
-    } catch (err) {
-      showToast(err.message || "Couldn't update that complaint in Supabase.", "error");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  function confirmMarkResolved() {
-    if (confirmResolve) setStatus(confirmResolve, "Resolved");
-    setConfirmResolve(null);
-  }
+  function openReport(c) { setOpenId(c.dbId); }
+  function closeReport() { setOpenId(null); }
 
   return (
     <>
@@ -69,7 +37,7 @@ export default function Complaints() {
       <main className="p-4 sm:p-8 space-y-6 pdma-page" dir="ltr">
         <PdmaPageHero
           title="Complaint operations desk"
-          copy="Review farmer and public damage reports, move cases through the PDMA workflow and keep resolution notes attached to each complaint."
+          copy="View explicitly assigned reports within your verified districts and the recorded AgriWatch review and response."
           stats={[
             { label: "Total complaints", value: complaints.length },
             { label: "Under review", value: complaints.filter((c) => c.status === "Under Review").length },
@@ -81,8 +49,8 @@ export default function Complaints() {
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <p className="text-xs text-ink/45">
             {offline
-              ? "Showing locally stored complaints while Supabase is unreachable."
-              : "Live from Supabase — complaints filed on the farmer and public portals appear here automatically."}
+              ? "Assigned reports are unavailable while Supabase is unreachable."
+              : "Live from Supabase — only reports explicitly assigned to your verified account appear here."}
           </p>
           <Link
             to="/pdma/report-issue"
@@ -117,7 +85,7 @@ export default function Complaints() {
                   <th className="pb-2 font-medium">Photo</th>
                   <SortableHeader label="Date" sortKey="date" sortConfig={sortConfig} onSort={requestSort} />
                   <SortableHeader label="Status" sortKey="status" sortConfig={sortConfig} onSort={requestSort} />
-                  <th className="pb-2 font-medium">Update</th>
+                  <th className="pb-2 font-medium">View</th>
                 </tr>
               </thead>
               <tbody>
@@ -152,7 +120,7 @@ export default function Complaints() {
                         )}
                       </td>
                       <td className="py-2.5 font-mono text-xs text-ink/50">{c.date}</td>
-                      <td className="py-2.5"><StatusBadge status={c.status} /></td>
+                      <td className="py-2.5"><StatusBadge status={c.displayStatus} /></td>
                       <td className="py-2.5">
                         <button
                           onClick={() => openReport(c)}
@@ -224,60 +192,15 @@ export default function Complaints() {
 
               <div>
                 <p className="text-xs uppercase text-ink/40 font-medium mb-1">Current Status</p>
-                <StatusBadge status={open.status} />
+                <StatusBadge status={open.displayStatus} />
               </div>
 
-              <div>
-                <p className="text-xs uppercase text-ink/40 font-medium mb-1.5">Response / Resolution Note</p>
-                <textarea
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                  rows={2}
-                  placeholder="Visible to the farmer once marked resolved..."
-                  className="border border-line rounded-lg px-3 py-2 text-sm bg-surface w-full"
-                />
-              </div>
-
-              <div className="flex flex-wrap gap-2 pt-1">
-                <button
-                  disabled={busy}
-                  onClick={() => setStatus(open.id, "Under Review")}
-                  onMouseDown={addRipple}
-                  className="btn-animated text-xs font-medium border border-line rounded-lg px-3 py-2 hover:bg-paper-dim"
-                >
-                  Under Review
-                </button>
-                <button
-                  disabled={busy}
-                  onClick={() => setStatus(open.id, "Forwarded")}
-                  onMouseDown={addRipple}
-                  className="btn-animated text-xs font-medium border border-line rounded-lg px-3 py-2 hover:bg-paper-dim"
-                >
-                  Forward
-                </button>
-                <button
-                  disabled={busy}
-                  onClick={() => setConfirmResolve(open.id)}
-                  onMouseDown={addRipple}
-                  className="btn-animated flex items-center gap-1.5 text-xs font-medium bg-primary text-white rounded-lg px-3 py-2 hover:bg-primary-light"
-                >
-                  <CheckCircle2 size={14} /> Mark Resolved
-                </button>
-              </div>
+              <DroughtReportReview key={open.dbId} report={open} readOnly />
             </div>
           </div>
         </div>
       )}
 
-      <ConfirmDialog
-        open={!!confirmResolve}
-        title="Mark this complaint resolved?"
-        body="The farmer will see this as resolved along with your response note, right away."
-        confirmLabel="Mark resolved"
-        tone="primary"
-        onConfirm={confirmMarkResolved}
-        onCancel={() => setConfirmResolve(null)}
-      />
     </>
   );
 }

@@ -1,4 +1,6 @@
 import { supabase } from "./config";
+import { DROUGHT_REPORT_CATEGORIES, complaintFromRow } from './reportContract';
+export { complaintFromRow } from './reportContract';
 
 // Central place for every Supabase read/write to do with complaints and
 // software issue reports. The React contexts (ComplaintsContext /
@@ -11,7 +13,7 @@ export const COMPLAINTS_TABLE = "complaints";
 export const ISSUES_TABLE = "issue_reports";
 export const PHOTO_BUCKET = "complaint-photos";
 
-export const COMPLAINT_STATUS = ["Under Review", "Forwarded", "Resolved"];
+export const COMPLAINT_STATUS = ['Submitted', 'Under Review', 'Assigned for PDMA review', 'Resolved'];
 export const ISSUE_STATUS = ["Open", "In Progress", "Resolved", "Closed"];
 export const ISSUE_SEVERITY = ["Low", "Medium", "High", "Critical"];
 export const ISSUE_AREAS = [
@@ -73,31 +75,29 @@ export async function uploadAttachment(file, folder = "complaints") {
 // ---------------------------------------------------------------------------
 
 // Database row -> the shape the existing pages already render.
-export function complaintFromRow(row) {
-  return {
-    dbId: row.id,
-    id: row.ref || row.id,
-    farmer: row.reporter_name || "Anonymous",
-    role: row.reporter_role || "farmer",
-    phone: row.reporter_phone || "",
-    district: row.district || "—",
-    category: row.category || "Other",
-    description: row.description || "",
-    photo: row.photo_url || null,
-    status: row.status || "Under Review",
-    resolutionNote: row.resolution_note || "",
-    handledBy: row.handled_by || "",
-    userId: row.user_id || null,
-    date: (row.created_at || new Date().toISOString()).slice(0, 10),
-    createdAt: row.created_at,
-  };
+
+
+export async function fetchComplaintAccess() {
+  const { data, error } = await supabase.rpc('agriwatch_report_access_v1');
+  if (error) throw new Error('Drought report access is unavailable. The coordinated database rollout is required.');
+  return data;
 }
 
-export async function fetchComplaints() {
-  const { data, error } = await supabase
+export async function fetchComplaints(access) {
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+  if (authError) throw authError;
+  if (!authData.user) return [];
+  let query = supabase
     .from(COMPLAINTS_TABLE)
-    .select("*")
-    .order("created_at", { ascending: false });
+    .select('*');
+  if (!access?.admin) {
+    if (access?.districts?.length) {
+      query = query.eq('pdma_assigned_to', authData.user.id).in('district', access.districts).not('pdma_assigned_at', 'is', null);
+    } else {
+      query = query.eq('user_id', authData.user.id);
+    }
+  }
+  const { data, error } = await query.order('created_at', { ascending: false });
   if (error) throw error;
   return (data ?? []).map(complaintFromRow);
 }
@@ -110,14 +110,19 @@ export async function insertComplaint({
   category,
   description,
   photoUrl = null,
-  userId = null,
 }) {
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+  if (authError) throw authError;
+  if (!authData.user) throw new Error('Sign in before submitting a drought report.');
+  if (!DROUGHT_REPORT_CATEGORIES.includes(category) || !district?.trim() || description?.trim().length < 10) {
+    throw new Error('Choose a drought category and district, and describe the situation (at least 10 characters).');
+  }
   const ref = makeRef("CMP");
   const { data, error } = await supabase
     .from(COMPLAINTS_TABLE)
     .insert({
       ref,
-      user_id: userId,
+      user_id: authData.user.id,
       reporter_name: reporterName,
       reporter_role: reporterRole,
       reporter_phone: reporterPhone,
@@ -125,7 +130,6 @@ export async function insertComplaint({
       category,
       description,
       photo_url: photoUrl,
-      status: "Under Review",
     })
     .select()
     .single();
@@ -133,15 +137,18 @@ export async function insertComplaint({
   return complaintFromRow(data);
 }
 
-export async function updateComplaintRow(dbId, patch) {
-  const { data, error } = await supabase
-    .from(COMPLAINTS_TABLE)
-    .update({ ...patch, updated_at: new Date().toISOString() })
-    .eq("id", dbId)
-    .select()
-    .single();
+export async function reviewComplaint(dbId, action, note = '', assignee = null, reason = '') {
+  const { data, error } = await supabase.rpc('agriwatch_review_report_v1', {
+    report_id: dbId, action, note, assignee, reason,
+  });
   if (error) throw error;
-  return complaintFromRow(data);
+  return complaintFromRow(Array.isArray(data) ? data[0] : data);
+}
+
+export async function fetchReportReviewers() {
+  const { data, error } = await supabase.rpc('agriwatch_report_reviewers_v1');
+  if (error) throw error;
+  return data || [];
 }
 
 // ---------------------------------------------------------------------------

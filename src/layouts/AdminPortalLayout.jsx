@@ -10,7 +10,7 @@ import {
 const navItems = [
   { to: "", label: "Overview", icon: LayoutDashboard },
   { to: "/requests", label: "Access Requests", icon: ClipboardCheck, badge: true },
-  { to: "/complaints", label: "Field Complaints", icon: FileWarning },
+  { to: "/complaints", label: "Drought Reports", icon: FileWarning },
   { to: "/issues", label: "Software Issues", icon: Bug },
   { to: "/users", label: "Users & Officers", icon: Users },
   { to: "/reports", label: "Reports", icon: FileBarChart },

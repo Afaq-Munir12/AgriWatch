@@ -66,6 +66,12 @@ export function StatusBadge({ status }) {
   const { t, lang } = useLanguage();
   const map = {
     Delivered: "bg-primary/10 text-primary",
+    Submitted: "bg-warn/10 text-warn",
+    "Awaiting AgriWatch review": "bg-warn/10 text-warn",
+    "AgriWatch review started": "bg-info/10 text-info",
+    "Assigned for PDMA review": "bg-info/10 text-info",
+    "Legacy status: Forwarded": "bg-info/10 text-info",
+    "Resolved (legacy record)": "bg-primary/10 text-primary",
     "Under Review": "bg-warn/10 text-warn",
     Forwarded: "bg-info/10 text-info",
     Resolved: "bg-primary/10 text-primary",
