@@ -51,7 +51,7 @@ export default function AdminPortalOverview() {
             <span className="portal-chip"><Radio size={12} /> Live Supabase control center</span>
             <h2 className="font-display text-2xl sm:text-3xl font-semibold mt-3">System approvals and operations</h2>
             <p className="text-white/72 mt-2 max-w-2xl">
-              Live account totals, approval queues, complaints and software issues across AgriWatch.
+              Live account totals, approval queues, drought reports and software issues across AgriWatch.
             </p>
           </div>
           <div className="portal-chip"><Activity size={12} /> Realtime database</div>
@@ -180,7 +180,7 @@ export default function AdminPortalOverview() {
           <Card>
             <div className="flex items-center gap-2">
               <FileWarning size={16} className="text-warn" />
-              <p className="font-display font-semibold">Field complaints</p>
+              <p className="font-display font-semibold">Drought situation reports</p>
             </div>
             <p className="text-3xl font-display font-semibold mt-4">{complaints.length}</p>
             <p className="text-xs text-ink/45 mt-1">{openComplaints} still open</p>
@@ -201,7 +201,7 @@ export default function AdminPortalOverview() {
         {[
           ["/admin-portal/requests", "Review access requests", "Approve Farmer, Public, PDMA and Admin access from live Supabase queues."],
           ["/admin-portal/users", "Browse users & officers", "Live directory of every approved Farmer, Public user and PDMA officer."],
-          ["/admin-portal/complaints", "Field complaints", "Monitor and resolve farmer/public complaints across all districts."],
+          ["/admin-portal/complaints", "Drought situation reports", "Monitor and resolve farmer/public complaints across all districts."],
           ["/admin-portal/issues", "Software issues", "Triage glitches reported from every AgriWatch portal."],
         ].map(([to, title, text]) => (
           <Link to={to} className="block group" key={to}>
