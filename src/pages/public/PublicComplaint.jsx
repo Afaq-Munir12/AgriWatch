@@ -11,15 +11,20 @@ import { addRipple } from "../../utils/ripple";
 import { districts } from "../../data/dummyData";
 import { Paperclip, Send, X, CheckCircle2, Bug } from "lucide-react";
 
-import { DROUGHT_REPORT_CATEGORIES } from "../../supabase/reportContract";
-
 const MAX_PHOTO_MB = 3;
 
-const CATEGORIES = DROUGHT_REPORT_CATEGORIES;
+const CATEGORIES = [
+  "Water Shortage",
+  "Crop Damage",
+  "Livestock Loss",
+  "Well / Tubewell Dried Up",
+  "Relief Not Received",
+  "Other",
+];
 
 // General-public version of the farmer complaint form. Writes to the same
-// Supabase `complaints` table, tagged reporter_role = "public";
-// the AgriWatch admin dashboard receives it alongside farmer reports.
+// Supabase `complaints` table, tagged reporter_role = "public", so PDMA
+// officers and the Admin portal see it alongside farmer complaints.
 export default function PublicComplaint() {
   const { complaints, loading, offline, error, addComplaint } = useComplaints();
   const profile = useCurrentProfile("public");
@@ -45,9 +50,9 @@ export default function PublicComplaint() {
   const mine = useMemo(
     () =>
       complaints.filter((c) =>
-        Boolean(profile.userId) && c.userId === profile.userId
+        profile.userId ? c.userId === profile.userId : c.farmer === reporterName && c.role === "public"
       ),
-    [complaints, profile.userId]
+    [complaints, profile.userId, reporterName]
   );
 
   function handleFile(e) {
@@ -91,7 +96,7 @@ export default function PublicComplaint() {
       setForm({ ...form, description: "" });
       clearFile();
       setSubmittedId(ref);
-      showToast(`Report ${ref} recorded for AgriWatch admin review`, "success");
+      showToast(`Report ${ref} submitted to the PDMA office`, "success");
       setTimeout(() => setSubmittedId(null), 5000);
     } catch (err) {
       showToast(err.message || "Couldn't submit that report — please try again.", "error");
@@ -103,15 +108,15 @@ export default function PublicComplaint() {
   return (
     <>
       <Topbar
-        title="Report Drought Situation"
-        subtitle="Submit an area or community drought situation for AgriWatch admin review"
+        title="Submit a Report"
+        subtitle="Tell your district PDMA office about drought damage or water shortage in your area"
       />
       <main className="p-4 sm:p-8 space-y-6 public-page" dir="ltr">
         <section className="public-page-hero">
           <div className="public-hero-content">
             <span className="public-hero-eyebrow">Citizen reporting channel</span>
-            <h2 className="public-hero-title">Report Drought Situation</h2>
-            <p className="public-hero-copy">Report a drought situation affecting your area or community. AgriWatch admins receive every new report first.</p>
+            <h2 className="public-hero-title">Report drought damage or water shortage</h2>
+            <p className="public-hero-copy">Send a district-linked report to PDMA, attach photo evidence, and follow the resolution status from the same portal.</p>
           </div>
           <div className="public-hero-stats">
             <div className="public-hero-stat"><span>Your district</span><strong>{district || "Select district"}</strong></div>
@@ -125,14 +130,14 @@ export default function PublicComplaint() {
         {submittedId && (
           <div className="flex items-center gap-2 bg-primary/10 text-primary text-sm font-medium rounded-lg px-4 py-3">
             <CheckCircle2 size={16} />
-            Report {submittedId} recorded for AgriWatch admin review.
+            Report {submittedId} submitted — your district PDMA officer can see it now.
           </div>
         )}
 
         <Card className="public-form-card">
           <p className="font-display font-semibold mb-1">New report</p>
           <p className="text-xs text-ink/45 mb-4">
-            Reports first go to AgriWatch admins for review and response. Found a bug in the website
+            Reports are reviewed by PDMA officers for your district. Found a bug in the website
             instead?{" "}
             <Link to="/public/report-issue" className="text-primary hover:underline inline-flex items-center gap-1">
               <Bug size={12} /> Report a software issue
@@ -140,7 +145,6 @@ export default function PublicComplaint() {
             .
           </p>
 
-          <p className="mb-4 text-sm">For routine farming questions, use crop advice in the farmer portal; this form is for drought situations.</p>
           <form onSubmit={submit} className="space-y-3">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {!profile.name && (
@@ -182,7 +186,7 @@ export default function PublicComplaint() {
               </label>
 
               <label className="block">
-                <span className="text-xs uppercase text-ink/40 font-medium">Drought report category</span>
+                <span className="text-xs uppercase text-ink/40 font-medium">Type of problem</span>
                 <select
                   value={form.category}
                   onChange={(e) => setForm({ ...form, category: e.target.value })}
@@ -242,7 +246,7 @@ export default function PublicComplaint() {
         </Card>
 
         <Card>
-          <div className="public-section-title mb-4"><div><h2>Your reports</h2><p>Track recorded updates from AgriWatch admins.</p></div></div>
+          <div className="public-section-title mb-4"><div><h2>Your reports</h2><p>Track the reports you have sent to PDMA.</p></div></div>
           {loading ? (
             <SkeletonCardList count={2} />
           ) : mine.length === 0 ? (
@@ -255,15 +259,15 @@ export default function PublicComplaint() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-sm font-medium">{c.category}</p>
-                      <StatusBadge status={c.displayStatus} />
+                      <StatusBadge status={c.status} />
                     </div>
                     <p className="text-xs text-ink/40 font-mono mt-0.5">
                       {c.id} · {c.date} · {c.district}
                     </p>
                     {c.description && <p className="text-xs text-ink/55 mt-1">{c.description}</p>}
-                    {c.resolutionNote && (
+                    {c.status === "Resolved" && c.resolutionNote && (
                       <p className="text-xs text-primary mt-2 bg-primary/5 rounded-md px-2 py-1.5">
-                        <span className="font-medium">{c.respondedAt ? "AgriWatch admin response: " : "Recorded response: "}</span>
+                        <span className="font-medium">PDMA response: </span>
                         {c.resolutionNote}
                       </p>
                     )}

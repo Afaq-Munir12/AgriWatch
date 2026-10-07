@@ -1,7 +1,7 @@
 import { useMemo, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import Topbar from "../../components/Topbar";
-import { DROUGHT_REPORT_CATEGORIES } from "../../supabase/reportContract";
+import { useLanguage } from "../../i18n/LanguageContext";
 import Card, { StatusBadge } from "../../components/Card";
 import OfflineNotice from "../../components/OfflineNotice";
 import { SkeletonCardList } from "../../components/Skeleton";
@@ -25,13 +25,13 @@ import { useToast } from "../../components/ToastContext";
 const MAX_PHOTO_MB = 3;
 
 export default function FarmerComplaints() {
-
+  const { t } = useLanguage();
   const { complaints, loading, offline, error, addComplaint } = useComplaints();
   const profile = useCurrentProfile("farmer");
   const { showToast } = useToast();
   const fileInputRef = useRef(null);
 
-  const [form, setForm] = useState({ category: DROUGHT_REPORT_CATEGORIES[0], description: "" });
+  const [form, setForm] = useState({ category: "Crop Failure", description: "" });
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [photoError, setPhotoError] = useState("");
@@ -39,8 +39,8 @@ export default function FarmerComplaints() {
   const [justSubmittedId, setJustSubmittedId] = useState(null);
 
   const mine = useMemo(
-    () => complaints.filter((c) => Boolean(profile.userId) && c.userId === profile.userId),
-    [complaints, profile.userId]
+    () => complaints.filter((c) => profile.userId ? c.userId === profile.userId : c.farmer === profile.name),
+    [complaints, profile.userId, profile.name]
   );
 
   const openCount = mine.filter((c) => c.status !== "Resolved").length;
@@ -90,10 +90,10 @@ export default function FarmerComplaints() {
       setForm({ ...form, description: "" });
       removePhoto();
       setJustSubmittedId(id);
-      showToast(`Report ${id} recorded for AgriWatch admin review`, "success");
+      showToast(`Complaint ${id} submitted successfully`, "success");
       setTimeout(() => setJustSubmittedId(null), 5000);
     } catch (err) {
-      showToast(err.message || "Couldn't submit that report — please try again.", "error");
+      showToast(err.message || "Couldn't submit that complaint — please try again.", "error");
     } finally {
       setBusy(false);
     }
@@ -101,32 +101,32 @@ export default function FarmerComplaints() {
 
   return (
     <>
-      <Topbar title="Report Drought Situation" subtitle="Submit an area or community drought situation for AgriWatch admin review" />
+      <Topbar title={t("ptFarmerComplaintsTitle")} subtitle={t("ptFarmerComplaintsSub")} />
       <main className="farmer-page p-4 sm:p-8 space-y-6" dir="ltr">
         <section className="farmer-page-hero">
           <div className="farmer-hero-content">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <span className="farmer-hero-eyebrow"><Sparkles size={13} /> AgriWatch drought reporting</span>
-                <h2 className="farmer-hero-title">Report Drought Situation</h2>
-                <p className="farmer-hero-copy">Report a drought situation affecting your area or community. AgriWatch admins receive every new report first.</p>
+                <span className="farmer-hero-eyebrow"><Sparkles size={13} /> Farmer-to-PDMA channel</span>
+                <h2 className="farmer-hero-title">Report crop damage directly to your district office</h2>
+                <p className="farmer-hero-copy">Submit a structured complaint, attach photo evidence, and follow the status as PDMA reviews your case.</p>
               </div>
               <span className="farmer-hero-button"><MapPin size={14} /> {profile.district || "District not set"}</span>
             </div>
             <div className="farmer-hero-stats">
-              <div className="farmer-hero-stat"><span>Total drought reports</span><strong>{mine.length}</strong></div>
+              <div className="farmer-hero-stat"><span>Total complaints</span><strong>{mine.length}</strong></div>
               <div className="farmer-hero-stat"><span>Open cases</span><strong>{openCount}</strong></div>
               <div className="farmer-hero-stat"><span>Resolved</span><strong>{resolvedCount}</strong></div>
             </div>
           </div>
         </section>
 
-        {offline && <OfflineNotice what="drought reports" error={error} />}
+        {offline && <OfflineNotice what="complaints" error={error} />}
 
         {justSubmittedId && (
           <div className="farmer-callout flex items-center gap-2 text-primary text-sm font-medium">
             <CheckCircle2 size={17} />
-            Report {justSubmittedId} recorded for AgriWatch admin review.
+            Complaint {justSubmittedId} submitted — sent to your district PDMA office for review.
           </div>
         )}
 
@@ -135,30 +135,29 @@ export default function FarmerComplaints() {
             <div className="flex items-start gap-3 mb-5">
               <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0"><FileWarning size={18} className="text-primary" /></div>
               <div>
-                <p className="font-display font-semibold">Create a drought situation report</p>
-                <p className="text-xs text-ink/45 mt-1">This report goes first to the AgriWatch admin dashboard.</p>
+                <p className="font-display font-semibold">Create a new complaint</p>
+                <p className="text-xs text-ink/45 mt-1">This report goes to the PDMA officer assigned to {profile.district || "your district"}.</p>
               </div>
             </div>
 
-            <p className="mb-4 text-sm">Routine farming question? <Link className="text-primary underline" to="/farmer/crops">Use crop advice</Link> rather than submit a drought report.</p>
             <form onSubmit={submit} className="space-y-4 farmer-form-card">
               <label className="block">
-                <span className="farmer-card-label">Drought report category</span>
+                <span className="farmer-card-label">Complaint category</span>
                 <select
                   value={form.category}
                   onChange={(e) => setForm({ ...form, category: e.target.value })}
                   className="mt-1.5 border border-line rounded-xl px-3 py-2.5 text-sm bg-surface w-full"
                 >
-                  {DROUGHT_REPORT_CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+                  {["Crop Failure", "Irrigation Shortage", "Livestock Loss", "Other"].map((c) => <option key={c}>{c}</option>)}
                 </select>
               </label>
 
               <label className="block">
-                <span className="farmer-card-label">Describe the drought situation</span>
+                <span className="farmer-card-label">Describe the damage</span>
                 <textarea
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  placeholder="Describe where the drought situation is happening, how long it has lasted, and the affected area or community..."
+                  placeholder="Tell PDMA what happened, which field was affected and how serious the damage is..."
                   rows={5}
                   className="mt-1.5 border border-line rounded-xl px-3 py-3 text-sm bg-surface w-full resize-y"
                 />
@@ -190,7 +189,7 @@ export default function FarmerComplaints() {
                 onMouseDown={addRipple}
                 className="btn-animated auth-primary-btn"
               >
-                <Send size={15} /> {busy ? "Submitting..." : "Submit report"}
+                <Send size={15} /> {busy ? "Submitting..." : "Submit complaint"}
               </button>
             </form>
 
@@ -202,13 +201,13 @@ export default function FarmerComplaints() {
           <Card className="farmer-form-card">
             <div className="flex items-start justify-between gap-3 mb-4">
               <div>
-                <p className="font-display font-semibold">How drought reporting works</p>
+                <p className="font-display font-semibold">How the complaint flow works</p>
                 <p className="text-xs text-ink/45 mt-1">Your report stays linked to your farmer account.</p>
               </div>
               <ShieldCheck size={19} className="text-primary" />
             </div>
             <div className="farmer-advice-list">
-              {["Submit a drought situation report and optional evidence.", "AgriWatch admins review and respond first. Serious drought reports may be explicitly assigned for PDMA review.", "Track recorded actions here. Assignment does not confirm government action."].map((item, index) => (
+              {["Submit your damage report and optional photo evidence.", "The complaint is routed to the PDMA office for your district.", "Track status changes here until the complaint is resolved."].map((item, index) => (
                 <div key={item} className="farmer-advice-item"><span className="w-6 h-6 rounded-lg bg-primary text-white flex items-center justify-center text-[10px] font-bold shrink-0">0{index + 1}</span><span>{item}</span></div>
               ))}
             </div>
@@ -217,23 +216,23 @@ export default function FarmerComplaints() {
 
         <section>
           <div className="farmer-section-title mb-3">
-            <div><h2>Your drought reports</h2><p>Review recorded updates and AgriWatch admin responses.</p></div>
+            <div><h2>Your complaints</h2><p>Review submitted cases and PDMA responses.</p></div>
           </div>
           <Card className="farmer-form-card">
             {loading ? (
               <SkeletonCardList count={2} />
             ) : mine.length === 0 ? (
-              <div className="farmer-empty-state"><FileWarning size={22} className="text-primary mx-auto" /><p className="font-display font-semibold mt-3">No drought reports yet</p><p className="text-sm text-ink/45 mt-1">Your submitted reports will appear here.</p></div>
+              <div className="farmer-empty-state"><FileWarning size={22} className="text-primary mx-auto" /><p className="font-display font-semibold mt-3">No complaints filed yet</p><p className="text-sm text-ink/45 mt-1">Your submitted complaints will appear here.</p></div>
             ) : (
               <div className="space-y-3">
                 {mine.map((c) => (
                   <div key={c.id} className="farmer-list-row flex items-start gap-3">
                     {c.photo && <img src={c.photo} alt="" className="w-14 h-14 rounded-xl object-cover shrink-0" />}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2 flex-wrap"><p className="text-sm font-semibold">{c.category}</p><StatusBadge status={c.displayStatus} /></div>
+                      <div className="flex items-center justify-between gap-2 flex-wrap"><p className="text-sm font-semibold">{c.category}</p><StatusBadge status={c.status} /></div>
                       <p className="text-[11px] text-ink/40 font-mono mt-1">{c.id} · {c.date}</p>
                       {c.description && <p className="text-sm text-ink/55 mt-2 leading-relaxed">{c.description}</p>}
-                      {c.resolutionNote && <p className="text-xs text-primary mt-2 bg-primary/5 rounded-lg px-3 py-2"><span className="font-semibold">{c.respondedAt ? "AgriWatch admin response: " : "Recorded response: "}</span>{c.resolutionNote}</p>}
+                      {c.status === "Resolved" && c.resolutionNote && <p className="text-xs text-primary mt-2 bg-primary/5 rounded-lg px-3 py-2"><span className="font-semibold">PDMA response: </span>{c.resolutionNote}</p>}
                     </div>
                   </div>
                 ))}
