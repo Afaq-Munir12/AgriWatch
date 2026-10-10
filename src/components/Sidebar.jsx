@@ -40,7 +40,12 @@ export default function Sidebar({ navItems, roleLabelKey, basePath }) {
           </button>
         </div>
 
-        <nav data-tour="sidebar-nav" className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+        <nav
+          data-tour="sidebar-nav"
+          className={`flex-1 overflow-y-auto py-4 px-3 space-y-1 ${
+            basePath === "/pdma" ? "pdma-sidebar-scroll" : ""
+          }`}
+        >
           {navItems.map(({ to, labelKey, icon: Icon }) => (
             <NavLink
               key={to}

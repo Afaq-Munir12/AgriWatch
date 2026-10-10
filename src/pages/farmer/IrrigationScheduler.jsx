@@ -5,6 +5,11 @@ import Card from "../../components/Card";
 import { useLanguage } from "../../i18n/LanguageContext";
 import { getMyFields } from "../../services/farmerFieldService";
 import { useMyProfile } from "../../hooks/useMyProfile";
+import {
+  getIrrigationRecommendation,
+  predictDistrict,
+  resolveDistrictName,
+} from "../../services/droughtService";
 
 import {
   Droplets,
@@ -17,7 +22,6 @@ import {
   Sparkles,
 } from "lucide-react";
 
-const API_URL = "http://127.0.0.1:8000";
 
 // ============================================================
 // HELPERS
@@ -315,33 +319,13 @@ export default function IrrigationScheduler() {
           district
         );
 
-        const response = await fetch(
-          `${API_URL}/predict-district/${encodeURIComponent(
-            district
-          )}`
-        );
+        // Resolve the profile district against the live ML /districts list,
+        // then use the same deployed API service as Farmer Home / Public / PDMA.
+        const apiDistrict =
+          await resolveDistrictName(district);
 
-        if (!response.ok) {
-          let message = "";
-
-          try {
-            const errorData = await response.json();
-
-            message =
-              errorData?.detail ||
-              errorData?.message ||
-              "";
-          } catch {
-            // ignore JSON error
-          }
-
-          throw new Error(
-            message ||
-              `Prediction failed: ${response.status}`
-          );
-        }
-
-        const data = await response.json();
+        const data =
+          await predictDistrict(apiDistrict);
 
         if (cancelled) return;
 
@@ -402,8 +386,11 @@ export default function IrrigationScheduler() {
         setScheduleError("");
         setSchedule(null);
 
+        const apiDistrict =
+          await resolveDistrictName(district);
+
         const payload = {
-          district,
+          district: apiDistrict,
 
           field_id: selectedField.id,
 
@@ -424,41 +411,10 @@ export default function IrrigationScheduler() {
           payload
         );
 
-        const response = await fetch(
-          `${API_URL}/irrigation-recommendation`,
-          {
-            method: "POST",
-
-            headers: {
-              "Content-Type": "application/json",
-            },
-
-            body: JSON.stringify(payload),
-          }
-        );
-
-        if (!response.ok) {
-          let errorMessage = "";
-
-          try {
-            const errorData =
-              await response.json();
-
-            errorMessage =
-              errorData?.detail ||
-              errorData?.message ||
-              "";
-          } catch {
-            // ignore JSON parsing error
-          }
-
-          throw new Error(
-            errorMessage ||
-              `Irrigation request failed: ${response.status}`
+        const data =
+          await getIrrigationRecommendation(
+            payload
           );
-        }
-
-        const data = await response.json();
 
         console.log(
           "REAL AGRIWATCH IRRIGATION RESULT:",

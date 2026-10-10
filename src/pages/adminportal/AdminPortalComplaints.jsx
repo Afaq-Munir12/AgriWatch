@@ -1,14 +1,14 @@
 import { useMemo, useState } from "react";
 import Card, { StatusBadge } from "../../components/Card";
 import OfflineNotice from "../../components/OfflineNotice";
-import DroughtReportReview from "../../components/DroughtReportReview";
+import ConfirmDialog from "../../components/ConfirmDialog";
 import { SkeletonCardList } from "../../components/Skeleton";
 import { useComplaints } from "../../store/ComplaintsContext";
+import { useSupabaseAuth } from "../../supabase/useSupabaseAuth";
+import { useToast } from "../../components/ToastContext";
 import { addRipple } from "../../utils/ripple";
 import { COMPLAINT_STATUS, COMPLAINTS_TABLE } from "../../supabase/complaintsApi";
-import { Sprout, Users2, X, Image as ImageIcon, MapPin, Radio, FileWarning } from "lucide-react";
-
-const REPORT_STATUSES = [...COMPLAINT_STATUS, "Forwarded"];
+import { Sprout, Users2, X, CheckCircle2, Image as ImageIcon, MapPin, Radio, FileWarning } from "lucide-react";
 
 const roleIcon = { farmer: Sprout, public: Users2 };
 const roleLabel = { farmer: "Farmer", public: "General Public" };
@@ -16,14 +16,25 @@ const roleLabel = { farmer: "Farmer", public: "General Public" };
 // Admin-portal view of the same complaints the PDMA officers work on —
 // full-system oversight, including anything an officer hasn't picked up yet.
 export default function AdminPortalComplaints() {
-  const { complaints: rows, loading, offline, error, access } = useComplaints();
-  const complaints = useMemo(() => access?.admin ? rows : [], [access?.admin, rows]);
-
+  const { complaints, loading, offline, error, updateStatus } = useComplaints();
+  const { user } = useSupabaseAuth();
+  const { showToast } = useToast();
 
   const [statusFilter, setStatusFilter] = useState("all");
   const [districtFilter, setDistrictFilter] = useState("all");
-  const [openId, setOpenId] = useState(null);
-  const open = complaints.find(c => c.dbId === openId);
+  const [open, setOpen] = useState(null);
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [confirmResolve, setConfirmResolve] = useState(null);
+
+  const counts = useMemo(
+    () =>
+      COMPLAINT_STATUS.reduce((acc, s) => {
+        acc[s] = complaints.filter((c) => c.status === s).length;
+        return acc;
+      }, {}),
+    [complaints]
+  );
 
   const districtList = useMemo(
     () => ["all", ...Array.from(new Set(complaints.map((c) => c.district).filter(Boolean)))],
@@ -36,16 +47,32 @@ export default function AdminPortalComplaints() {
       (districtFilter === "all" || c.district === districtFilter)
   );
 
-  function openComplaint(c) { setOpenId(c.dbId); }
-  function close() { setOpenId(null); }
+  function openComplaint(c) {
+    setOpen(c);
+    setNote(c.resolutionNote || "");
+  }
+
+  function close() {
+    setOpen(null);
+    setNote("");
+  }
+
+  async function setStatusFor(complaint, status) {
+    setBusy(true);
+    try {
+      await updateStatus(complaint.id, status, note, user?.email || "");
+      setOpen((prev) => (prev && prev.id === complaint.id ? { ...prev, status, resolutionNote: note } : prev));
+      showToast(`${complaint.id} set to ${status}`, status === "Resolved" ? "success" : "info");
+    } catch (err) {
+      showToast(err.message || "Couldn't update that complaint.", "error");
+    } finally {
+      setBusy(false);
+      setConfirmResolve(null);
+    }
+  }
 
   const openCount = complaints.filter((c) => c.status !== "Resolved").length;
-  const resolvedCount = complaints.filter((c) => c.status === "Resolved" || c.resolvedAt).length;
-  const summaryCards = [
-    { label: "Awaiting review", count: complaints.filter(c => c.status !== "Resolved" && !c.resolvedAt && !c.reviewStartedAt && !c.assignedAt).length },
-    { label: "In review / assigned", count: complaints.filter(c => c.status !== "Resolved" && !c.resolvedAt && (c.reviewStartedAt || c.assignedAt)).length },
-    { label: "Resolved", count: resolvedCount },
-  ];
+  const resolvedCount = complaints.filter((c) => c.status === "Resolved").length;
 
   return (
     <main className="p-4 sm:p-8 max-w-6xl mx-auto space-y-6 page-enter">
@@ -67,17 +94,17 @@ export default function AdminPortalComplaints() {
 
       {offline && <OfflineNotice what="complaints" error={error} />}
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-        {summaryCards.map(({ label, count }) => (
-          <Card key={label} className="transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30">
-            <p className="text-xs uppercase text-ink/40 font-medium">{label}</p>
-            <p className="font-display text-2xl font-semibold mt-1">{count}</p>
+      <div className="grid grid-cols-3 gap-4">
+        {COMPLAINT_STATUS.map((s) => (
+          <Card key={s} className="transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30">
+            <p className="text-xs uppercase text-ink/40 font-medium">{s}</p>
+            <p className="font-display text-2xl font-semibold mt-1">{counts[s] || 0}</p>
           </Card>
         ))}
       </div>
 
       <div className="flex flex-wrap gap-2 items-center">
-        {["all", ...REPORT_STATUSES].map((s) => (
+        {["all", ...COMPLAINT_STATUS].map((s) => (
           <button
             key={s}
             onClick={() => setStatusFilter(s)}
@@ -135,7 +162,7 @@ export default function AdminPortalComplaints() {
                       {c.category}{" "}
                       <span className="text-ink/40 font-normal">· {roleLabel[c.role] || c.role}</span>
                     </p>
-                    <StatusBadge status={c.displayStatus} />
+                    <StatusBadge status={c.status} />
                   </div>
                   <p className="text-xs text-ink/50 mt-1 flex items-center gap-1">
                     <MapPin size={11} /> {c.district} · {c.farmer}
@@ -214,12 +241,57 @@ export default function AdminPortalComplaints() {
                 <p className="text-xs text-ink/40">No photo attached to this report.</p>
               )}
 
-              <DroughtReportReview key={open.dbId} report={open} />
+              <div>
+                <p className="text-xs uppercase text-ink/40 font-medium mb-1.5">Response / resolution note</p>
+                <textarea
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  rows={3}
+                  placeholder="Shown to the person who filed this once you mark it resolved…"
+                  className="border border-line rounded-lg px-3 py-2 text-sm bg-surface w-full"
+                />
+              </div>
+
+              <div className="flex flex-wrap gap-2 pt-1">
+                <button
+                  disabled={busy}
+                  onClick={() => setStatusFor(open, "Under Review")}
+                  onMouseDown={addRipple}
+                  className="btn-animated text-xs font-medium border border-line rounded-lg px-3 py-2 hover:bg-paper-dim disabled:opacity-50"
+                >
+                  Under Review
+                </button>
+                <button
+                  disabled={busy}
+                  onClick={() => setStatusFor(open, "Forwarded")}
+                  onMouseDown={addRipple}
+                  className="btn-animated text-xs font-medium border border-line rounded-lg px-3 py-2 hover:bg-paper-dim disabled:opacity-50"
+                >
+                  Forward to district office
+                </button>
+                <button
+                  disabled={busy}
+                  onClick={() => setConfirmResolve(open)}
+                  onMouseDown={addRipple}
+                  className="btn-animated flex items-center gap-1.5 text-xs font-medium bg-primary text-white rounded-lg px-3 py-2 hover:bg-primary-light disabled:opacity-50"
+                >
+                  <CheckCircle2 size={14} /> {busy ? "Saving..." : "Mark Resolved"}
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
 
+      <ConfirmDialog
+        open={!!confirmResolve}
+        title="Mark this complaint resolved?"
+        body="The status and your note are written to Supabase, and the person who filed it sees them right away."
+        confirmLabel="Mark resolved"
+        tone="primary"
+        onConfirm={() => confirmResolve && setStatusFor(confirmResolve, "Resolved")}
+        onCancel={() => setConfirmResolve(null)}
+      />
     </main>
   );
 }

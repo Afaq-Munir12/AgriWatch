@@ -1469,3 +1469,45 @@ html[dir="rtl"] .sidebar-polished nav a:hover { transform:translateX(-3px); }
     padding-inline: .35rem;
   }
 }
+
+/* ============================================================
+   PDMA SIDEBAR — polished role-specific scrollbar
+   Only the PDMA navigation uses this treatment.
+   ============================================================ */
+.pdma-sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #8fc84b rgba(255, 255, 255, 0.055);
+  scrollbar-gutter: stable;
+}
+
+.pdma-sidebar-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.pdma-sidebar-scroll::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.045);
+  border-radius: 999px;
+  margin-block: 8px;
+}
+
+.pdma-sidebar-scroll::-webkit-scrollbar-thumb {
+  min-height: 54px;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, #b7df69 0%, #83bd43 50%, #e2c33b 100%)
+    padding-box;
+  box-shadow:
+    0 0 0 1px rgba(183, 223, 105, 0.10),
+    0 0 12px rgba(142, 198, 72, 0.24);
+}
+
+.pdma-sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background:
+    linear-gradient(180deg, #d0ee8a 0%, #99cf55 48%, #f0d35a 100%)
+    padding-box;
+  box-shadow:
+    0 0 0 1px rgba(208, 238, 138, 0.16),
+    0 0 16px rgba(174, 220, 92, 0.34);
+}
+

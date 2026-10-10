@@ -351,7 +351,7 @@ export default function FarmerHome() {
             <QuickAction to="/farmer/crops" icon={Sprout} title="Crop recommendations" body="Get crop advice from current drought conditions." />
             <QuickAction to="/farmer/irrigation" icon={Waves} title="Irrigation schedule" body="See whether to irrigate, reduce or skip." />
             <QuickAction to="/farmer/calendar" icon={CalendarDays} title="Crop calendar" body="Review seasonal crop activities and timing." />
-            <QuickAction to="/farmer/complaints" icon={MessageSquareWarning} title="Report Drought Situation" body="Submit and track a drought report with AgriWatch admins." />
+            <QuickAction to="/farmer/complaints" icon={MessageSquareWarning} title="Report crop damage" body="Send and track a complaint with PDMA." />
           </div>
         </section>
       </main>

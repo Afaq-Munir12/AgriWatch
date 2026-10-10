@@ -384,3 +384,44 @@ export async function resolveDistrictName(savedDistrict) {
 
   return match || String(savedDistrict).trim();
 }
+
+// ============================================================
+// IRRIGATION RECOMMENDATION
+// ============================================================
+// Uses the same deployed FastAPI base URL as every other ML request.
+// This prevents Farmer Irrigation from falling back to 127.0.0.1
+// after the frontend is deployed.
+
+export async function getIrrigationRecommendation(payload) {
+  try {
+    const response = await fetch(
+      `${API_URL}/irrigation-recommendation`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      }
+    );
+
+    const data = await handleResponse(
+      response,
+      "Irrigation recommendation failed"
+    );
+
+    console.log(
+      "REAL AGRIWATCH IRRIGATION RECOMMENDATION:",
+      data
+    );
+
+    return data;
+  } catch (error) {
+    console.error(
+      "Irrigation recommendation API error:",
+      error
+    );
+    throw error;
+  }
+}
+
