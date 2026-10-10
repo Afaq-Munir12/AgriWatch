@@ -33,7 +33,9 @@ The pre-login personal portal cards are hints only. They cannot grant a Firebase
 | Production login HTTP page | 200 with application root; authentication itself not tested |
 | Downloaded deployed bundle in mocked DOM | Existing login layout, heading, logo and navigation links passed; standalone heading absent |
 | Real OTP, stored-role routing, Settings and sign-out on this new preview | User confirmed passed |
-| Real Admin/PDMA Google preview login | Blocked by redirect allowlist and unavailable browser session |
+| Admin/PDMA OAuth entry points and exact preview return allowlist | Passed: both authorize endpoints redirect to Google with expected provider callback |
+| Staff-focused component and permission recheck | 6 passed |
+| Real Admin/PDMA Google preview login | Pending: no connected browser or interactive staff account session |
 
 Commands: `npm run test:personal`, `npm run test:personal-ui`, `node --test test/report-contract.test.mjs`, `npm run build`, `oxlint src`, `git diff --check`. Automated tests use fake OTP fixtures and do not send SMS or write records. The prior staging/mobile UID match passed. The stored account role is `citizen` (General Public), with a profile present, zero CMP reports and zero access requests. The user confirmed the expected role and counts on the normal website preview.
 
@@ -43,7 +45,7 @@ The earlier page headed "Farmer and public sign-in preview" was identified by th
 
 Firebase Authorized Domains received only `agri-watch-4wj7m8bnb-afaq-munirs-projects.vercel.app`. Existing domains were preserved.
 
-Supabase Google is enabled, but its Redirect URLs contain only `http://localhost:5173/`. An attempted patch containing only the two exact preview return URLs returned HTTP 403. No redirect settings changed. A Supabase owner must add:
+Supabase Google is enabled. Our earlier attempt to add the two preview URLs returned HTTP 403. The owner subsequently added them, and a read-only configuration check verified both exact URLs below, with the existing localhost entry and Site URL preserved:
 
 - `https://agri-watch-4wj7m8bnb-afaq-munirs-projects.vercel.app/auth/callback`
 - `https://agri-watch-4wj7m8bnb-afaq-munirs-projects.vercel.app/admin-portal`
