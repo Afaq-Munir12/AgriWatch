@@ -4,6 +4,17 @@
 // (for example severity/crop labels) is intentionally localized.
 
 const dict = {
+  firebaseOtpCancel: { en: "Cancel and retry", ur: "منسوخ کریں اور دوبارہ کوشش کریں" },
+  firebaseOtpResend: { en: "Send a new code", ur: "نیا کوڈ بھیجیں" },
+  firebaseOtpTimeout: { en: "Phone verification took too long. Cancel any open CAPTCHA and try again.", ur: "فون کی تصدیق میں زیادہ وقت لگا۔ کھلے کیپچا کو بند کریں اور دوبارہ کوشش کریں۔" },
+  firebaseOtpCaptcha: { en: "The CAPTCHA check failed. Please send a new code and complete the CAPTCHA again.", ur: "کیپچا کی تصدیق ناکام ہوئی۔ نیا کوڈ بھیجیں اور کیپچا دوبارہ مکمل کریں۔" },
+  firebaseOtpNetwork: { en: "Phone verification could not connect. Check your connection and try again.", ur: "فون کی تصدیق کے لیے رابطہ نہیں ہو سکا۔ انٹرنیٹ چیک کریں اور دوبارہ کوشش کریں۔" },
+  firebaseOtpInvalid: { en: "That code is incorrect. Check the latest SMS and try again.", ur: "یہ کوڈ درست نہیں ہے۔ تازہ ترین پیغام چیک کریں اور دوبارہ کوشش کریں۔" },
+  firebaseOtpExpired: { en: "That SMS code has expired. Please request a new code.", ur: "اس کوڈ کی مدت ختم ہو گئی ہے۔ براہ کرم نیا کوڈ منگوائیں۔" },
+  firebaseOtpLimited: { en: "Too many SMS attempts or the SMS limit was reached. Please wait before trying again.", ur: "بہت زیادہ کوششیں ہوئی ہیں یا پیغامات کی حد پوری ہو گئی ہے۔ دوبارہ کوشش سے پہلے انتظار کریں۔" },
+  firebaseOtpDomain: { en: "Phone sign-in is not configured for this website address. Please contact support.", ur: "اس ویب پتے پر فون سے سائن ان کی ترتیب مکمل نہیں ہے۔ معاونت سے رابطہ کریں۔" },
+  firebaseOtpSendFailed: { en: "The SMS code could not be sent. Please try again.", ur: "پیغام کا کوڈ نہیں بھیجا جا سکا۔ براہ کرم دوبارہ کوشش کریں۔" },
+  firebaseOtpVerifyFailed: { en: "The SMS code could not be verified. Please try again or request a new code.", ur: "پیغام کے کوڈ کی تصدیق نہیں ہو سکی۔ دوبارہ کوشش کریں یا نیا کوڈ منگوائیں۔" },
   firebasePersonalPhoneOnly: { en: "Use phone verification for your Farmer or General Public account. Google sign-in remains available for PDMA and administrators.", ur: "کسان یا عام شہری اکاؤنٹ کے لیے فون کی تصدیق کریں۔ پی ڈی ایم اے اور ایڈمن کے لیے گوگل سائن اِن دستیاب ہے۔" },
   firebaseStoredRoleHint: { en: "Your saved account role determines which portal opens after verification.", ur: "تصدیق کے بعد آپ کے اکاؤنٹ میں محفوظ کردار کے مطابق پورٹل کھلے گا۔" },
   firebaseVerifyContinue: { en: "Verify and continue", ur: "تصدیق کریں اور آگے بڑھیں" },

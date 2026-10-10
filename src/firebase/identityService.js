@@ -1,8 +1,17 @@
 import { profileMemberships, resolvePortal } from './roleRouting.js';
 
-export function createIdentityService({ auth, sdk, client, readProfile, readRequests, readMemberships = profileMemberships, checkPhoneSite = async () => {}, delay = ms => new Promise(resolve => setTimeout(resolve, ms)) }) {
+export function createIdentityService({ auth, sdk, client, readProfile, readRequests, readMemberships = profileMemberships, checkPhoneSite = async () => {}, delay = ms => new Promise(resolve => setTimeout(resolve, ms)), otpTimeoutMs = 90000 }) {
   let verifier;
   let confirmation;
+  let otpGeneration = 0;
+  const cancelled = () => Object.assign(new Error('OTP attempt cancelled.'), { code: 'auth/otp-cancelled' });
+  function withDeadline(operation) {
+    let timer;
+    const timeout = new Promise((_, reject) => {
+      timer = setTimeout(() => reject(Object.assign(new Error('Phone verification timed out. Please try again.'), { code: 'auth/otp-timeout' })), otpTimeoutMs);
+    });
+    return Promise.race([operation, timeout]).finally(() => clearTimeout(timer));
+  }
   const requireUser = () => {
     const user = auth.currentUser;
     if (!user || user.isAnonymous) throw new Error('Sign in with phone OTP first.');
@@ -26,22 +35,36 @@ export function createIdentityService({ auth, sdk, client, readProfile, readRequ
     async sendOtp(phone, container) {
       if (!/^\+[1-9]\d{7,14}$/.test(phone)) throw new Error('Use an international phone number, for example +923001234567.');
       if (auth.currentUser) throw new Error('Sign out before signing into another phone account.');
+      const version = ++otpGeneration;
       confirmation = undefined;
       clearVerifier();
-      await checkPhoneSite();
-      // Firebase supplies the site key and invokes its normal interactive challenge when needed.
-      verifier = new sdk.RecaptchaVerifier(auth, container, { size: 'invisible' });
+      let attemptVerifier;
       try {
-        confirmation = await sdk.signInWithPhoneNumber(auth, phone, verifier);
+        const result = await withDeadline((async () => {
+          await checkPhoneSite();
+          if (version !== otpGeneration) throw cancelled();
+          // Firebase supplies the site key and invokes its normal interactive challenge when needed.
+          attemptVerifier = new sdk.RecaptchaVerifier(auth, container, { size: 'invisible' });
+          verifier = attemptVerifier;
+          return sdk.signInWithPhoneNumber(auth, phone, attemptVerifier);
+        })());
+        if (version !== otpGeneration) throw cancelled();
+        confirmation = result;
       } catch (error) {
-        clearVerifier();
+        // An old request must never clear the verifier belonging to its retry.
+        if (version === otpGeneration) {
+          ++otpGeneration;
+          clearVerifier();
+        }
         throw error;
       }
     },
     async confirmOtp(code) {
-      if (!confirmation) throw new Error('Request a new SMS code.');
+      if (!confirmation) throw Object.assign(new Error('Request a new SMS code.'), { code: 'auth/missing-verification-id' });
       if (!/^\d{6}$/.test(code)) throw new Error('Enter the six-digit SMS code.');
-      const result = await confirmation.confirm(code);
+      const version = otpGeneration;
+      const result = await withDeadline(confirmation.confirm(code));
+      if (version !== otpGeneration) throw cancelled();
       confirmation = undefined;
       clearVerifier();
       await ready(result.user);
@@ -99,10 +122,11 @@ export function createIdentityService({ auth, sdk, client, readProfile, readRequ
       };
     },
     async signOut() {
+      ++otpGeneration;
       confirmation = undefined;
       clearVerifier();
       await sdk.signOut(auth);
     },
-    dispose() { confirmation = undefined; clearVerifier(); },
+    dispose() { ++otpGeneration; confirmation = undefined; clearVerifier(); },
   };
 }

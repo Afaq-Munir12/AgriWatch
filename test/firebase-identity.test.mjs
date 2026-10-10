@@ -67,6 +67,78 @@ test('failed SMS verifier is cleared for retry', async () => {
   await assert.rejects(service.sendOtp('+923110000000', {}));
   assert.deepEqual(calls.map(call => call[0]), ['recaptcha', 'sms', 'clear']);
 });
+
+test('cancelled SMS completion cannot restore the old confirmation or clear the retry verifier', async () => {
+  let completeOld;
+  let rejectOld;
+  const verifiers = [];
+  let smsCalls = 0;
+  const confirmations = [];
+  const auth = { currentUser: null };
+  const user = { uid: 'retry-uid', getIdTokenResult: async () => ({ claims: { role: 'authenticated' } }) };
+  const sdk = {
+    RecaptchaVerifier: class { constructor() { this.cleared = false; verifiers.push(this); } clear() { this.cleared = true; } },
+    signInWithPhoneNumber: async () => {
+      if (++smsCalls === 1) return new Promise((resolve, reject) => { completeOld = resolve; rejectOld = reject; });
+      return { confirm: async () => { confirmations.push('retry'); auth.currentUser = user; return { user }; } };
+    },
+  };
+  for (const lateFailure of [false, true]) {
+    smsCalls = 0; auth.currentUser = null;
+    const service = createIdentityService({ auth, sdk });
+    const old = service.sendOtp('+923110000000', {});
+    const oldResult = assert.rejects(old);
+    await new Promise(resolve => setImmediate(resolve));
+    service.dispose();
+    await service.sendOtp('+923110000000', {});
+    const retryVerifier = verifiers.at(-1);
+    if (lateFailure) rejectOld({ code: 'auth/captcha-check-failed' });
+    else completeOld({ confirm: async () => { throw new Error('old confirmation was resurrected'); } });
+    await oldResult;
+    assert.equal(retryVerifier.cleared, false);
+    assert.equal((await service.confirmOtp('123456')).uid, 'retry-uid');
+  }
+  assert.deepEqual(confirmations, ['retry', 'retry']);
+});
+
+test('stalled CAPTCHA times out, clears its verifier, and the next SMS succeeds', async () => {
+  let calls = 0;
+  let cleared = 0;
+  const sdk = {
+    RecaptchaVerifier: class { clear() { cleared++; } },
+    signInWithPhoneNumber: async () => ++calls === 1 ? new Promise(() => {}) : { confirm: async () => ({ user: null }) },
+  };
+  const service = createIdentityService({ auth: { currentUser: null }, sdk, otpTimeoutMs: 20 });
+  await assert.rejects(service.sendOtp('+923110000000', {}), { code: 'auth/otp-timeout' });
+  assert.equal(cleared, 1);
+  await service.sendOtp('+923110000000', {});
+  service.dispose();
+  assert.equal(calls, 2);
+});
+
+test('a stalled site preflight cannot start a CAPTCHA after timeout', async () => {
+  let completePreflight;
+  let captchaCalls = 0;
+  const service = createIdentityService({ auth: { currentUser: null }, sdk: { RecaptchaVerifier: class { constructor() { captchaCalls++; } } }, checkPhoneSite: () => new Promise(resolve => { completePreflight = resolve; }), otpTimeoutMs: 20 });
+  await assert.rejects(service.sendOtp('+923110000000', {}), { code: 'auth/otp-timeout' });
+  completePreflight();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(captchaCalls, 0);
+});
+
+test('stalled verification times out and a code retry still verifies the same UID', async () => {
+  let attempts = 0;
+  const auth = { currentUser: null };
+  const user = { uid: 'same-uid', getIdTokenResult: async () => ({ claims: { role: 'authenticated' } }) };
+  const sdk = { RecaptchaVerifier: class { clear() {} }, signInWithPhoneNumber: async () => ({ confirm: async () => {
+    if (++attempts === 1) return new Promise(() => {});
+    auth.currentUser = user; return { user };
+  } }) };
+  const service = createIdentityService({ auth, sdk, otpTimeoutMs: 20 });
+  await service.sendOtp('+923110000000', {});
+  await assert.rejects(service.confirmOtp('123456'), { code: 'auth/otp-timeout' });
+  assert.equal((await service.confirmOtp('123456')).uid, 'same-uid');
+});
 test('actual Supabase SDK sends the latest Firebase ID token, with no Supabase Auth session', async () => {
   let token = 'firebase-token-before-refresh';
   const received = [];

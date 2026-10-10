@@ -21,6 +21,7 @@ import logo from "../assets/logo.jpeg";
 import { useLanguage } from "../i18n/LanguageContext";
 import LanguageToggle from "../components/LanguageToggle";
 import ThemeToggle from "../components/ThemeToggle";
+import { useToast } from "../components/ToastContext";
 import { addRipple } from "../utils/ripple";
 import { useSupabaseAuth } from "../supabase/useSupabaseAuth";
 import { supabase } from "../supabase/config";
@@ -72,6 +73,7 @@ function localizedOtpError(message, t) {
 
 export default function Login() {
   const { t, lang } = useLanguage();
+  const { showToast } = useToast();
   const { user, loading: authLoading, signIn: googleSignIn, signOut } = useSupabaseAuth();
   const navigate = useNavigate();
   const credentialFlow = useRef(false);
@@ -96,8 +98,42 @@ export default function Login() {
   const cancelOtp = personal.cancelOtp;
   const recaptchaContainer = useRef(null);
   const personalLogin = role !== "admin";
+  const otpOperation = useRef(0);
 
-  useEffect(() => () => cancelOtp(), [cancelOtp]);
+  useEffect(() => () => { ++otpOperation.current; cancelOtp(); }, [cancelOtp]);
+  function resetOtp() {
+    ++otpOperation.current;
+    cancelOtp();
+    setBusy(false); setStep("phone"); setOtp(""); setError("");
+  }
+  function selectRole(key) {
+    if (key === role) return;
+    if (personalLogin && key !== "admin") {
+      // Both buttons use the same Firebase identity; they are presentation hints.
+      setRole(key);
+      showToast(t("firebaseStoredRoleHint"), "info");
+      return;
+    }
+    resetOtp(); setRole(key); setPassword(""); setStaffOtpMode(false);
+  }
+  function showOtpFailure(err, sending) {
+    const keys = {
+      "auth/otp-timeout": "firebaseOtpTimeout",
+      "auth/captcha-check-failed": "firebaseOtpCaptcha",
+      "auth/network-request-failed": "firebaseOtpNetwork",
+      "auth/invalid-verification-code": "firebaseOtpInvalid",
+      "auth/code-expired": "firebaseOtpExpired",
+      "auth/session-expired": "firebaseOtpExpired",
+      "auth/missing-verification-id": "firebaseOtpExpired",
+      "auth/too-many-requests": "firebaseOtpLimited",
+      "auth/quota-exceeded": "firebaseOtpLimited",
+      "auth/unauthorized-domain": "firebaseOtpDomain",
+    };
+    // Raw Firebase messages can include account details; display only safe localized copy.
+    const message = t(keys[err?.code] || (sending ? "firebaseOtpSendFailed" : "firebaseOtpVerifyFailed"));
+    if (["auth/code-expired", "auth/session-expired", "auth/missing-verification-id"].includes(err?.code)) resetOtp();
+    setError(message); showToast(message, "error", 6000);
+  }
   useEffect(() => {
     if (personalLogin && personal.user && !personal.loading) navigate(personal.error ? "/personal-account" : personalDestination(personal.access), { replace: true });
   }, [personal.user, personal.loading, personal.error, personal.access, navigate, personalLogin]);
@@ -118,12 +154,14 @@ export default function Login() {
 
   async function requestOtp(e) {
     e.preventDefault();
+    if (busy) return;
     const validationError = localizedPhoneError(pakistanPhoneError(phone), t);
     if (validationError) {
       setError(validationError);
       return;
     }
 
+    const operation = ++otpOperation.current;
     setBusy(true);
     setError("");
     try {
@@ -134,36 +172,44 @@ export default function Login() {
         await sendPhoneOtp(phone);
         localStorage.setItem("pendingSignupRole", role);
       }
-      setStep("otp");
+      if (operation === otpOperation.current) setStep("otp");
     } catch (err) {
-      setError(err?.message || t("loginErrSendOtp"));
+      if (operation === otpOperation.current) {
+        if (personalLogin) showOtpFailure(err, true);
+        else setError(err?.message || t("loginErrSendOtp"));
+      }
     } finally {
-      setBusy(false);
+      if (operation === otpOperation.current) setBusy(false);
     }
   }
 
   async function verifyOtp(e) {
     e.preventDefault();
+    if (busy) return;
     const validationError = localizedOtpError(otpError(otp), t);
     if (validationError) {
       setError(validationError);
       return;
     }
 
+    const operation = ++otpOperation.current;
     setBusy(true);
     setError("");
     try {
       if (personalLogin) {
         const state = await personal.confirmOtp(otp);
+        if (operation !== otpOperation.current) return;
         setPhone(""); setOtp("");
         navigate(state.error ? "/personal-account" : personalDestination(state.access), { replace: true });
         return;
       }
       const result = await verifyPhoneOtp(phone, otp);
+      if (operation !== otpOperation.current) return;
       const signedInUser = result?.user;
       if (!signedInUser) throw new Error(t("loginErrNoSession"));
 
       const request = await getSignupRequest(signedInUser.id, role);
+      if (operation !== otpOperation.current) return;
       if (!request) {
         navigate("/complete-profile", { replace: true });
         return;
@@ -176,9 +222,12 @@ export default function Login() {
       }
       setStatus(request.status === "rejected" ? "rejected" : "pending");
     } catch (err) {
-      setError(err?.message || t("loginErrOtpInvalid"));
+      if (operation === otpOperation.current) {
+        if (personalLogin) showOtpFailure(err, false);
+        else setError(err?.message || t("loginErrOtpInvalid"));
+      }
     } finally {
-      setBusy(false);
+      if (operation === otpOperation.current) setBusy(false);
     }
   }
 
@@ -312,7 +361,7 @@ export default function Login() {
                 <p className="auth-label mb-2">{t("loginIAmA")}</p>
                 <div className="grid grid-cols-3 gap-2 mb-5">
                   {roles.map(({ key, labelKey, icon: Icon }) => (
-                    <button key={key} type="button" disabled={busy} onClick={() => { personal.cancelOtp(); setRole(key); setStep("phone"); setOtp(""); setPassword(""); setError(""); setStaffOtpMode(false); }} onMouseDown={addRipple} className={`role-choice ${role === key ? "role-choice-active" : ""}`}>
+                    <button key={key} type="button" disabled={busy && !(personalLogin && key !== "admin")} onClick={() => selectRole(key)} onMouseDown={addRipple} className={`role-choice ${role === key ? "role-choice-active" : ""}`}>
                       <Icon size={17} /><span>{t(labelKey)}</span>
                     </button>
                   ))}
@@ -330,6 +379,7 @@ export default function Login() {
                         <span className="w-px h-6 bg-line" />
                         <input
                           value={phone}
+                          disabled={busy}
                           onChange={(e) => {
                             setPhone(normalizePakistanLocalPhone(e.target.value));
                             setError("");
@@ -350,7 +400,7 @@ export default function Login() {
                       </div>
                     </div>
 
-                    {error && <div className="auth-error">{error}</div>}
+                    {error && <div role="alert" className="auth-error">{error}</div>}
 
                     <button
                       type="submit"
@@ -362,12 +412,14 @@ export default function Login() {
                       {t("sendOtp")}
                     </button>
 
+                    {personalLogin && busy && <button type="button" onClick={resetOtp} className="text-xs font-semibold text-ink/50 hover:text-ink">{t("firebaseOtpCancel")}</button>}
+
                     {role === "admin" && <p className="text-xs text-ink/40 text-center">{t("adminApprovalNote")}</p>}
                   </form>
 
                 ) : (
                 <form onSubmit={verifyOtp} className="space-y-5 animate-fade-in">
-                  <button type="button" onClick={() => { personal.cancelOtp(); setStep("phone"); setOtp(""); setError(""); }} className="inline-flex items-center gap-1.5 text-xs font-semibold text-ink/50 hover:text-ink">
+                  <button type="button" onClick={resetOtp} className="inline-flex items-center gap-1.5 text-xs font-semibold text-ink/50 hover:text-ink">
                     <ArrowLeft size={14} /> {t("changeNumber")}
                   </button>
 
@@ -380,6 +432,7 @@ export default function Login() {
                     <label className="auth-label">{t("enterOtp")}</label>
                     <input
                       value={otp}
+                      disabled={busy}
                       onChange={(e) => { setOtp(digitsOnly(e.target.value, 6)); setError(""); }}
                       placeholder="••••••" aria-label={t("enterOtp")}
                       maxLength={6}
@@ -392,12 +445,13 @@ export default function Login() {
                     <p className="text-[11px] text-ink/40 mt-1.5">{t("otpHelp")}</p>
                   </div>
 
-                  {error && <div className="auth-error">{error}</div>}
+                  {error && <div role="alert" className="auth-error">{error}</div>}
 
                   <button type="submit" disabled={busy || otp.length !== 6} onMouseDown={addRipple} className="btn-animated auth-primary-btn">
                     {busy && <Loader2 size={16} className="animate-spin" />}
                     {personalLogin ? t("firebaseVerifyContinue") : <>{t("verifyContinueAs")} {t(roles.find((r) => r.key === role).labelKey)}</>}
                   </button>
+                  {personalLogin && <button type="button" disabled={busy} onClick={(e) => { resetOtp(); void requestOtp(e); }} className="text-xs font-semibold text-primary hover:underline">{t("firebaseOtpResend")}</button>}
                 </form>
                 )) : (
 <form onSubmit={handlePasswordLogin} className="space-y-4">
