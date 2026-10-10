@@ -2,7 +2,7 @@
 
 Preview: https://agri-watch-4wj7m8bnb-afaq-munirs-projects.vercel.app/login
 
-Status: preview deployed and artifact hashes verified. The user confirmed the normal website preview's OTP, stored-role routing, Settings counts and sign-out checks passed. The user also confirmed both Admin and PDMA completed Google sign-in and returned to the new preview, opening Admin Overview and `/pdma` with the existing UI. Production promotion remains held because the exact live Supabase return URLs are absent from the saved configuration. No live login verification is claimed.
+Status: released to https://agri-watch-rho.vercel.app/login as production deployment `dpl_G2eDqSTco72E4LHRbo94431Q8W1P`. Personal OTP and both staff Google round trips passed on preview, confirmed by the user. Production public artifacts, routes, existing login DOM and Google OAuth entry points passed. Completed real live OTP and staff Google round trips remain pending user/browser acceptance.
 
 ## Source and preservation
 
@@ -29,15 +29,18 @@ The pre-login personal portal cards are hints only. They cannot grant a Firebase
 | Uploaded files against tested dist SHA-1 hashes | Passed for all 7 files |
 | Firebase preview hostname | Authorized; only the exact new hostname added |
 | Firebase production hostname `agri-watch-rho.vercel.app` | Already authorized; verified |
-| All production aliases | Unchanged |
-| Production login HTTP page | 200 with application root; authentication itself not tested |
+| Live website aliases | Canonical and project aliases serve verified release; Git-main branch alias preserved |
+| Public production routes and all 7 artifact hashes | Passed; hash-identical to tested preview |
+| Live login DOM with mocked backend | Existing layout, heading, logo and links passed |
+| Live Admin/PDMA OAuth entry points | Both redirect to Google; completed sign-in remains pending |
+| Real live Farmer/Public OTP and staff Google round trips | Pending user/browser confirmation |
 | Downloaded deployed bundle in mocked DOM | Existing login layout, heading, logo and navigation links passed; standalone heading absent |
 | Real OTP, stored-role routing, Settings and sign-out on this new preview | User confirmed passed |
 | Admin/PDMA OAuth entry points and exact preview return allowlist | Passed: both authorize endpoints redirect to Google with expected provider callback |
 | Staff-focused component and permission recheck | 6 passed |
 | Real Admin/PDMA Google preview login | Passed, user-confirmed Google round trips returning to this preview and correct portals |
 | Release artifact, public Firebase production domain and rollback READY state | Passed |
-| Exact live staff return URLs in saved Supabase configuration | Missing; release held |
+| Exact live staff return URLs in saved Supabase configuration | Both verified; localhost and both preview entries also retained |
 
 Commands: `npm run test:personal`, `npm run test:personal-ui`, `node --test test/report-contract.test.mjs`, `npm run build`, `oxlint src`, `git diff --check`. Automated tests use fake OTP fixtures and do not send SMS or write records. The prior staging/mobile UID match passed. The stored account role is `citizen` (General Public), with a profile present, zero CMP reports and zero access requests. The user confirmed the expected role and counts on the normal website preview.
 
@@ -52,7 +55,7 @@ Supabase Google is enabled. Our earlier attempt to add the two preview URLs retu
 - `https://agri-watch-4wj7m8bnb-afaq-munirs-projects.vercel.app/auth/callback`
 - `https://agri-watch-4wj7m8bnb-afaq-munirs-projects.vercel.app/admin-portal`
 
-Keep the Site URL `https://agri-watch-rho.vercel.app/` and providers unchanged. Supabase phone sign-in was already disabled; PDMA's retained phone path cannot be certified as working live. PDMA Google and Admin Google retain their existing permission checks. Production callback URLs were also absent from the allowlist; Afaq's new OAuth resume guard handles a Site URL fallback on the updated site, and the user subsequently confirmed the real preview Google round trips for both staff portals. For release parity, the exact live return URLs must be saved before promotion: `https://agri-watch-rho.vercel.app/auth/callback` and `https://agri-watch-rho.vercel.app/admin-portal`. The user reported adding these, but repeated management API reads still show only localhost and the two preview entries; the discrepancy remains unresolved.
+Keep the Site URL `https://agri-watch-rho.vercel.app/` and providers unchanged. Supabase phone sign-in was already disabled; PDMA's retained phone path cannot be certified as working live. PDMA Google and Admin Google retain their existing permission checks. Production callback URLs were also absent from the allowlist; Afaq's new OAuth resume guard handles a Site URL fallback on the updated site, and the user subsequently confirmed the real preview Google round trips for both staff portals. For release parity, the exact live return URLs must be saved before promotion: `https://agri-watch-rho.vercel.app/auth/callback` and `https://agri-watch-rho.vercel.app/admin-portal`. A subsequent management API read verified all five saved entries: localhost, both preview URLs and both live URLs. The Site URL remains unchanged.
 
 Vercel's existing preview authentication protection redirects unauthenticated HTTP requests to Vercel login. It was not disabled. The Browser integration reported no available browser, so automated visual QA remains unavailable. Personal OTP and staff Google preview acceptance are user-confirmed, not browser automation results.
 
@@ -68,9 +71,9 @@ This integration reads personal records only. Profile edits, setup, new CMP repo
 
 ## Rollback and promotion
 
-The current production deployment is `dpl_HBPPne8MJx8eTqePLVRyjufDbXAj` at `https://agri-watch-a3py73751-afaq-munirs-projects.vercel.app` and remains READY. All three production aliases are recorded in `.local/personal-website-rollback.json` in the mobile workspace. The preview payload, deployment state and all tested artifact hashes are retained separately in `.local/personal-website-preview-payload.json` and `.local/personal-website-preview.json`.
+The saved pre-release production deployment is `dpl_HBPPne8MJx8eTqePLVRyjufDbXAj` at `https://agri-watch-a3py73751-afaq-munirs-projects.vercel.app` and remains READY. All three production aliases are recorded in `.local/personal-website-rollback.json` in the mobile workspace. The preview payload, deployment state and all tested artifact hashes are retained separately in `.local/personal-website-preview-payload.json` and `.local/personal-website-preview.json`.
 
-After actual preview acceptance, promote the exact verified deployment rather than rebuilding a different version, then perform a real live OTP/sign-out check. If live acceptance fails, roll back to `dpl_HBPPne8MJx8eTqePLVRyjufDbXAj`. Neither promotion nor rollback has been run. Vercel documents [promotion](https://vercel.com/docs/cli/promote) and [rollback](https://vercel.com/docs/cli/rollback); the saved deployment ID is the rollback target.
+Direct preview promotion returned HTTP 422. The identical tested static files were then submitted with target production, creating `dpl_G2eDqSTco72E4LHRbo94431Q8W1P`; all seven hashes match and no application rebuild was performed. The canonical and project website aliases point to this deployment; the Git-main branch alias retains its prior deployment because no Git push occurred. Rollback has not been performed. The local helper `.local/rollback_personal_website.py --apply` in `C:/agriwatch_mobile/agriwatch` checks for concurrent deployment before restoring the saved production deployment. Real live OTP/sign-out and staff Google round trips remain pending user/browser confirmation. Vercel documents [promotion](https://vercel.com/docs/cli/promote) and [rollback](https://vercel.com/docs/cli/rollback); the saved deployment ID is the rollback target.
 
 ## Exact website files changed relative to Afaq's latest main
 
