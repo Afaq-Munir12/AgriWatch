@@ -2,7 +2,7 @@
 
 Preview: https://agri-watch-4wj7m8bnb-afaq-munirs-projects.vercel.app/login
 
-Status: preview deployed and artifact hashes verified. The user confirmed the normal website preview's OTP, stored-role routing, Settings counts and sign-out checks passed. Production promotion remains held pending real Admin/PDMA OAuth preview checks. No live login verification is claimed.
+Status: preview deployed and artifact hashes verified. The user confirmed the normal website preview's OTP, stored-role routing, Settings counts and sign-out checks passed. The user also confirmed both Admin and PDMA completed Google sign-in and returned to the new preview, opening Admin Overview and `/pdma` with the existing UI. Production promotion remains held because the exact live Supabase return URLs are absent from the saved configuration. No live login verification is claimed.
 
 ## Source and preservation
 
@@ -35,7 +35,9 @@ The pre-login personal portal cards are hints only. They cannot grant a Firebase
 | Real OTP, stored-role routing, Settings and sign-out on this new preview | User confirmed passed |
 | Admin/PDMA OAuth entry points and exact preview return allowlist | Passed: both authorize endpoints redirect to Google with expected provider callback |
 | Staff-focused component and permission recheck | 6 passed |
-| Real Admin/PDMA Google preview login | Pending: no connected browser or interactive staff account session |
+| Real Admin/PDMA Google preview login | Passed, user-confirmed Google round trips returning to this preview and correct portals |
+| Release artifact, public Firebase production domain and rollback READY state | Passed |
+| Exact live staff return URLs in saved Supabase configuration | Missing; release held |
 
 Commands: `npm run test:personal`, `npm run test:personal-ui`, `node --test test/report-contract.test.mjs`, `npm run build`, `oxlint src`, `git diff --check`. Automated tests use fake OTP fixtures and do not send SMS or write records. The prior staging/mobile UID match passed. The stored account role is `citizen` (General Public), with a profile present, zero CMP reports and zero access requests. The user confirmed the expected role and counts on the normal website preview.
 
@@ -50,9 +52,9 @@ Supabase Google is enabled. Our earlier attempt to add the two preview URLs retu
 - `https://agri-watch-4wj7m8bnb-afaq-munirs-projects.vercel.app/auth/callback`
 - `https://agri-watch-4wj7m8bnb-afaq-munirs-projects.vercel.app/admin-portal`
 
-Keep the Site URL `https://agri-watch-rho.vercel.app/` and providers unchanged. Supabase phone sign-in was already disabled; PDMA's retained phone path cannot be certified as working live. PDMA Google and Admin Google retain their existing permission checks. Production callback URLs were also absent from the allowlist; Afaq's new OAuth resume guard handles a Site URL fallback on the updated site, but a real staff login must still be checked before promotion.
+Keep the Site URL `https://agri-watch-rho.vercel.app/` and providers unchanged. Supabase phone sign-in was already disabled; PDMA's retained phone path cannot be certified as working live. PDMA Google and Admin Google retain their existing permission checks. Production callback URLs were also absent from the allowlist; Afaq's new OAuth resume guard handles a Site URL fallback on the updated site, and the user subsequently confirmed the real preview Google round trips for both staff portals. For release parity, the exact live return URLs must be saved before promotion: `https://agri-watch-rho.vercel.app/auth/callback` and `https://agri-watch-rho.vercel.app/admin-portal`. The user reported adding these, but repeated management API reads still show only localhost and the two preview entries; the discrepancy remains unresolved.
 
-Vercel's existing preview authentication protection redirects unauthenticated HTTP requests to Vercel login. It was not disabled. The Browser integration reported no available browser, so visual QA and real provider interactions remain pending.
+Vercel's existing preview authentication protection redirects unauthenticated HTTP requests to Vercel login. It was not disabled. The Browser integration reported no available browser, so automated visual QA remains unavailable. Personal OTP and staff Google preview acceptance are user-confirmed, not browser automation results.
 
 This integration reads personal records only. Profile edits, setup, new CMP reports and software-issue submissions are directed to the mobile app. The website does not send Firebase UIDs into legacy UUID columns or claim that an offline example/local record was saved. Legacy Supabase farmer fields are not automatically attached to Firebase profiles; only fields actually present on the Firebase profile are used. The build has a bundle-size warning (approximately 523 KB gzip main JavaScript).
 
