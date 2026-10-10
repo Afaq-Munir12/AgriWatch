@@ -1,10 +1,12 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import CommandPalette from "./components/CommandPalette";
+import OAuthResumeGuard from "./components/OAuthResumeGuard";
 
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import CompleteProfile from "./pages/CompleteProfile";
+import AuthCallback from "./pages/AuthCallback";
 import GuestDashboard from "./pages/GuestDashboard";
 import DistrictDetail from "./pages/DistrictDetail";
 import DistrictCompare from "./pages/DistrictCompare";
@@ -51,12 +53,14 @@ import PublicComplaint from "./pages/public/PublicComplaint";
 export default function App() {
   return (
     <BrowserRouter>
+      <OAuthResumeGuard />
       <CommandPalette />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/complete-profile" element={<CompleteProfile />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/guest" element={<GuestDashboard />} />
 
         {/* Admin portal — full-system oversight: access requests, user directory, reports. Separate Google-account login from the phone/OTP login above. */}

@@ -13,15 +13,9 @@ import { useEffect, useMemo, useState } from "react";
 import Topbar from "../../components/Topbar";
 import Card, { SeverityBadge } from "../../components/Card";
 import { useLanguage } from "../../i18n/LanguageContext";
+import { useCurrentProfile } from "../../supabase/useCurrentProfile";
+import { getMapData, normalizeDistrictKey } from "../../services/droughtService";
 
-const API_BASE = "http://127.0.0.1:8000";
-
-// ============================================================
-// PUBLIC USER DISTRICT
-// Later we will get this from logged-in user's profile.
-// ============================================================
-
-const USER_DISTRICT = "Peshawar District";
 
 // User district + 7 nearest districts
 const NEARBY_COUNT = 7;
@@ -134,6 +128,8 @@ function getProbability(district) {
 
 export default function RegionalMap() {
   const { t } = useLanguage();
+  const { district: savedDistrict, loading: profileLoading } = useCurrentProfile("public");
+  const userDistrictName = savedDistrict || "your district";
 
   const [allDistricts, setAllDistricts] =
     useState([]);
@@ -156,66 +152,21 @@ export default function RegionalMap() {
         setLoading(true);
         setError("");
 
-        const response = await fetch(
-          `${API_BASE}/map-data`
-        );
-
-        if (!response.ok) {
-          const errorData = await response
-            .json()
-            .catch(() => ({}));
-
-          throw new Error(
-            errorData.detail ||
-              errorData.error ||
-              `Map request failed (${response.status})`
-          );
-        }
-
-        const data = await response.json();
-
-        console.log(
-          "PUBLIC REGIONAL MAP REAL DATA:",
-          data
-        );
-
-        if (!data.success) {
-          throw new Error(
-            data.error ||
-              "Backend map request failed."
-          );
-        }
-
-        const districts =
-          Array.isArray(data.districts)
-            ? data.districts
-            : [];
+        const data = await getMapData();
+        const districts = Array.isArray(data?.districts) ? data.districts : [];
 
         if (!districts.length) {
-          throw new Error(
-            "No district map data was returned."
-          );
+          throw new Error("No district map data was returned.");
         }
 
-        if (!cancelled) {
-          setAllDistricts(districts);
-        }
+        if (!cancelled) setAllDistricts(districts);
       } catch (err) {
-        console.error(
-          "PUBLIC REGIONAL MAP ERROR:",
-          err
-        );
-
+        console.error("PUBLIC REGIONAL MAP ERROR:", err);
         if (!cancelled) {
-          setError(
-            err.message ||
-              "Unable to load regional map."
-          );
+          setError(err?.message || "Unable to load regional map.");
         }
       } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
+        if (!cancelled) setLoading(false);
       }
     }
 
@@ -231,53 +182,16 @@ export default function RegionalMap() {
   // ==========================================================
 
   const userDistrict = useMemo(() => {
-    if (!allDistricts.length) {
-      return null;
-    }
+    if (!allDistricts.length || !savedDistrict) return null;
 
-    const requested =
-      USER_DISTRICT.trim().toLowerCase();
+    const requested = normalizeDistrictKey(savedDistrict);
 
-    // Exact match
-    let match = allDistricts.find(
-      (district) =>
-        String(district.district || "")
-          .trim()
-          .toLowerCase() === requested
+    return (
+      allDistricts.find(
+        (district) => normalizeDistrictKey(district?.district) === requested
+      ) || null
     );
-
-    // Fallback:
-    // "Peshawar District" = "Peshawar"
-    if (!match) {
-      const simplifiedRequested =
-        requested.replace(
-          /\s+district$/,
-          ""
-        );
-
-      match = allDistricts.find(
-        (district) => {
-          const simplifiedDistrict =
-            String(
-              district.district || ""
-            )
-              .trim()
-              .toLowerCase()
-              .replace(
-                /\s+district$/,
-                ""
-              );
-
-          return (
-            simplifiedDistrict ===
-            simplifiedRequested
-          );
-        }
-      );
-    }
-
-    return match || null;
-  }, [allDistricts]);
+  }, [allDistricts, savedDistrict]);
 
   // ==========================================================
   // FIND NEAREST DISTRICTS
@@ -353,11 +267,8 @@ export default function RegionalMap() {
   const mapCenter =
     useMemo(() => {
       if (!userDistrict) {
-        // Peshawar fallback
-        return [
-          34.0151,
-          71.5249,
-        ];
+        // Pakistan center fallback while profile/map data resolves.
+        return [30.3753, 69.3451];
       }
 
       return [
@@ -375,7 +286,7 @@ export default function RegionalMap() {
   // LOADING
   // ==========================================================
 
-  if (loading) {
+  if (profileLoading || loading) {
     return (
       <>
         <Topbar
@@ -430,7 +341,7 @@ export default function RegionalMap() {
 
             <p className="text-sm text-ink/60 mt-2">
               {error ||
-                `${USER_DISTRICT} was not found in map data.`}
+                `${userDistrictName} was not found in the ML map data.`}
             </p>
           </Card>
         </main>

@@ -1353,3 +1353,119 @@ html[dir="rtl"] .sidebar-polished nav a:hover { transform:translateX(-3px); }
     right: -7px !important;
   }
 }
+
+
+/* ============================================================
+   Auth Urdu refinement — keep layout stable, translate only the
+   functional auth UI, and avoid applying Urdu typography to the
+   English brand/GeoAI visual panel.
+   ============================================================ */
+.i18n-ur .auth-visual-panel {
+  direction: ltr !important;
+  text-align: left !important;
+  font-family: var(--font-body) !important;
+  line-height: 1.55;
+  word-spacing: normal;
+}
+.i18n-ur .auth-visual-panel .font-display {
+  font-family: var(--font-display) !important;
+}
+.i18n-ur .auth-visual-panel h2 {
+  line-height: 1.14 !important;
+}
+.i18n-ur .auth-visual-panel [class*="tracking-"] {
+  letter-spacing: .12em !important;
+}
+
+.i18n-ur .auth-form-column {
+  direction: rtl;
+  text-align: right;
+}
+.i18n-ur .auth-card-header {
+  direction: rtl;
+  text-align: right;
+}
+.i18n-ur .auth-card-header h1 {
+  line-height: 1.5 !important;
+  max-width: 25rem;
+}
+.i18n-ur .auth-card-tools {
+  direction: ltr;
+}
+.i18n-ur .auth-eyebrow {
+  letter-spacing: 0 !important;
+}
+.i18n-ur .auth-card-body-scroll,
+.i18n-ur .auth-card-footer,
+.i18n-ur .auth-status-card {
+  text-align: right;
+}
+.i18n-ur .auth-status-card {
+  direction: rtl;
+}
+.i18n-ur .auth-status-card .text-center,
+.i18n-ur .auth-card-body-scroll .text-center,
+.i18n-ur .auth-card-footer {
+  text-align: center !important;
+}
+
+.i18n-ur .form-input,
+.i18n-ur .form-select,
+.i18n-ur textarea {
+  text-align: right;
+}
+.i18n-ur .phone-control,
+.i18n-ur .phone-control input,
+.i18n-ur .otp-input,
+.i18n-ur [dir="ltr"] {
+  direction: ltr !important;
+}
+.i18n-ur .phone-control input,
+.i18n-ur .otp-input {
+  text-align: left !important;
+  font-family: var(--font-mono) !important;
+  word-spacing: normal;
+}
+.i18n-ur .auth-divider,
+.i18n-ur .signup-progress,
+.i18n-ur .signup-trust-row {
+  direction: rtl;
+}
+.i18n-ur .signup-progress-item,
+.i18n-ur .signup-trust-chip,
+.i18n-ur .role-choice,
+.i18n-ur .auth-primary-btn,
+.i18n-ur .auth-google-btn,
+.i18n-ur .auth-portal-link {
+  line-height: 1.65;
+}
+.i18n-ur .auth-google-btn {
+  direction: rtl;
+}
+.i18n-ur .auth-portal-link {
+  direction: rtl;
+  text-align: center;
+}
+.i18n-ur .profile-field-card {
+  direction: rtl;
+  text-align: right;
+}
+
+/* Mixed English/technical tokens remain readable inside Urdu copy. */
+.i18n-ur .font-mono {
+  font-family: var(--font-mono) !important;
+  word-spacing: normal;
+}
+
+@media (max-width: 639px) {
+  .i18n-ur .auth-card-header {
+    gap: .65rem;
+  }
+  .i18n-ur .auth-card-header h1 {
+    font-size: 1.45rem !important;
+  }
+  .i18n-ur .role-choice {
+    min-height: 66px;
+    padding-inline: .35rem;
+  }
+}

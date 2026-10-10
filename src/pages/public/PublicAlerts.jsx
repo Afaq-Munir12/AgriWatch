@@ -3,15 +3,9 @@ import { useEffect, useMemo, useState } from "react";
 import Topbar from "../../components/Topbar";
 import { useLanguage } from "../../i18n/LanguageContext";
 import Card, { SeverityBadge } from "../../components/Card";
+import { useCurrentProfile } from "../../supabase/useCurrentProfile";
+import { getAlerts } from "../../services/droughtService";
 
-const API_BASE = "http://127.0.0.1:8000";
-
-// ============================================================
-// PUBLIC USER DISTRICT
-// Temporary until user profile is connected.
-// ============================================================
-
-const USER_DISTRICT = "Peshawar District";
 
 // ============================================================
 // NORMALIZE DISTRICT NAME
@@ -70,6 +64,8 @@ function getAlertDate(alert) {
 
 export default function PublicAlerts() {
   const { t } = useLanguage();
+  const { district: savedDistrict, loading: profileLoading } = useCurrentProfile("public");
+  const userDistrictName = savedDistrict || "your district";
 
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -80,72 +76,37 @@ export default function PublicAlerts() {
   // ==========================================================
 
   useEffect(() => {
+    if (profileLoading) return;
+
     let cancelled = false;
 
     async function loadAlerts() {
+      if (!savedDistrict) {
+        setAlerts([]);
+        setError("No district is saved in your General Public profile. Update it in Settings.");
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
         setError("");
 
-        const response = await fetch(
-          `${API_BASE}/alerts`
-        );
-
-        if (!response.ok) {
-          const errorData = await response
-            .json()
-            .catch(() => ({}));
-
-          throw new Error(
-            errorData.detail ||
-              errorData.error ||
-              `Alerts request failed (${response.status})`
-          );
-        }
-
-        const data = await response.json();
-
-        console.log(
-          "PUBLIC ALERTS REAL DATA:",
-          data
-        );
-
-        // Backend may return:
-        //
-        // {
-        //   success: true,
-        //   alerts: [...]
-        // }
-        //
-        // OR directly [...]
-        //
-        // Support both.
-
+        const data = await getAlerts();
         const realAlerts = Array.isArray(data)
           ? data
-          : Array.isArray(data.alerts)
+          : Array.isArray(data?.alerts)
           ? data.alerts
           : [];
 
-        if (!cancelled) {
-          setAlerts(realAlerts);
-        }
+        if (!cancelled) setAlerts(realAlerts);
       } catch (err) {
-        console.error(
-          "PUBLIC ALERTS ERROR:",
-          err
-        );
-
+        console.error("PUBLIC ALERTS ERROR:", err);
         if (!cancelled) {
-          setError(
-            err.message ||
-              "Unable to load alerts."
-          );
+          setError(err?.message || "Unable to load alerts.");
         }
       } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
+        if (!cancelled) setLoading(false);
       }
     }
 
@@ -154,7 +115,7 @@ export default function PublicAlerts() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [profileLoading, savedDistrict]);
 
   // ==========================================================
   // FILTER ALERTS
@@ -162,7 +123,7 @@ export default function PublicAlerts() {
 
   const districtAlerts = useMemo(() => {
     const currentDistrict =
-      normalizeDistrict(USER_DISTRICT);
+      normalizeDistrict(savedDistrict);
 
     return alerts
       .filter((alert) => {
@@ -200,20 +161,20 @@ export default function PublicAlerts() {
 
         return dateB - dateA;
       });
-  }, [alerts]);
+  }, [alerts, savedDistrict]);
 
   // ==========================================================
   // LOADING
   // ==========================================================
 
-  if (loading) {
+  if (profileLoading || loading) {
     return (
       <>
         <Topbar
           title={t(
             "ptPublicAlertsTitle"
           )}
-          subtitle={`Loading alerts for ${USER_DISTRICT}...`}
+          subtitle={`Loading alerts for ${userDistrictName}...`}
         />
 
         <main
@@ -242,7 +203,7 @@ export default function PublicAlerts() {
           title={t(
             "ptPublicAlertsTitle"
           )}
-          subtitle={USER_DISTRICT}
+          subtitle={userDistrictName}
         />
 
         <main
@@ -273,7 +234,7 @@ export default function PublicAlerts() {
         title={t(
           "ptPublicAlertsTitle"
         )}
-        subtitle={`${USER_DISTRICT} — Public drought alerts`}
+        subtitle={`${userDistrictName} — Public drought alerts`}
       />
 
       <main
@@ -283,7 +244,7 @@ export default function PublicAlerts() {
         <section className="public-page-hero">
           <div className="public-hero-content">
             <span className="public-hero-eyebrow">PDMA alert center</span>
-            <h2 className="public-hero-title">Regional drought alerts for {USER_DISTRICT}</h2>
+            <h2 className="public-hero-title">Regional drought alerts for {userDistrictName}</h2>
             <p className="public-hero-copy">Official drought messages and actionable guidance for the public, ordered with the newest alert first.</p>
           </div>
           <div className="public-hero-stats">
@@ -305,7 +266,7 @@ export default function PublicAlerts() {
               </p>
 
               <p className="font-display font-semibold mt-1">
-                {USER_DISTRICT}
+                {userDistrictName}
               </p>
 
               <p className="text-xs text-ink/40 mt-1">
@@ -360,7 +321,7 @@ export default function PublicAlerts() {
                 There are currently no
                 public drought alerts
                 issued for{" "}
-                {USER_DISTRICT}.
+                {userDistrictName}.
               </p>
             </div>
           </Card>
@@ -382,7 +343,7 @@ export default function PublicAlerts() {
 
             const district =
               alert.district ||
-              USER_DISTRICT;
+              userDistrictName;
 
             const message =
               alert.message ||

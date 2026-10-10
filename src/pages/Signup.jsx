@@ -51,7 +51,29 @@ const crops = [
   { value: "other", labelKey: "cropOther" },
 ];
 
-const GOOGLE_SIGNUP_REDIRECT = typeof window !== "undefined" ? `${window.location.origin}/complete-profile` : undefined;
+const GOOGLE_SIGNUP_REDIRECT = typeof window !== "undefined" ? `${window.location.origin}/auth/callback` : undefined;
+
+function localizedPhoneError(message, t) {
+  if (!message) return "";
+  if (message === "Enter your mobile number.") return t("errPhoneRequired");
+  if (message === "Enter exactly 10 digits after +92.") return t("errPhoneLength");
+  if (message === "Pakistani mobile numbers must start with 3.") return t("errPhoneStart");
+  return message;
+}
+
+function localizedOtpError(message, t) {
+  if (!message) return "";
+  if (message === "Enter the 6-digit verification code.") return t("errOtpLength");
+  return message;
+}
+
+function localizedNameError(message, t) {
+  if (!message) return "";
+  if (message === "Name is required.") return t("errNameRequired");
+  if (message === "Name is too short.") return t("errNameShort");
+  if (message === "Use letters only in the name.") return t("errNameLetters");
+  return message;
+}
 
 export default function Signup() {
   const { t, lang, setLang } = useLanguage();
@@ -71,13 +93,13 @@ export default function Signup() {
     district: "",
     tehsil: "",
     language: lang,
-    fields: [{ fieldName: "Field 1", crop: "", areaAcres: "" }],
+    fields: [{ fieldName: "", crop: "", areaAcres: "" }],
   });
   const [publicForm, setPublicForm] = useState({ district: "", language: lang });
   const [adminForm, setAdminForm] = useState({ designation: "", district: "" });
 
-  const phoneValidation = useMemo(() => (phone ? pakistanPhoneError(phone) : ""), [phone]);
-  const nameValidation = useMemo(() => (fullName ? personNameError(fullName) : ""), [fullName]);
+  const phoneValidation = useMemo(() => (phone ? localizedPhoneError(pakistanPhoneError(phone), t) : ""), [phone, t]);
+  const nameValidation = useMemo(() => (fullName ? localizedNameError(personNameError(fullName), t) : ""), [fullName, t]);
 
   useEffect(() => {
     getDistricts()
@@ -85,8 +107,8 @@ export default function Signup() {
         const list = Array.isArray(result) ? result : result?.districts || [];
         setDistricts(list.map((d, i) => ({ id: d.id ?? i, name: d.name || d.district })).filter((d) => d.name));
       })
-      .catch(() => setError("Could not load districts from the AgriWatch API."));
-  }, []);
+      .catch(() => setError(t("errLoadDistricts")));
+  }, [t]);
 
   function updateFarmerField(index, key, value) {
     setFarmerForm((prev) => ({
@@ -98,7 +120,7 @@ export default function Signup() {
   function addFarmerField() {
     setFarmerForm((prev) => ({
       ...prev,
-      fields: [...prev.fields, { fieldName: `Field ${prev.fields.length + 1}`, crop: "", areaAcres: "" }],
+      fields: [...prev.fields, { fieldName: "", crop: "", areaAcres: "" }],
     }));
   }
 
@@ -108,7 +130,7 @@ export default function Signup() {
 
   async function requestOtp(e) {
     e.preventDefault();
-    const validationError = pakistanPhoneError(phone);
+    const validationError = localizedPhoneError(pakistanPhoneError(phone), t);
     if (validationError) return setError(validationError);
 
     setBusy(true);
@@ -118,7 +140,7 @@ export default function Signup() {
       localStorage.setItem("pendingSignupRole", role);
       setStep("otp");
     } catch (err) {
-      setError(err?.message || "Could not send OTP. Make sure the Supabase/Twilio phone provider is configured.");
+      setError(err?.message || t("errSendOtp"));
     } finally {
       setBusy(false);
     }
@@ -126,18 +148,18 @@ export default function Signup() {
 
   async function verifyOtp(e) {
     e.preventDefault();
-    const validationError = otpError(otp);
+    const validationError = localizedOtpError(otpError(otp), t);
     if (validationError) return setError(validationError);
 
     setBusy(true);
     setError("");
     try {
       const result = await verifyPhoneOtp(phone, otp);
-      if (!result?.user?.id) throw new Error("Could not create a verified phone session.");
+      if (!result?.user?.id) throw new Error(t("errVerifiedSession"));
       setUserId(result.user.id);
       setStep("details");
     } catch (err) {
-      setError(err?.message || "The verification code is invalid or expired.");
+      setError(err?.message || t("errOtpInvalid"));
     } finally {
       setBusy(false);
     }
@@ -154,25 +176,25 @@ export default function Signup() {
       await supabaseSignIn(GOOGLE_SIGNUP_REDIRECT, { forceAccountChoice: true });
     } catch (err) {
       clearLoginAttempt();
-      setError(err?.message || "Google signup could not be started.");
+      setError(err?.message || t("errGoogleSignup"));
       setBusy(false);
     }
   }
 
   function validateDetails() {
-    const nameErr = personNameError(fullName);
+    const nameErr = localizedNameError(personNameError(fullName), t);
     if (nameErr) return nameErr;
 
     if (role === "farmer") {
-      if (!farmerForm.district) return "Select your district.";
-      if (!farmerForm.tehsil.trim()) return "Enter your tehsil.";
+      if (!farmerForm.district) return t("errSelectDistrict");
+      if (!farmerForm.tehsil.trim()) return t("errEnterTehsil");
       const invalidField = farmerForm.fields.find((field) => !field.fieldName.trim() || !field.crop || Number(field.areaAcres) <= 0);
-      if (invalidField) return "Complete the field name, crop and acreage for every field.";
+      if (invalidField) return t("errCompleteFields");
     }
-    if (role === "public" && !publicForm.district) return "Select your district.";
+    if (role === "public" && !publicForm.district) return t("errSelectDistrict");
     if (role === "admin") {
-      if (!adminForm.designation.trim()) return "Enter your designation.";
-      if (!adminForm.district) return "Select your assigned district.";
+      if (!adminForm.designation.trim()) return t("errEnterDesignation");
+      if (!adminForm.district) return t("errAssignedDistrict");
     }
     return "";
   }
@@ -181,7 +203,7 @@ export default function Signup() {
     e.preventDefault();
     const validationError = validateDetails();
     if (validationError) return setError(validationError);
-    if (!userId) return setError("Your phone session expired. Please verify the number again.");
+    if (!userId) return setError(t("errSessionExpired"));
 
     setBusy(true);
     setError("");
@@ -217,7 +239,7 @@ export default function Signup() {
         .maybeSingle();
       if (existingRoleError) throw existingRoleError;
       if (existingRole) {
-        throw new Error(`This account is already registered as ${dbRole === "pdma" ? "PDMA Officer" : dbRole}. Please use Log in instead.`);
+        throw new Error(t("errAlreadyRegistered"));
       }
 
       const { error: insertError } = await supabase.from("website_signup_requests").insert(payload);
@@ -233,19 +255,19 @@ export default function Signup() {
         setStep("pending");
       }
     } catch (err) {
-      setError(err?.message || "Could not create your account.");
+      setError(err?.message || t("errCreateAccount"));
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <div dir={lang === "ur" ? "rtl" : undefined} className={`auth-page ${lang === "ur" ? "i18n-ur" : ""}`}>
+    <div className={`auth-page ${lang === "ur" ? "i18n-ur" : ""}`}>
       <div className="auth-orb auth-orb-one" />
       <div className="auth-orb auth-orb-two" />
 
       <div className="auth-layout">
-        <section className="hidden lg:flex flex-col justify-between rounded-[2rem] p-10 xl:p-12 auth-visual-panel auth-equal-panel animate-fade-up">
+        <section dir="ltr" className="hidden lg:flex flex-col justify-between rounded-[2rem] p-10 xl:p-12 auth-visual-panel auth-equal-panel animate-fade-up">
           <div>
             <Link to="/" className="inline-flex items-center gap-3">
               <img src={logo} alt="AgriWatch Pakistan" className="w-12 h-12 rounded-2xl object-cover bg-white shadow-lg" />
@@ -274,16 +296,16 @@ export default function Signup() {
           </div>
         </section>
 
-        <section className="auth-form-column">
+        <section className="auth-form-column" dir={lang === "ur" ? "rtl" : "ltr"}>
           <div className="auth-form-wrap animate-fade-up animation-delay-100">
             <div className="auth-form-card auth-equal-card auth-scroll-card">
               <div className="auth-card-header">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.18em] text-primary font-semibold">Secure registration</p>
+                  <p className="auth-eyebrow text-xs uppercase tracking-[0.18em] text-primary font-semibold">{t("signupSecureRegistration")}</p>
                   <h1 className="font-display text-2xl sm:text-3xl font-semibold mt-2">
-                    {step === "phone" ? "Create your AgriWatch account" : step === "otp" ? "Verify your Pakistani number" : step === "details" ? "Tell us about your profile" : "Registration submitted"}
+                    {step === "phone" ? t("signupHeadingPhone") : step === "otp" ? t("signupHeadingOtp") : step === "details" ? t("signupHeadingDetails") : t("signupHeadingPending")}
                   </h1>
-                  {step !== "pending" && <p className="text-sm text-ink/50 mt-2 max-w-md">Three quick steps. Your role decides which tools become available after approval.</p>}
+                  {step !== "pending" && <p className="text-sm text-ink/50 mt-2 max-w-md">{t("signupSubheading")}</p>}
                 </div>
                 <div className="auth-card-tools">
                   <ThemeToggle />
@@ -292,13 +314,13 @@ export default function Signup() {
               </div>
               <div className="auth-card-body-scroll flex-1">
 
-              {step !== "pending" && <SignupProgress step={step} />}
+              {step !== "pending" && <SignupProgress step={step} t={t} />}
 
               {step === "phone" && (
                 <div className="signup-trust-row mb-6">
-                  <span className="signup-trust-chip"><ShieldCheck size={13} /> Verified access</span>
-                  <span className="signup-trust-chip">🇵🇰 +92 protected</span>
-                  <span className="signup-trust-chip"><CheckCircle2 size={13} /> Clean validated data</span>
+                  <span className="signup-trust-chip"><ShieldCheck size={13} /> {t("signupVerifiedAccess")}</span>
+                  <span className="signup-trust-chip">🇵🇰 {t("signupProtected92")}</span>
+                  <span className="signup-trust-chip"><CheckCircle2 size={13} /> {t("signupCleanData")}</span>
                 </div>
               )}
 
@@ -314,13 +336,13 @@ export default function Signup() {
                   </div>
 
                   <form onSubmit={requestOtp} className="space-y-4">
-                    <Field label={t("phoneNumber")} hint="Pakistani mobile number only">
+                    <Field label={t("phoneNumber")} hint={t("signupPhoneHint")}>
                       <div className={`phone-control ${phoneValidation ? "field-invalid" : phone.length === 10 ? "field-valid" : ""}`} dir="ltr">
                         <span className="text-lg">🇵🇰</span><span className="font-semibold text-sm">+92</span><span className="w-px h-6 bg-line" />
                         <input value={phone} onChange={(e) => { setPhone(normalizePakistanLocalPhone(e.target.value)); setError(""); }} inputMode="numeric" maxLength={10} placeholder="3XX XXXXXXX" className="outline-none bg-transparent w-full text-sm font-mono" />
                         {phone.length === 10 && !phoneValidation && <CheckCircle2 size={17} className="text-primary" />}
                       </div>
-                      <p className={`text-[11px] mt-1.5 ${phoneValidation ? "text-danger" : "text-ink/40"}`}>{phoneValidation || "Only 10 numeric digits are accepted after +92."}</p>
+                      <p className={`text-[11px] mt-1.5 ${phoneValidation ? "text-danger" : "text-ink/40"}`}>{phoneValidation || t("signupPhoneHelp")}</p>
                     </Field>
                     {error && <div className="auth-error">{error}</div>}
                     <button type="submit" disabled={busy || Boolean(pakistanPhoneError(phone))} onMouseDown={addRipple} className="btn-animated auth-primary-btn">
@@ -328,7 +350,7 @@ export default function Signup() {
                     </button>
                   </form>
 
-                  <div className="auth-divider"><span>or</span></div>
+                  <div className="auth-divider"><span>{t("authOr")}</span></div>
 
                   <button
                     type="button"
@@ -338,33 +360,33 @@ export default function Signup() {
                     className="btn-animated auth-google-btn"
                   >
                     {busy ? <Loader2 size={16} className="animate-spin" /> : <GoogleIcon />}
-                    Continue with Google
+                    {t("continueWithGoogle")}
                   </button>
                   <p className="text-[11px] text-ink/40 text-center mt-2">
-                    One Gmail can have separate Farmer, Public and PDMA registrations.
+                    {t("signupGoogleNote")}
                   </p>
                 </>
               )}
 
               {step === "otp" && (
                 <form onSubmit={verifyOtp} className="space-y-5 animate-fade-in">
-                  <button type="button" onClick={() => { setStep("phone"); setOtp(""); setError(""); }} className="inline-flex items-center gap-1.5 text-xs font-semibold text-ink/50 hover:text-ink"><ArrowLeft size={14} /> Change number</button>
+                  <button type="button" onClick={() => { setStep("phone"); setOtp(""); setError(""); }} className="inline-flex items-center gap-1.5 text-xs font-semibold text-ink/50 hover:text-ink"><ArrowLeft size={14} /> {t("changeNumber")}</button>
                   <div className="rounded-2xl bg-primary/8 border border-primary/15 p-4">
-                    <p className="text-xs text-ink/45">SMS sent to</p>
+                    <p className="text-xs text-ink/45">{t("smsSentTo")}</p>
                     <p className="font-display font-semibold mt-1" dir="ltr">+92 {phone.slice(0, 3)} {phone.slice(3, 6)} {phone.slice(6)}</p>
                   </div>
-                  <Field label={t("enterOtp")} hint="6 digits only">
+                  <Field label={t("enterOtp")} hint={t("sixDigitsOnly")}>
                     <input value={otp} onChange={(e) => { setOtp(digitsOnly(e.target.value, 6)); setError(""); }} inputMode="numeric" autoComplete="one-time-code" maxLength={6} dir="ltr" placeholder="••••••" className="otp-input" autoFocus />
                   </Field>
                   {error && <div className="auth-error">{error}</div>}
-                  <button type="submit" disabled={busy || otp.length !== 6} onMouseDown={addRipple} className="btn-animated auth-primary-btn">{busy && <Loader2 size={16} className="animate-spin" />} Verify number</button>
+                  <button type="submit" disabled={busy || otp.length !== 6} onMouseDown={addRipple} className="btn-animated auth-primary-btn">{busy && <Loader2 size={16} className="animate-spin" />} {t("verifyNumber")}</button>
                 </form>
               )}
 
               {step === "details" && (
                 <form onSubmit={submitDetails} className="space-y-4 animate-fade-in">
-                  <Field label="Full name" hint="Letters only — numbers are blocked">
-                    <input required value={fullName} onChange={(e) => { setFullName(sanitizePersonName(e.target.value)); setError(""); }} placeholder="Your full name" className={`form-input ${nameValidation ? "!border-danger" : fullName ? "!border-primary" : ""}`} autoComplete="name" />
+                  <Field label={t("signupFullName")} hint={t("signupFullNameHint")}>
+                    <input required value={fullName} onChange={(e) => { setFullName(sanitizePersonName(e.target.value)); setError(""); }} placeholder={t("signupFullNamePlaceholder")} className={`form-input ${nameValidation ? "!border-danger" : fullName ? "!border-primary" : ""}`} autoComplete="name" />
                     {nameValidation && <p className="text-[11px] text-danger mt-1">{nameValidation}</p>}
                   </Field>
 
@@ -372,24 +394,24 @@ export default function Signup() {
                     <>
                       <SectionTitle icon={MapPin} text={t("signupFarmerDetails")} />
                       <DistrictField districts={districts} value={farmerForm.district} onChange={(district) => setFarmerForm({ ...farmerForm, district })} label={t("fieldDistrict")} t={t} />
-                      <Field label={t("fieldTehsil")} hint="Letters only">
+                      <Field label={t("fieldTehsil")} hint={t("lettersOnly")}>
                         <input required value={farmerForm.tehsil} onChange={(e) => setFarmerForm({ ...farmerForm, tehsil: sanitizeLettersText(e.target.value) })} placeholder={t("fieldTehsilPlaceholder")} className="form-input" />
                       </Field>
                       <div className="space-y-3">
                         <div className="flex items-center justify-between gap-3">
-                          <div><p className="auth-label">Your fields</p><p className="text-[11px] text-ink/40 mt-0.5">Add one or more cultivated fields.</p></div>
-                          <button type="button" onClick={addFarmerField} className="text-xs text-primary font-semibold flex items-center gap-1"><Plus size={13} /> Add field</button>
+                          <div><p className="auth-label">{t("yourFields")}</p><p className="text-[11px] text-ink/40 mt-0.5">{t("fieldsHelp")}</p></div>
+                          <button type="button" onClick={addFarmerField} className="text-xs text-primary font-semibold flex items-center gap-1"><Plus size={13} /> {t("addField")}</button>
                         </div>
                         {farmerForm.fields.map((field, index) => (
                           <div key={index} className="profile-field-card">
-                            <div className="flex justify-between items-center"><span className="text-sm font-semibold">Field {index + 1}</span>{farmerForm.fields.length > 1 && <button type="button" onClick={() => removeFarmerField(index)} className="text-xs text-danger flex gap-1 items-center"><Trash2 size={12} /> Remove</button>}</div>
-                            <input required value={field.fieldName} onChange={(e) => updateFarmerField(index, "fieldName", sanitizeFieldName(e.target.value))} placeholder="Field name" className="form-input" />
+                            <div className="flex justify-between items-center"><span className="text-sm font-semibold">{t("fieldLabel")} {index + 1}</span>{farmerForm.fields.length > 1 && <button type="button" onClick={() => removeFarmerField(index)} className="text-xs text-danger flex gap-1 items-center"><Trash2 size={12} /> {t("remove")}</button>}</div>
+                            <input required value={field.fieldName} onChange={(e) => updateFarmerField(index, "fieldName", sanitizeFieldName(e.target.value))} placeholder={t("fieldNamePlaceholder")} className="form-input" />
                             <select required value={field.crop} onChange={(e) => updateFarmerField(index, "crop", e.target.value)} className="form-select"><option value="">{t("selectOption")}</option>{crops.map((crop) => <option key={crop.value} value={crop.value}>{t(crop.labelKey)}</option>)}</select>
-                            <div className="flex items-center gap-2"><input required inputMode="decimal" value={field.areaAcres} onChange={(e) => updateFarmerField(index, "areaAcres", positiveDecimal(e.target.value))} placeholder="Area" className="form-input" /><span className="text-xs text-ink/45">acres</span></div>
+                            <div className="flex items-center gap-2"><input required inputMode="decimal" value={field.areaAcres} onChange={(e) => updateFarmerField(index, "areaAcres", positiveDecimal(e.target.value))} placeholder={t("areaPlaceholder")} className="form-input" /><span className="text-xs text-ink/45">{t("acres")}</span></div>
                           </div>
                         ))}
                       </div>
-                      <LanguagePreference value={farmerForm.language} onChange={(language) => setFarmerForm({ ...farmerForm, language })} />
+                      <LanguagePreference value={farmerForm.language} onChange={(language) => setFarmerForm({ ...farmerForm, language })} t={t} />
                     </>
                   )}
 
@@ -397,14 +419,14 @@ export default function Signup() {
                     <>
                       <SectionTitle icon={MapPin} text={t("signupPublicDetails")} />
                       <DistrictField districts={districts} value={publicForm.district} onChange={(district) => setPublicForm({ ...publicForm, district })} label={t("fieldDistrict")} t={t} />
-                      <LanguagePreference value={publicForm.language} onChange={(language) => setPublicForm({ ...publicForm, language })} />
+                      <LanguagePreference value={publicForm.language} onChange={(language) => setPublicForm({ ...publicForm, language })} t={t} />
                     </>
                   )}
 
                   {role === "admin" && (
                     <>
                       <SectionTitle icon={ShieldCheck} text={t("signupAdminDetails")} />
-                      <Field label={t("fieldDesignation")} hint="Letters and standard title punctuation only">
+                      <Field label={t("fieldDesignation")} hint={t("designationHint")}>
                         <input required value={adminForm.designation} onChange={(e) => setAdminForm({ ...adminForm, designation: sanitizeLettersText(e.target.value) })} placeholder={t("fieldDesignationPlaceholder")} className="form-input" />
                       </Field>
                       <DistrictField districts={districts} value={adminForm.district} onChange={(district) => setAdminForm({ ...adminForm, district })} label={t("fieldAssignedDistrict")} t={t} />
@@ -423,7 +445,7 @@ export default function Signup() {
                   <div className="w-16 h-16 rounded-2xl bg-warn/10 flex items-center justify-center"><Clock size={28} className="text-warn" /></div>
                   <p className="font-display text-xl font-semibold">{t("adminPendingTitle")}</p>
                   <p className="text-sm text-ink/55 leading-relaxed max-w-sm">{role === "farmer" ? t("farmerPendingBody") : t("adminPendingBody")}</p>
-                  <Link to="/login" className="btn-animated auth-primary-btn !w-auto px-6 mt-2">Back to login</Link>
+                  <Link to="/login" className="btn-animated auth-primary-btn !w-auto px-6 mt-2">{t("backToLogin")}</Link>
                 </div>
               )}
 
@@ -442,16 +464,16 @@ export default function Signup() {
   );
 }
 
-function SignupProgress({ step }) {
+function SignupProgress({ step, t }) {
   const steps = [
-    { key: "phone", label: "Phone" },
-    { key: "otp", label: "Verify" },
-    { key: "details", label: "Profile" },
+    { key: "phone", label: t("progressPhone") },
+    { key: "otp", label: t("progressVerify") },
+    { key: "details", label: t("progressProfile") },
   ];
   const current = Math.max(0, steps.findIndex((item) => item.key === step));
 
   return (
-    <div className="signup-progress" aria-label="Signup progress">
+    <div className="signup-progress" aria-label={t("signupProgressLabel")}>
       {steps.map((item, index) => {
         const complete = index < current;
         const active = index === current;
@@ -491,12 +513,12 @@ function DistrictField({ districts, value, onChange, label, t }) {
   );
 }
 
-function LanguagePreference({ value, onChange }) {
+function LanguagePreference({ value, onChange, t }) {
   return (
-    <Field label="Language preference">
+    <Field label={t("languagePreference")}>
       <div className="grid grid-cols-2 gap-2">
-        <button type="button" onClick={() => onChange("en")} className={`role-choice !flex-row !py-2.5 ${value === "en" ? "role-choice-active" : ""}`}>English</button>
-        <button type="button" onClick={() => onChange("ur")} className={`role-choice !flex-row !py-2.5 ${value === "ur" ? "role-choice-active" : ""}`}>اردو</button>
+        <button type="button" onClick={() => onChange("en")} className={`role-choice !flex-row !py-2.5 ${value === "en" ? "role-choice-active" : ""}`}>{t("englishLanguage")}</button>
+        <button type="button" onClick={() => onChange("ur")} className={`role-choice !flex-row !py-2.5 ${value === "ur" ? "role-choice-active" : ""}`}>{t("urduLanguage")}</button>
       </div>
     </Field>
   );

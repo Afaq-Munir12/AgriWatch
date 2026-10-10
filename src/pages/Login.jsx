@@ -40,11 +40,25 @@ const roles = [
   { key: "admin", labelKey: "roleAdminLabel", icon: ShieldCheck, dest: "/pdma" },
 ];
 
-const GOOGLE_REDIRECT = typeof window !== "undefined" ? `${window.location.origin}/login` : undefined;
+const GOOGLE_REDIRECT = typeof window !== "undefined" ? `${window.location.origin}/auth/callback` : undefined;
 
 function routeForRole(role) {
   const normalized = role === "pdma" ? "admin" : role;
   return roles.find((item) => item.key === normalized)?.dest || "/";
+}
+
+function localizedPhoneError(message, t) {
+  if (!message) return "";
+  if (message === "Enter your mobile number.") return t("errPhoneRequired");
+  if (message === "Enter exactly 10 digits after +92.") return t("errPhoneLength");
+  if (message === "Pakistani mobile numbers must start with 3.") return t("errPhoneStart");
+  return message;
+}
+
+function localizedOtpError(message, t) {
+  if (!message) return "";
+  if (message === "Enter the 6-digit verification code.") return t("errOtpLength");
+  return message;
 }
 
 export default function Login() {
@@ -63,71 +77,32 @@ export default function Login() {
   const [googleState, setGoogleState] = useState(null);
   const navigate = useNavigate();
 
-  const phoneError = useMemo(() => (phone ? pakistanPhoneError(phone) : ""), [phone]);
+  const phoneError = useMemo(() => (phone ? localizedPhoneError(pakistanPhoneError(phone), t) : ""), [phone, t]);
   const prettyPhone = phone ? `+92 ${phone.slice(0, 3)} ${phone.slice(3, 6)} ${phone.slice(6)}` : "+92";
 
   useEffect(() => {
     if (authLoading) return;
+
     if (!user) {
-      setGoogleState(null);
       return;
     }
 
-    // A Supabase/Google session can survive browser navigation. We do not
-    // auto-enter a dashboard just because an old session exists. Only a
-    // login callback that was explicitly started from this page may route.
+    // OAuth is finalized in one dedicated callback component. Keeping all
+    // Google routing in one place prevents Login/Home/CompleteProfile from
+    // racing each other while Supabase restores the session.
     const loginAttempt = getLoginAttempt();
-    if (!loginAttempt) {
-      signOut();
-      setGoogleState(null);
+    if (loginAttempt) {
+      navigate("/auth/callback", { replace: true });
       return;
     }
 
-    // Google redirects back to this page, recreating React state. Keep the role
-    // selected before OAuth and use it as part of the account lookup.
-    const requestedUiRole = loginAttempt.role || role;
-    const requestedDbRole = normalizeDbRole(requestedUiRole);
-    setRole(requestedDbRole === "pdma" ? "admin" : requestedDbRole);
-    localStorage.setItem("pendingSignupRole", requestedUiRole);
-
-    let cancelled = false;
-    setGoogleState("checking");
-
-    getSignupRequest(user.id, requestedDbRole)
-      .then((data) => {
-        if (cancelled) return;
-        if (!data) {
-          // The Gmail can still have other roles; only this selected role is
-          // missing, so let the user create that role-specific profile.
-          clearLoginAttempt();
-          navigate("/complete-profile", { replace: true });
-          return;
-        }
-
-        clearLoginAttempt();
-        localStorage.removeItem("pendingSignupRole");
-        if (data.status === "approved") {
-          grantPortalAccess(user.id, requestedDbRole);
-          navigate(routeForRole(requestedDbRole), { replace: true });
-          return;
-        }
-        setGoogleState(data.status === "rejected" ? "rejected" : "pending");
-      })
-      .catch(() => {
-        if (cancelled) return;
-        clearLoginAttempt();
-        setError("Couldn't check the selected role for this account. Try again.");
-        setGoogleState(null);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [user, authLoading, navigate]);
+    // An old Supabase session alone must never auto-enter a portal.
+    signOut();
+  }, [user, authLoading, navigate, signOut]);
 
   async function requestOtp(e) {
     e.preventDefault();
-    const validationError = pakistanPhoneError(phone);
+    const validationError = localizedPhoneError(pakistanPhoneError(phone), t);
     if (validationError) {
       setError(validationError);
       return;
@@ -140,7 +115,7 @@ export default function Login() {
       localStorage.setItem("pendingSignupRole", role);
       setStep("otp");
     } catch (err) {
-      setError(err?.message || "Could not send OTP. Check the phone provider configuration and try again.");
+      setError(err?.message || t("loginErrSendOtp"));
     } finally {
       setBusy(false);
     }
@@ -148,7 +123,7 @@ export default function Login() {
 
   async function verifyOtp(e) {
     e.preventDefault();
-    const validationError = otpError(otp);
+    const validationError = localizedOtpError(otpError(otp), t);
     if (validationError) {
       setError(validationError);
       return;
@@ -159,7 +134,7 @@ export default function Login() {
     try {
       const result = await verifyPhoneOtp(phone, otp);
       const signedInUser = result?.user;
-      if (!signedInUser) throw new Error("Phone verification succeeded but no user session was returned.");
+      if (!signedInUser) throw new Error(t("loginErrNoSession"));
 
       const request = await getSignupRequest(signedInUser.id, role);
       if (!request) {
@@ -174,7 +149,7 @@ export default function Login() {
       }
       setGoogleState(request.status === "rejected" ? "rejected" : "pending");
     } catch (err) {
-      setError(err?.message || "The OTP is invalid or expired.");
+      setError(err?.message || t("loginErrOtpInvalid"));
     } finally {
       setBusy(false);
     }
@@ -191,7 +166,7 @@ export default function Login() {
       await supabaseSignIn(GOOGLE_REDIRECT, { forceAccountChoice: true });
     } catch (err) {
       clearLoginAttempt();
-      setError(err?.message || "Google sign-in could not be started.");
+      setError(err?.message || t("loginErrGoogleStart"));
     } finally {
       setBusy(false);
     }
@@ -203,21 +178,19 @@ export default function Login() {
 
   if (googleState === "pending" || googleState === "rejected") {
     return (
-      <div className="auth-page flex items-center justify-center p-5">
-        <div className="auth-status-card animate-pop-in">
+      <div className={`auth-page flex items-center justify-center p-5 ${lang === "ur" ? "i18n-ur" : ""}`}>
+        <div className="auth-status-card animate-pop-in" dir={lang === "ur" ? "rtl" : "ltr"}>
           <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5 ${googleState === "pending" ? "bg-warn/10" : "bg-danger/10"}`}>
             {googleState === "pending" ? <Clock size={30} className="text-warn" /> : <XCircle size={30} className="text-danger" />}
           </div>
           <h1 className="font-display text-xl font-semibold">
-            {googleState === "pending" ? "Your account is awaiting approval" : "Access request declined"}
+            {googleState === "pending" ? t("authPendingTitle") : t("authRejectedTitle")}
           </h1>
           <p className="text-sm text-ink/55 leading-relaxed mt-3">
-            {googleState === "pending"
-              ? "Your details were received. A system administrator must approve the account before dashboard access is enabled."
-              : "Your request was declined. Please contact the AgriWatch administrator if you believe this needs review."}
+            {googleState === "pending" ? t("authPendingBody") : t("authRejectedBody")}
           </p>
           <button onClick={signOut} className="mt-6 w-full border border-line rounded-xl py-3 text-sm font-semibold hover:bg-paper-dim transition-colors">
-            Sign out
+            {t("signOut")}
           </button>
         </div>
       </div>
@@ -225,12 +198,12 @@ export default function Login() {
   }
 
   return (
-    <div dir={lang === "ur" ? "rtl" : undefined} className={`auth-page ${lang === "ur" ? "i18n-ur" : ""}`}>
+    <div className={`auth-page ${lang === "ur" ? "i18n-ur" : ""}`}>
       <div className="auth-orb auth-orb-one" />
       <div className="auth-orb auth-orb-two" />
 
       <div className="auth-layout">
-        <section className="hidden lg:flex flex-col justify-between rounded-[2rem] p-10 xl:p-12 auth-visual-panel auth-equal-panel animate-fade-up">
+        <section dir="ltr" className="hidden lg:flex flex-col justify-between rounded-[2rem] p-10 xl:p-12 auth-visual-panel auth-equal-panel animate-fade-up">
           <div>
             <Link to="/" className="inline-flex items-center gap-3">
               <img src={logo} alt="AgriWatch Pakistan" className="w-12 h-12 rounded-2xl object-cover bg-white shadow-lg" />
@@ -267,14 +240,14 @@ export default function Login() {
           </div>
         </section>
 
-        <section className="auth-form-column">
+        <section className="auth-form-column" dir={lang === "ur" ? "rtl" : "ltr"}>
           <div className="auth-form-wrap animate-fade-up animation-delay-100">
             <div className="auth-form-card auth-equal-card auth-login-card">
               <div className="auth-card-header">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.18em] text-primary font-semibold">Welcome back</p>
-                  <h1 className="font-display text-2xl sm:text-3xl font-semibold mt-2">Access your AgriWatch account</h1>
-                  <p className="text-sm text-ink/50 mt-2 max-w-md">Use your Pakistani mobile number or continue with Google.</p>
+                  <p className="auth-eyebrow text-xs uppercase tracking-[0.18em] text-primary font-semibold">{t("loginWelcomeBack")}</p>
+                  <h1 className="font-display text-2xl sm:text-3xl font-semibold mt-2">{t("loginHeading")}</h1>
+                  <p className="text-sm text-ink/50 mt-2 max-w-md">{t("loginSubheading")}</p>
                 </div>
                 <div className="auth-card-tools">
                   <ThemeToggle />
@@ -325,7 +298,7 @@ export default function Login() {
                       </div>
                       <div className="flex items-center justify-between gap-3 mt-1.5">
                         <p className={`text-[11px] ${phoneError ? "text-danger" : "text-ink/40"}`}>
-                          {phoneError || "10 digits after +92, e.g. 3001234567"}
+                          {phoneError || t("loginPhoneHelp")}
                         </p>
                         <span className="text-[11px] text-ink/35" dir="ltr">{phone.length}/10</span>
                       </div>
@@ -346,22 +319,22 @@ export default function Login() {
                     {role === "admin" && <p className="text-xs text-ink/40 text-center">{t("adminApprovalNote")}</p>}
                   </form>
 
-                  <div className="auth-divider"><span>or</span></div>
+                  <div className="auth-divider"><span>{t("authOr")}</span></div>
 
                   <button type="button" onClick={handleGoogleSignIn} disabled={busy} onMouseDown={addRipple} className="btn-animated auth-google-btn">
                     {busy ? <Loader2 size={16} className="animate-spin" /> : <GoogleIcon />}
-                    Continue with Google
+                    {t("continueWithGoogle")}
                   </button>
 
                 </>
               ) : (
                 <form onSubmit={verifyOtp} className="space-y-5 animate-fade-in">
                   <button type="button" onClick={() => { setStep("phone"); setOtp(""); setError(""); }} className="inline-flex items-center gap-1.5 text-xs font-semibold text-ink/50 hover:text-ink">
-                    <ArrowLeft size={14} /> Change number
+                    <ArrowLeft size={14} /> {t("changeNumber")}
                   </button>
 
                   <div className="rounded-2xl bg-primary/8 border border-primary/15 p-4">
-                    <p className="text-xs text-ink/45">Verification code sent to</p>
+                    <p className="text-xs text-ink/45">{t("verificationCodeSentTo")}</p>
                     <p className="font-display font-semibold mt-1" dir="ltr">{prettyPhone}</p>
                   </div>
 
@@ -378,7 +351,7 @@ export default function Login() {
                       className="otp-input mt-1.5"
                       autoFocus
                     />
-                    <p className="text-[11px] text-ink/40 mt-1.5">Enter the 6-digit SMS code. Only numbers are accepted.</p>
+                    <p className="text-[11px] text-ink/40 mt-1.5">{t("otpHelp")}</p>
                   </div>
 
                   {error && <div className="auth-error">{error}</div>}
@@ -402,7 +375,7 @@ export default function Login() {
             </div>
 
             <Link to="/admin-portal/login" className="auth-portal-link">
-              <ShieldCheck size={14} /> Need administrator access? Open Admin Portal login
+              <ShieldCheck size={14} /> {t("adminPortalAccess")}
             </Link>
           </div>
         </section>

@@ -3,24 +3,18 @@ import { useEffect, useState } from "react";
 import Topbar from "../../components/Topbar";
 import { useLanguage } from "../../i18n/LanguageContext";
 import Card, { SeverityBadge } from "../../components/Card";
+import { useCurrentProfile } from "../../supabase/useCurrentProfile";
+import {
+  getAlerts,
+  normalizeDistrictKey,
+  predictDistrict,
+  resolveDistrictName,
+} from "../../services/droughtService";
 
-const API_BASE = "http://127.0.0.1:8000";
-
-// ------------------------------------------------------------
-// PUBLIC USER DISTRICT
-// ------------------------------------------------------------
-// Temporary default until we connect the logged-in public
-// user's saved district/profile.
-//
-// IMPORTANT:
-// Backend district names include "District".
-// Example: "Peshawar District"
-// ------------------------------------------------------------
-
-const DEFAULT_DISTRICT = "Peshawar District";
 
 export default function PublicHome() {
   const { t } = useLanguage();
+  const { district: savedDistrict, loading: profileLoading } = useCurrentProfile("public");
 
   const [prediction, setPrediction] = useState(null);
   const [activeAlert, setActiveAlert] = useState(null);
@@ -29,136 +23,85 @@ export default function PublicHome() {
   const [error, setError] = useState("");
 
   // ==========================================================
-  // LOAD REAL ML DATA
+  // LOAD REAL ML DATA FOR THE LOGGED-IN PUBLIC USER'S DISTRICT
   // ==========================================================
 
   useEffect(() => {
+    if (profileLoading) return;
+
     let cancelled = false;
 
     async function loadPublicHome() {
+      if (!savedDistrict) {
+        setPrediction(null);
+        setActiveAlert(null);
+        setError("No district is saved in your General Public profile. Update it in Settings.");
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
         setError("");
 
-        // ------------------------------------------------------
-        // 1. REAL DISTRICT ML PREDICTION
-        // ------------------------------------------------------
+        const apiDistrict = await resolveDistrictName(savedDistrict);
+        const predictionData = await predictDistrict(apiDistrict);
 
-        const predictionResponse = await fetch(
-          `${API_BASE}/predict-district/${encodeURIComponent(
-            DEFAULT_DISTRICT
-          )}`
-        );
-
-        if (!predictionResponse.ok) {
-          const errorData = await predictionResponse
-            .json()
-            .catch(() => ({}));
-
-          throw new Error(
-            errorData.detail ||
-              `Prediction request failed (${predictionResponse.status})`
-          );
+        if (!predictionData?.success) {
+          throw new Error("Backend did not return a successful prediction.");
         }
 
-        const predictionData =
-          await predictionResponse.json();
-
-        console.log(
-          "PUBLIC HOME REAL ML DATA:",
-          predictionData
-        );
-
-        if (!predictionData.success) {
-          throw new Error(
-            "Backend did not return a successful prediction."
-          );
-        }
-
-        if (!cancelled) {
-          setPrediction(predictionData);
-        }
-
-        // ------------------------------------------------------
-        // 2. REAL ALERTS
-        // ------------------------------------------------------
+        if (!cancelled) setPrediction(predictionData);
 
         try {
-          const alertResponse = await fetch(
-            `${API_BASE}/alerts`
-          );
+          const alertData = await getAlerts();
+          const allAlerts = Array.isArray(alertData)
+            ? alertData
+            : Array.isArray(alertData?.alerts)
+            ? alertData.alerts
+            : [];
 
-          if (alertResponse.ok) {
-            const alertData =
-              await alertResponse.json();
+          const currentKey = normalizeDistrictKey(predictionData.district || apiDistrict);
 
-            console.log(
-              "PUBLIC HOME REAL ALERTS:",
-              alertData
-            );
+          const districtAlert = allAlerts
+            .filter((alert) => {
+              const sameDistrict =
+                normalizeDistrictKey(alert?.district) === currentKey;
 
-            const allAlerts =
-              Array.isArray(alertData.alerts)
-                ? alertData.alerts
-                : [];
+              const audience = String(
+                alert?.sentTo ?? alert?.sent_to ?? alert?.audience ?? ""
+              )
+                .trim()
+                .toLowerCase();
 
-            // Find newest alert for this district that
-            // includes the general public.
-            const districtAlert =
-              allAlerts.find((alert) => {
-                const sameDistrict =
-                  String(alert.district || "")
-                    .trim()
-                    .toLowerCase() ===
-                  String(predictionData.district || "")
-                    .trim()
-                    .toLowerCase();
+              const forPublic =
+                audience === "farmers + public" ||
+                audience === "farmers and public" ||
+                audience === "general public" ||
+                audience === "public" ||
+                audience.includes("public");
 
-                const audience =
-                  String(alert.sentTo || "")
-                    .trim()
-                    .toLowerCase();
+              return sameDistrict && forPublic;
+            })
+            .sort((a, b) => {
+              const ta = new Date(a?.date || a?.created_at || 0).getTime();
+              const tb = new Date(b?.date || b?.created_at || 0).getTime();
+              return tb - ta;
+            })[0];
 
-                const forPublic =
-                  audience === "farmers + public" ||
-                  audience === "general public";
-
-                return sameDistrict && forPublic;
-              });
-
-            if (!cancelled) {
-              setActiveAlert(
-                districtAlert || null
-              );
-            }
-          }
+          if (!cancelled) setActiveAlert(districtAlert || null);
         } catch (alertError) {
-          // Alert failure should NOT break the entire home page.
-          console.error(
-            "PUBLIC HOME ALERT ERROR:",
-            alertError
-          );
-
-          if (!cancelled) {
-            setActiveAlert(null);
-          }
+          console.error("PUBLIC HOME ALERT ERROR:", alertError);
+          if (!cancelled) setActiveAlert(null);
         }
       } catch (err) {
-        console.error(
-          "PUBLIC HOME LOAD ERROR:",
-          err
-        );
-
+        console.error("PUBLIC HOME LOAD ERROR:", err);
         if (!cancelled) {
-          setError(
-            err.message ||
-              "Unable to load regional drought data."
-          );
+          setPrediction(null);
+          setError(err?.message || "Unable to load regional drought data.");
         }
       } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
+        if (!cancelled) setLoading(false);
       }
     }
 
@@ -167,13 +110,13 @@ export default function PublicHome() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [profileLoading, savedDistrict]);
 
   // ==========================================================
   // LOADING
   // ==========================================================
 
-  if (loading) {
+  if (profileLoading || loading) {
     return (
       <>
         <Topbar
@@ -235,7 +178,7 @@ export default function PublicHome() {
 
   const district =
     prediction.district ||
-    DEFAULT_DISTRICT;
+    savedDistrict;
 
   const province =
     prediction.province || "";

@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import Topbar from "../../components/Topbar";
 import { useLanguage } from "../../i18n/LanguageContext";
 import Card, { SeverityBadge } from "../../components/Card";
+import { useCurrentProfile } from "../../supabase/useCurrentProfile";
+import { predictDistrict, resolveDistrictName } from "../../services/droughtService";
 
 import {
   Droplets,
@@ -15,8 +17,6 @@ import {
   Activity,
 } from "lucide-react";
 
-const API_BASE = "http://127.0.0.1:8000";
-const USER_DISTRICT = "Peshawar District";
 
 // ============================================================
 // BASE PUBLIC AWARENESS TIPS
@@ -113,6 +113,8 @@ function getRiskAdvice(riskLevel) {
 
 export default function Awareness() {
   const { t } = useLanguage();
+  const { district: savedDistrict, loading: profileLoading } = useCurrentProfile("public");
+  const userDistrictName = savedDistrict || "your district";
 
   const [prediction, setPrediction] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -123,62 +125,38 @@ export default function Awareness() {
   // ==========================================================
 
   useEffect(() => {
+    if (profileLoading) return;
+
     let cancelled = false;
 
     async function loadPrediction() {
+      if (!savedDistrict) {
+        setPrediction(null);
+        setError("No district is saved in your General Public profile. Update it in Settings.");
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
         setError("");
 
-        const response = await fetch(
-          `${API_BASE}/predict-district/${encodeURIComponent(
-            USER_DISTRICT
-          )}`
-        );
+        const apiDistrict = await resolveDistrictName(savedDistrict);
+        const data = await predictDistrict(apiDistrict);
 
-        if (!response.ok) {
-          const data = await response
-            .json()
-            .catch(() => ({}));
-
-          throw new Error(
-            data.detail ||
-              `Prediction request failed (${response.status})`
-          );
+        if (!data?.success) {
+          throw new Error("Prediction data was not available.");
         }
 
-        const data = await response.json();
-
-        console.log(
-          "PUBLIC AWARENESS REAL ML DATA:",
-          data
-        );
-
-        if (!data.success) {
-          throw new Error(
-            "Prediction data was not available."
-          );
-        }
-
-        if (!cancelled) {
-          setPrediction(data);
-        }
+        if (!cancelled) setPrediction(data);
       } catch (err) {
-        console.error(
-          "PUBLIC AWARENESS ERROR:",
-          err
-        );
-
+        console.error("PUBLIC AWARENESS ERROR:", err);
         if (!cancelled) {
-          setError(
-            err.message ||
-              "Unable to load current drought status."
-          );
+          setPrediction(null);
+          setError(err?.message || "Unable to load current drought status.");
         }
       } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
+        if (!cancelled) setLoading(false);
       }
     }
 
@@ -187,11 +165,13 @@ export default function Awareness() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [profileLoading, savedDistrict]);
 
   // ==========================================================
   // CURRENT RISK
   // ==========================================================
+
+  const effectiveLoading = profileLoading || loading;
 
   const riskLevel =
     prediction?.risk_level || "Low";
@@ -215,7 +195,7 @@ export default function Awareness() {
     <>
       <Topbar
         title={t("ptPublicAwarenessTitle")}
-        subtitle={`${USER_DISTRICT} — Drought awareness & water conservation`}
+        subtitle={`${userDistrictName} — Drought awareness & water conservation`}
       />
 
       <main
@@ -225,12 +205,12 @@ export default function Awareness() {
         <section className="public-page-hero">
           <div className="public-hero-content">
             <span className="public-hero-eyebrow">Community preparedness</span>
-            <h2 className="public-hero-title">Drought awareness for {USER_DISTRICT}</h2>
+            <h2 className="public-hero-title">Drought awareness for {userDistrictName}</h2>
             <p className="public-hero-copy">Practical water-saving guidance, local risk context, and simple actions households can take before drought conditions worsen.</p>
           </div>
           <div className="public-hero-stats">
-            <div className="public-hero-stat"><span>Current risk</span><strong>{loading ? "Loading" : error ? "Unavailable" : riskLevel}</strong></div>
-            <div className="public-hero-stat"><span>30-day risk</span><strong>{loading || error ? "—" : `${probability.toFixed(1)}%`}</strong></div>
+            <div className="public-hero-stat"><span>Current risk</span><strong>{effectiveLoading ? "Loading" : error ? "Unavailable" : riskLevel}</strong></div>
+            <div className="public-hero-stat"><span>30-day risk</span><strong>{effectiveLoading || error ? "—" : `${probability.toFixed(1)}%`}</strong></div>
             <div className="public-hero-stat"><span>Guidance</span><strong>6 key actions</strong></div>
           </div>
         </section>
@@ -238,7 +218,7 @@ export default function Awareness() {
         {/* CURRENT DISTRICT STATUS */}
 
         <Card scan className="public-data-card">
-          {loading ? (
+          {effectiveLoading ? (
             <p className="text-sm text-ink/50">
               Loading current drought conditions...
             </p>
@@ -284,7 +264,7 @@ export default function Awareness() {
 
         {/* RISK-SPECIFIC ADVICE */}
 
-        {!loading && !error && (
+        {!effectiveLoading && !error && (
           <Card className="public-callout">
             <div className="flex gap-4">
               <div className="w-11 h-11 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">

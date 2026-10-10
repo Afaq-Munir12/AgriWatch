@@ -19,25 +19,33 @@ export default function Topbar({ title, subtitle, contentLoading = false }) {
   const { pathname } = useLocation();
   const urduClass = lang === "ur" ? "i18n-ur" : "";
 
-  const base = pathname.startsWith("/farmer") ? "/farmer" : pathname.startsWith("/public") ? "/public" : "/pdma";
-  const alertsHref = `${base}/alerts`;
+  const base = pathname.startsWith("/farmer")
+    ? "/farmer"
+    : pathname.startsWith("/public")
+      ? "/public"
+      : "/pdma";
 
+  const alertsHref = `${base}/alerts`;
   const { fallbackRole, roleLabelKey } = portalMeta[base];
   const profile = useCurrentProfile(fallbackRole);
+
   const displayName = profile.loading ? "" : (profile.name || t(roleLabelKey));
   const initials = profile.loading
     ? ""
     : displayName
-      .trim()
-      .split(/\s+/)
-      .map((w) => w[0])
-      .slice(0, 2)
-      .join("")
-      .toUpperCase() || "?";
+        .trim()
+        .split(/\s+/)
+        .map((w) => w[0])
+        .slice(0, 2)
+        .join("")
+        .toUpperCase() || "?";
+
   const displaySubtitle = profile.loading
     ? ""
     : [t(roleLabelKey), profile.district].filter(Boolean).join(" · ");
+
   const profileHref = `${base}/settings`;
+  const showDistrictSearch = base === "/pdma";
 
   return (
     <header className="dashboard-topbar sticky top-0 z-30 bg-paper/88 backdrop-blur-xl border-b border-line/80 px-4 sm:px-8 py-4 sm:py-5 flex items-center justify-between gap-3 page-enter">
@@ -49,6 +57,7 @@ export default function Topbar({ title, subtitle, contentLoading = false }) {
         >
           <Menu size={18} className="text-ink/70" />
         </button>
+
         <div className="min-w-0" dir={lang === "ur" ? "rtl" : undefined}>
           {contentLoading ? (
             <div className="space-y-2 py-0.5">
@@ -57,21 +66,29 @@ export default function Topbar({ title, subtitle, contentLoading = false }) {
             </div>
           ) : (
             <>
-              <h1 className={`font-display text-lg sm:text-xl font-semibold text-ink truncate ${urduClass}`}>{title}</h1>
-              {subtitle && <p className={`text-xs sm:text-sm text-ink/50 mt-0.5 truncate ${urduClass}`}>{subtitle}</p>}
+              <h1 className={`font-display text-lg sm:text-xl font-semibold text-ink truncate ${urduClass}`}>
+                {title}
+              </h1>
+              {subtitle && (
+                <p className={`text-xs sm:text-sm text-ink/50 mt-0.5 truncate ${urduClass}`}>
+                  {subtitle}
+                </p>
+              )}
             </>
           )}
         </div>
       </div>
 
       <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-        <DistrictSearch />
+        {showDistrictSearch && <DistrictSearch />}
         <NotificationDropdown viewAllHref={alertsHref} />
         <ProfileDropdown
           displayName={displayName}
           subtitle={displaySubtitle}
           initials={initials}
           profileHref={profileHref}
+          currentRole={fallbackRole}
+          userId={profile.userId}
           loading={profile.loading}
         />
       </div>

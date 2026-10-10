@@ -334,3 +334,53 @@ export async function createAlert(alertData) {
     throw error;
   }
 }
+
+// ============================================================
+// DISTRICT NAME RESOLUTION
+// ============================================================
+// Supabase profiles can contain "Mansehra" while the ML dataset can contain
+// "Mansehra District". Resolve the saved user district against /districts so
+// every portal calls the model with the exact backend name.
+
+export function normalizeDistrictKey(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+district$/, "")
+    .replace(/\s+/g, " ");
+}
+
+let districtNameCache = null;
+
+function extractDistrictNames(payload) {
+  const rows = Array.isArray(payload)
+    ? payload
+    : Array.isArray(payload?.districts)
+    ? payload.districts
+    : [];
+
+  return rows
+    .map((row) => {
+      if (typeof row === "string") return row;
+      return row?.name || row?.district || "";
+    })
+    .filter(Boolean);
+}
+
+export async function resolveDistrictName(savedDistrict) {
+  const requested = normalizeDistrictKey(savedDistrict);
+  if (!requested) {
+    throw new Error("No district is saved in this user profile.");
+  }
+
+  if (!districtNameCache) {
+    const payload = await getDistricts();
+    districtNameCache = extractDistrictNames(payload);
+  }
+
+  const match = districtNameCache.find(
+    (name) => normalizeDistrictKey(name) === requested
+  );
+
+  return match || String(savedDistrict).trim();
+}

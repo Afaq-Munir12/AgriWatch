@@ -44,3 +44,18 @@ export async function getSignupRequest(userId, role) {
   if (error) throw error;
   return data;
 }
+
+// Used by Google SIGN-UP to prevent an already-approved AgriWatch identity
+// from creating a second account through the Signup page. Existing approved
+// users should Log in first; multi-role registration can then be handled from
+// the authenticated flow without creating another Google identity.
+export async function getApprovedSignupRequests(userId) {
+  if (!userId) return [];
+  const { data, error } = await supabase
+    .from("website_signup_requests")
+    .select("status, role, user_id")
+    .eq("user_id", userId)
+    .eq("status", "approved");
+  if (error) throw error;
+  return Array.isArray(data) ? data : [];
+}
