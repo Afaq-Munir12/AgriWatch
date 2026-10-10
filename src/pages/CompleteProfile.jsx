@@ -146,21 +146,13 @@ export default function CompleteProfile() {
       return setError("Please enter your PDMA designation.");
     }
 
+
     if (files.length === 0) {
       return setError("Attach at least one verification document before submitting.");
     }
 
     setBusy(true);
     try {
-      const uploaded = [];
-      for (const file of files) {
-        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-        const path = `${user.id}/${Date.now()}_${safeName}`;
-        const { error: uploadErr } = await supabase.storage.from(DOCS_BUCKET).upload(path, file);
-        if (uploadErr) throw uploadErr;
-        uploaded.push({ name: file.name, path });
-      }
-
       const { data: existingRole, error: existingRoleError } = await supabase
         .from("website_signup_requests")
         .select("status, role, user_id")
@@ -170,6 +162,16 @@ export default function CompleteProfile() {
       if (existingRoleError) throw existingRoleError;
       if (existingRole) {
         throw new Error(`This Google account is already registered as ${role === "pdma" ? "PDMA Officer" : role}. Use Log in and select that role.`);
+      }
+
+
+      const uploaded = [];
+      for (const file of files) {
+        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+        const path = `${user.id}/${Date.now()}_${safeName}`;
+        const { error: uploadErr } = await supabase.storage.from(DOCS_BUCKET).upload(path, file);
+        if (uploadErr) throw uploadErr;
+        uploaded.push({ name: file.name, path });
       }
 
       const roleStatus = role === "public" ? "approved" : "pending";
@@ -406,6 +408,8 @@ export default function CompleteProfile() {
                   <input required value={designation} onChange={(e) => setDesignation(sanitizeLettersText(e.target.value))} placeholder="e.g. Field Officer" className="form-input" />
                 </Field>
               )}
+
+
 
               <Field label={role === "pdma" ? "PDMA ID card / appointment letter" : role === "farmer" ? "CNIC / proof of land ownership" : "CNIC or other ID"} hint="Image or PDF">
                 <label className="signup-upload-zone">

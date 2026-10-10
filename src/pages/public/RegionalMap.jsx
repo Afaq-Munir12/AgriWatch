@@ -127,7 +127,7 @@ function getProbability(district) {
 // ============================================================
 
 export default function RegionalMap() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const { district: savedDistrict, loading: profileLoading } = useCurrentProfile("public");
   const userDistrictName = savedDistrict || "your district";
 
@@ -163,7 +163,7 @@ export default function RegionalMap() {
       } catch (err) {
         console.error("PUBLIC REGIONAL MAP ERROR:", err);
         if (!cancelled) {
-          setError(err?.message || "Unable to load regional map.");
+          setError(err?.message || t("mapUnable"));
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -293,18 +293,16 @@ export default function RegionalMap() {
           title={t(
             "ptPublicMapTitle"
           )}
-          subtitle="Loading regional drought data..."
+          subtitle={t("mapLoading")}
         />
 
         <main
           className="p-4 sm:p-8 public-page"
-          dir="ltr"
+          dir={lang === "ur" ? "rtl" : "ltr"}
         >
           <Card>
             <p className="text-sm text-ink/50">
-              Loading nearby districts
-              and real AgriWatch ML
-              predictions...
+              {t("mapLoadingNearby")}
             </p>
           </Card>
         </main>
@@ -326,22 +324,21 @@ export default function RegionalMap() {
           title={t(
             "ptPublicMapTitle"
           )}
-          subtitle="Regional drought map"
+          subtitle={t("mapRegional")}
         />
 
         <main
           className="p-4 sm:p-8 public-page"
-          dir="ltr"
+          dir={lang === "ur" ? "rtl" : "ltr"}
         >
           <Card>
             <p className="font-display font-semibold">
-              Unable to load
-              regional map
+              {t("mapUnable")}
             </p>
 
             <p className="text-sm text-ink/60 mt-2">
               {error ||
-                `${userDistrictName} was not found in the ML map data.`}
+                `${userDistrictName} ${t("mapDistrictNotFound")}`}
             </p>
           </Card>
         </main>
@@ -373,18 +370,18 @@ export default function RegionalMap() {
 
       <main
         className="p-4 sm:p-8 space-y-6 public-page"
-        dir="ltr"
+        dir={lang === "ur" ? "rtl" : "ltr"}
       >
         <section className="public-page-hero">
           <div className="public-hero-content">
-            <span className="public-hero-eyebrow">Regional GIS monitoring</span>
-            <h2 className="public-hero-title">Explore drought conditions around {userDistrict.district}</h2>
-            <p className="public-hero-copy">Interactive regional monitoring using real AgriWatch Random Forest predictions and nearby-district context.</p>
+            <span className="public-hero-eyebrow">{t("mapGisMonitoring")}</span>
+            <h2 className="public-hero-title">{t("mapExploreAround")} {userDistrict.district}</h2>
+            <p className="public-hero-copy">{t("mapHeroBody")}</p>
           </div>
           <div className="public-hero-stats">
-            <div className="public-hero-stat"><span>Your district</span><strong>{userDistrict.district}</strong></div>
-            <div className="public-hero-stat"><span>Nearby districts</span><strong>{Math.max(regionalDistricts.length - 1, 0)}</strong></div>
-            <div className="public-hero-stat"><span>Province</span><strong>{displayProvince}</strong></div>
+            <div className="public-hero-stat"><span>{t("mapYourDistrict")}</span><strong>{userDistrict.district}</strong></div>
+            <div className="public-hero-stat"><span>{t("mapNearbyDistricts")}</span><strong>{Math.max(regionalDistricts.length - 1, 0)}</strong></div>
+            <div className="public-hero-stat"><span>{t("mapProvince")}</span><strong>{displayProvince}</strong></div>
           </div>
         </section>
 
@@ -396,7 +393,7 @@ export default function RegionalMap() {
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <p className="text-xs uppercase text-ink/40 font-medium">
-                Regional Coverage
+                {t("mapRegionalCoverage")}
               </p>
 
               <p className="font-display font-semibold mt-1">
@@ -409,13 +406,13 @@ export default function RegionalMap() {
                     1,
                   0
                 )}{" "}
-                nearby districts
+                {t("mapNearbyDistricts")}
               </p>
             </div>
 
             <div>
               <p className="text-xs uppercase text-ink/40 font-medium">
-                Data Source
+                {t("mapDataSource")}
               </p>
 
               <p className="text-sm text-ink/60 mt-1">
@@ -450,14 +447,13 @@ export default function RegionalMap() {
                   }}
                 />
 
-                {level}
+                {t({ Low: "riskLow", Normal: "sevNormal", Moderate: "sevModerate", High: "riskHigh", Severe: "sevSevere", Extreme: "sevExtreme" }[level] || "riskLow")}
               </span>
             )
           )}
 
           <span className="text-ink/30">
-            • Larger marker =
-            your district
+            • {t("mapLargerMarker")}
           </span>
         </div>
 
@@ -569,21 +565,20 @@ export default function RegionalMap() {
 
                         {isUserDistrict && (
                           <p className="text-xs font-semibold text-green-700 mt-2">
-                            Your district
+                            {t("mapYourDistrict")}
                           </p>
                         )}
 
                         <div className="mt-2 space-y-1">
                           <p>
-                            Risk:{" "}
+                            {t("mapRisk")}: {" "}
                             <strong>
-                              {risk}
+                              {t({ Low: "riskLow", Normal: "sevNormal", Moderate: "sevModerate", High: "riskHigh", Severe: "sevSevere", Extreme: "sevExtreme" }[risk] || "riskLow")}
                             </strong>
                           </p>
 
                           <p>
-                            Drought
-                            probability:{" "}
+                            {t("envDroughtProbability")}: {" "}
                             <strong>
                               {probability.toFixed(
                                 2
@@ -594,12 +589,12 @@ export default function RegionalMap() {
 
                           {!isUserDistrict && (
                             <p>
-                              Distance:{" "}
+                              {t("mapDistance")}: {" "}
                               <strong>
                                 {district.distance_km.toFixed(
                                   1
                                 )}{" "}
-                                km
+                                {t("unitKilometerShort")}
                               </strong>
                             </p>
                           )}
@@ -619,15 +614,11 @@ export default function RegionalMap() {
 
         <Card>
           <p className="font-display font-semibold">
-            Nearby drought
-            conditions
+            {t("mapNearbyConditions")}
           </p>
 
           <p className="text-xs text-ink/40 mt-1 mb-4">
-            Showing your district
-            and the nearest districts
-            using real Random Forest
-            predictions.
+            {t("mapNearbySub")}
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
@@ -669,7 +660,7 @@ export default function RegionalMap() {
 
                       {isUserDistrict && (
                         <span className="text-[10px] uppercase font-semibold text-primary">
-                          You
+                          {t("mapYou")}
                         </span>
                       )}
                     </div>
@@ -684,7 +675,7 @@ export default function RegionalMap() {
                     </div>
 
                     <p className="text-xs text-ink/50 mt-2">
-                      Drought risk:{" "}
+                      {t("envDroughtRisk")}: {" "}
                       <strong>
                         {probability.toFixed(
                           2
@@ -698,7 +689,7 @@ export default function RegionalMap() {
                         {district.distance_km.toFixed(
                           1
                         )}{" "}
-                        km away
+                        {t("mapKmAway")}
                       </p>
                     )}
                   </div>

@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import Topbar from "../../components/Topbar";
+import { useLanguage } from "../../i18n/LanguageContext";
 import Card, { StatusBadge } from "../../components/Card";
 import OfflineNotice from "../../components/OfflineNotice";
 import { SkeletonCardList } from "../../components/Skeleton";
@@ -21,6 +22,7 @@ const CATEGORIES = DROUGHT_REPORT_CATEGORIES;
 // Supabase `complaints` table, tagged reporter_role = "public";
 // the AgriWatch admin dashboard receives it alongside farmer reports.
 export default function PublicComplaint() {
+  const { t, lang } = useLanguage();
   const { complaints, loading, offline, error, addComplaint } = useComplaints();
   const profile = useCurrentProfile("public");
   const { showToast } = useToast();
@@ -39,7 +41,7 @@ export default function PublicComplaint() {
   const [busy, setBusy] = useState(false);
   const [submittedId, setSubmittedId] = useState(null);
 
-  const reporterName = form.name.trim() || profile.name || "Anonymous";
+  const reporterName = form.name.trim() || profile.name || t("commonAnonymous");
   const district = form.district || profile.district || "";
 
   const mine = useMemo(
@@ -55,11 +57,11 @@ export default function PublicComplaint() {
     if (!chosen) return;
     setFileError("");
     if (!chosen.type.startsWith("image/")) {
-      setFileError("Please attach an image file.");
+      setFileError(t("complaintImageOnly"));
       return;
     }
     if (chosen.size > MAX_PHOTO_MB * 1024 * 1024) {
-      setFileError(`That photo is too large — keep it under ${MAX_PHOTO_MB}MB.`);
+      setFileError(`${t("complaintImageTooLarge")} ${MAX_PHOTO_MB}MB.`);
       return;
     }
     setFile(chosen);
@@ -91,10 +93,10 @@ export default function PublicComplaint() {
       setForm({ ...form, description: "" });
       clearFile();
       setSubmittedId(ref);
-      showToast(`Report ${ref} recorded for AgriWatch admin review`, "success");
+      showToast(`${t("publicReportTitle")} ${ref} ${t("publicReportSubmitted")}`, "success");
       setTimeout(() => setSubmittedId(null), 5000);
     } catch (err) {
-      showToast(err.message || "Couldn't submit that report — please try again.", "error");
+      showToast(err.message || t("complaintSubmitFailed"), "error");
     } finally {
       setBusy(false);
     }
@@ -103,21 +105,21 @@ export default function PublicComplaint() {
   return (
     <>
       <Topbar
-        title="Report Drought Situation"
-        subtitle="Submit an area or community drought situation for AgriWatch admin review"
+        title={t("publicReportTitle")}
+        subtitle={t("publicReportSub")}
       />
-      <main className="p-4 sm:p-8 space-y-6 public-page" dir="ltr">
-        {profile.readOnly && <p className="text-sm text-ink/55 rounded-xl border border-line p-3">Your existing reports appear here. Submit new reports from the AgriWatch mobile app.</p>}
+      <main className="p-4 sm:p-8 space-y-6 public-page" dir={lang === "ur" ? "rtl" : "ltr"}>
+        {profile.readOnly && <p className="text-sm text-ink/55 rounded-xl border border-line p-3">{t("firebaseReportsReadOnly")}</p>}
         <section className="public-page-hero">
           <div className="public-hero-content">
-            <span className="public-hero-eyebrow">Citizen reporting channel</span>
-            <h2 className="public-hero-title">Report Drought Situation</h2>
-            <p className="public-hero-copy">Report a drought situation affecting your area or community. AgriWatch admins receive every new report first.</p>
+            <span className="public-hero-eyebrow">{t("publicReportChannel")}</span>
+            <h2 className="public-hero-title">{t("publicReportHeroTitle")}</h2>
+            <p className="public-hero-copy">{t("publicReportHeroBody")}</p>
           </div>
           <div className="public-hero-stats">
-            <div className="public-hero-stat"><span>Your district</span><strong>{district || "Select district"}</strong></div>
-            <div className="public-hero-stat"><span>Your reports</span><strong>{mine.length}</strong></div>
-            <div className="public-hero-stat"><span>Photo limit</span><strong>{MAX_PHOTO_MB} MB</strong></div>
+            <div className="public-hero-stat"><span>{t("publicYourDistrict")}</span><strong>{district || t("publicSelectDistrict")}</strong></div>
+            <div className="public-hero-stat"><span>{t("publicYourReports")}</span><strong>{mine.length}</strong></div>
+            <div className="public-hero-stat"><span>{t("publicPhotoLimit")}</span><strong>{MAX_PHOTO_MB} MB</strong></div>
           </div>
         </section>
 
@@ -126,17 +128,16 @@ export default function PublicComplaint() {
         {submittedId && (
           <div className="flex items-center gap-2 bg-primary/10 text-primary text-sm font-medium rounded-lg px-4 py-3">
             <CheckCircle2 size={16} />
-            Report {submittedId} recorded for AgriWatch admin review.
+            {t("publicReportTitle")} {submittedId} {t("publicReportSubmitted")}
           </div>
         )}
 
         <Card className="public-form-card">
-          <p className="font-display font-semibold mb-1">New report</p>
+          <p className="font-display font-semibold mb-1">{t("complaintNew")}</p>
           <p className="text-xs text-ink/45 mb-4">
-            Reports first go to AgriWatch admins for review and response. Found a bug in the website
-            instead?{" "}
+            {t("publicReportReviewNote")} {t("publicReportBugNote")}{" "}
             <Link to="/public/report-issue" className="text-primary hover:underline inline-flex items-center gap-1">
-              <Bug size={12} /> Report a software issue
+              <Bug size={12} /> {t("complaintReportSoftware")}
             </Link>
             .
           </p>
@@ -146,18 +147,18 @@ export default function PublicComplaint() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {!profile.name && (
                 <label className="block">
-                  <span className="text-xs uppercase text-ink/40 font-medium">Your name</span>
+                  <span className="text-xs uppercase text-ink/40 font-medium">{t("complaintYourName")}</span>
                   <input
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    placeholder="Optional"
+                    placeholder={t("complaintOptional")}
                     className="mt-1 border border-line rounded-lg px-3 py-2 text-sm bg-surface w-full"
                   />
                 </label>
               )}
 
               <label className="block">
-                <span className="text-xs uppercase text-ink/40 font-medium">Phone (optional)</span>
+                <span className="text-xs uppercase text-ink/40 font-medium">{t("complaintPhoneOptional")}</span>
                 <input
                   value={form.phone}
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
@@ -167,13 +168,13 @@ export default function PublicComplaint() {
               </label>
 
               <label className="block">
-                <span className="text-xs uppercase text-ink/40 font-medium">District</span>
+                <span className="text-xs uppercase text-ink/40 font-medium">{t("district")}</span>
                 <select
                   value={district}
                   onChange={(e) => setForm({ ...form, district: e.target.value })}
                   className="mt-1 border border-line rounded-lg px-3 py-2 text-sm bg-surface w-full"
                 >
-                  <option value="">Select a district…</option>
+                  <option value="">{t("publicSelectDistrictOption")}</option>
                   {districts.map((d) => (
                     <option key={d.id || d.name} value={d.name}>
                       {d.name}
@@ -183,26 +184,34 @@ export default function PublicComplaint() {
               </label>
 
               <label className="block">
-                <span className="text-xs uppercase text-ink/40 font-medium">Drought report category</span>
+                <span className="text-xs uppercase text-ink/40 font-medium">{t("complaintType")}</span>
                 <select
                   value={form.category}
                   onChange={(e) => setForm({ ...form, category: e.target.value })}
                   className="mt-1 border border-line rounded-lg px-3 py-2 text-sm bg-surface w-full"
                 >
-                  {CATEGORIES.map((c) => (
-                    <option key={c}>{c}</option>
-                  ))}
+                  {CATEGORIES.map((c) => {
+                    const key = {
+                      "Water Shortage": "categoryWaterShortage",
+                      "Crop Damage": "categoryCropDamage",
+                      "Livestock Loss": "categoryLivestockLoss",
+                      "Well / Tubewell Dried Up": "categoryWellDried",
+                      "Relief Not Received": "categoryReliefNotReceived",
+                      Other: "categoryOther",
+                    }[c];
+                    return <option key={c} value={c}>{key ? t(key) : c}</option>;
+                  })}
                 </select>
               </label>
             </div>
 
             <label className="block">
-              <span className="text-xs uppercase text-ink/40 font-medium">What's happening?</span>
+              <span className="text-xs uppercase text-ink/40 font-medium">{t("complaintWhatHappening")}</span>
               <textarea
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
                 rows={4}
-                placeholder="Describe the situation in your village / union council…"
+                placeholder={t("publicDescribeSituation")}
                 className="mt-1 border border-line rounded-lg px-3 py-2 text-sm bg-surface w-full"
               />
             </label>
@@ -215,7 +224,7 @@ export default function PublicComplaint() {
                 <div className="pr-2">
                   <p className="text-xs font-medium max-w-[10rem] truncate">{file?.name}</p>
                   <button type="button" onClick={clearFile} className="flex items-center gap-1 text-xs text-danger hover:underline mt-1">
-                    <X size={12} /> Remove
+                    <X size={12} /> {t("complaintRemove")}
                   </button>
                 </div>
               </div>
@@ -224,7 +233,7 @@ export default function PublicComplaint() {
                 htmlFor="public-complaint-photo"
                 className="btn-animated inline-flex items-center gap-2 text-xs text-ink/50 border border-line rounded-lg px-3 py-2 hover:bg-paper-dim cursor-pointer w-fit"
               >
-                <Paperclip size={14} /> Attach photo
+                <Paperclip size={14} /> {t("complaintAttachPhoto")}
               </label>
             )}
             {fileError && <p className="text-xs text-danger">{fileError}</p>}
@@ -236,18 +245,18 @@ export default function PublicComplaint() {
                 onMouseDown={addRipple}
                 className="btn-animated flex items-center gap-2 bg-primary text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-primary-light transition-colors disabled:opacity-50"
               >
-                <Send size={14} /> {busy ? "Sending..." : "Submit report"}
+                <Send size={14} /> {busy ? t("complaintSending") : t("complaintSubmit")}
               </button>
             </div>
           </form>
         </Card>
 
         <Card>
-          <div className="public-section-title mb-4"><div><h2>Your reports</h2><p>Track recorded updates from AgriWatch admins.</p></div></div>
+          <div className="public-section-title mb-4"><div><h2>{t("complaintYourReports")}</h2><p>{t("complaintTrack")}</p></div></div>
           {loading ? (
             <SkeletonCardList count={2} />
           ) : mine.length === 0 ? (
-            <p className="text-sm text-ink/45">You haven't submitted any reports yet.</p>
+            <p className="text-sm text-ink/45">{t("complaintNone")}</p>
           ) : (
             <div className="space-y-3">
               {mine.map((c) => (

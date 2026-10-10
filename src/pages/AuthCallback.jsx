@@ -53,6 +53,14 @@ export default function AuthCallback() {
         return;
       }
 
+      if (attempt.method === "admin-google") {
+        setStatus("Opening the secure Admin Portal…");
+        clearLoginAttempt();
+        localStorage.removeItem("pendingSignupRole");
+        navigate("/admin-portal", { replace: true });
+        return;
+      }
+
       const requestedUiRole =
         attempt.role || localStorage.getItem("pendingSignupRole") || "farmer";
       const requestedDbRole = normalizeDbRole(requestedUiRole);

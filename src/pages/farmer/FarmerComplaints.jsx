@@ -26,8 +26,7 @@ import { useToast } from "../../components/ToastContext";
 const MAX_PHOTO_MB = 3;
 
 export default function FarmerComplaints() {
-  const { t } = useLanguage();
-
+  const { t, lang } = useLanguage();
   const { complaints, loading, offline, error, addComplaint } = useComplaints();
   const profile = useCurrentProfile("farmer");
   const { showToast } = useToast();
@@ -54,11 +53,11 @@ export default function FarmerComplaints() {
     setPhotoError("");
 
     if (!chosen.type.startsWith("image/")) {
-      setPhotoError("Please attach an image file.");
+      setPhotoError(t("complaintImageOnly"));
       return;
     }
     if (chosen.size > MAX_PHOTO_MB * 1024 * 1024) {
-      setPhotoError(`Image is too large — please use a photo under ${MAX_PHOTO_MB}MB.`);
+      setPhotoError(`${t("complaintImageTooLarge")} ${MAX_PHOTO_MB}MB.`);
       return;
     }
 
@@ -92,10 +91,10 @@ export default function FarmerComplaints() {
       setForm({ ...form, description: "" });
       removePhoto();
       setJustSubmittedId(id);
-      showToast(`Report ${id} recorded for AgriWatch admin review`, "success");
+      showToast(`${t("complaintSubmitted")} ${id}`, "success");
       setTimeout(() => setJustSubmittedId(null), 5000);
     } catch (err) {
-      showToast(err.message || "Couldn't submit that report — please try again.", "error");
+      showToast(err.message || t("complaintSubmitFailed"), "error");
     } finally {
       setBusy(false);
     }
@@ -104,22 +103,22 @@ export default function FarmerComplaints() {
   return (
     <>
       <Topbar title={t("ptFarmerComplaintsTitle")} subtitle={t("ptFarmerComplaintsSub")} />
-      <main className="farmer-page p-4 sm:p-8 space-y-6" dir="ltr">
-        {profile.readOnly && <p className="text-sm text-ink/55 rounded-xl border border-line p-3">Your existing reports appear here. Submit new reports from the AgriWatch mobile app.</p>}
+      <main className="farmer-page p-4 sm:p-8 space-y-6" dir={lang === "ur" ? "rtl" : "ltr"}>
+        {profile.readOnly && <p className="text-sm text-ink/55 rounded-xl border border-line p-3">{t("firebaseReportsReadOnly")}</p>}
         <section className="farmer-page-hero">
           <div className="farmer-hero-content">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <span className="farmer-hero-eyebrow"><Sparkles size={13} /> AgriWatch drought reporting</span>
-                <h2 className="farmer-hero-title">Report Drought Situation</h2>
-                <p className="farmer-hero-copy">Report a drought situation affecting your area or community. AgriWatch admins receive every new report first.</p>
+                <span className="farmer-hero-eyebrow"><Sparkles size={13} /> {t("complaintFarmerChannel")}</span>
+                <h2 className="farmer-hero-title">{t("complaintFarmerHeroTitle")}</h2>
+                <p className="farmer-hero-copy">{t("complaintFarmerHeroBody")}</p>
               </div>
-              <span className="farmer-hero-button"><MapPin size={14} /> {profile.district || "District not set"}</span>
+              <span className="farmer-hero-button"><MapPin size={14} /> {profile.district || t("commonDistrictNotSet")}</span>
             </div>
             <div className="farmer-hero-stats">
-              <div className="farmer-hero-stat"><span>Total drought reports</span><strong>{mine.length}</strong></div>
-              <div className="farmer-hero-stat"><span>Open cases</span><strong>{openCount}</strong></div>
-              <div className="farmer-hero-stat"><span>Resolved</span><strong>{resolvedCount}</strong></div>
+              <div className="farmer-hero-stat"><span>{t("complaintTotal")}</span><strong>{mine.length}</strong></div>
+              <div className="farmer-hero-stat"><span>{t("complaintOpenCases")}</span><strong>{openCount}</strong></div>
+              <div className="farmer-hero-stat"><span>{t("statusResolved")}</span><strong>{resolvedCount}</strong></div>
             </div>
           </div>
         </section>
@@ -129,7 +128,7 @@ export default function FarmerComplaints() {
         {justSubmittedId && (
           <div className="farmer-callout flex items-center gap-2 text-primary text-sm font-medium">
             <CheckCircle2 size={17} />
-            Report {justSubmittedId} recorded for AgriWatch admin review.
+            {t("complaintSubmittedPrefix")} {justSubmittedId} {t("complaintSubmittedSuffix")}
           </div>
         )}
 
@@ -138,8 +137,8 @@ export default function FarmerComplaints() {
             <div className="flex items-start gap-3 mb-5">
               <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0"><FileWarning size={18} className="text-primary" /></div>
               <div>
-                <p className="font-display font-semibold">Create a drought situation report</p>
-                <p className="text-xs text-ink/45 mt-1">This report goes first to the AgriWatch admin dashboard.</p>
+                <p className="font-display font-semibold">{t("complaintCreateNew")}</p>
+                <p className="text-xs text-ink/45 mt-1">{t("complaintGoesToDistrict", { district: profile.district || t("commonYourDistrict") })}</p>
               </div>
             </div>
 
@@ -152,16 +151,16 @@ export default function FarmerComplaints() {
                   onChange={(e) => setForm({ ...form, category: e.target.value })}
                   className="mt-1.5 border border-line rounded-xl px-3 py-2.5 text-sm bg-surface w-full"
                 >
-                  {DROUGHT_REPORT_CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+                  {[["Crop Failure", "categoryCropFailure"], ["Irrigation Shortage", "categoryIrrigationShortage"], ["Livestock Loss", "categoryLivestockLoss"], ["Other", "categoryOther"]].map(([value, key]) => <option key={value} value={value}>{t(key)}</option>)}
                 </select>
               </label>
 
               <label className="block">
-                <span className="farmer-card-label">Describe the drought situation</span>
+                <span className="farmer-card-label">{t("complaintDescribeDamage")}</span>
                 <textarea
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  placeholder="Describe where the drought situation is happening, how long it has lasted, and the affected area or community..."
+                  placeholder={t("complaintDescribePlaceholder")}
                   rows={5}
                   className="mt-1.5 border border-line rounded-xl px-3 py-3 text-sm bg-surface w-full resize-y"
                 />
@@ -174,14 +173,14 @@ export default function FarmerComplaints() {
                   <img src={preview} alt="Attached" className="w-20 h-20 rounded-xl object-cover" />
                   <div className="min-w-0 flex-1">
                     <p className="text-xs font-semibold truncate">{file?.name}</p>
-                    <p className="text-[11px] text-ink/40 mt-1">Photo evidence ready to upload</p>
-                    <button type="button" onClick={removePhoto} className="flex items-center gap-1 text-xs text-danger hover:underline mt-2"><X size={12} /> Remove photo</button>
+                    <p className="text-[11px] text-ink/40 mt-1">{t("complaintPhotoReady")}</p>
+                    <button type="button" onClick={removePhoto} className="flex items-center gap-1 text-xs text-danger hover:underline mt-2"><X size={12} /> {t("complaintRemovePhoto")}</button>
                   </div>
                 </div>
               ) : (
                 <label htmlFor="complaint-photo-input" className="farmer-field-panel cursor-pointer flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary"><Camera size={18} /></div>
-                  <div><p className="text-sm font-semibold">Attach photo evidence</p><p className="text-xs text-ink/45 mt-0.5">Optional image, maximum {MAX_PHOTO_MB}MB</p></div>
+                  <div><p className="text-sm font-semibold">{t("complaintAttachEvidence")}</p><p className="text-xs text-ink/45 mt-0.5">{t("complaintOptionalImage")} {MAX_PHOTO_MB}MB</p></div>
                   <Paperclip size={16} className="ms-auto text-ink/35" />
                 </label>
               )}
@@ -193,25 +192,25 @@ export default function FarmerComplaints() {
                 onMouseDown={addRipple}
                 className="btn-animated auth-primary-btn"
               >
-                <Send size={15} /> {busy ? "Submitting..." : "Submit report"}
+                <Send size={15} /> {busy ? t("complaintSubmitting") : t("complaintSubmitComplaint")}
               </button>
             </form>
 
             <p className="text-xs text-ink/45 mt-4 text-center">
-              Is the app itself broken? <Link to="/farmer/report-issue" className="text-primary font-semibold hover:underline inline-flex items-center gap-1"><Bug size={12} /> Report a software issue</Link>
+              {t("complaintAppBroken")} <Link to="/farmer/report-issue" className="text-primary font-semibold hover:underline inline-flex items-center gap-1"><Bug size={12} /> {t("complaintReportSoftware")}</Link>
             </p>
           </Card>
 
           <Card className="farmer-form-card">
             <div className="flex items-start justify-between gap-3 mb-4">
               <div>
-                <p className="font-display font-semibold">How drought reporting works</p>
-                <p className="text-xs text-ink/45 mt-1">Your report stays linked to your farmer account.</p>
+                <p className="font-display font-semibold">{t("complaintFlowTitle")}</p>
+                <p className="text-xs text-ink/45 mt-1">{t("complaintFlowSub")}</p>
               </div>
               <ShieldCheck size={19} className="text-primary" />
             </div>
             <div className="farmer-advice-list">
-              {["Submit a drought situation report and optional evidence.", "AgriWatch admins review and respond first. Serious drought reports may be explicitly assigned for PDMA review.", "Track recorded actions here. Assignment does not confirm government action."].map((item, index) => (
+              {[t("complaintStep1"), t("complaintStep2"), t("complaintStep3")].map((item, index) => (
                 <div key={item} className="farmer-advice-item"><span className="w-6 h-6 rounded-lg bg-primary text-white flex items-center justify-center text-[10px] font-bold shrink-0">0{index + 1}</span><span>{item}</span></div>
               ))}
             </div>
@@ -220,13 +219,13 @@ export default function FarmerComplaints() {
 
         <section>
           <div className="farmer-section-title mb-3">
-            <div><h2>Your drought reports</h2><p>Review recorded updates and AgriWatch admin responses.</p></div>
+            <div><h2>{t("complaintYourComplaints")}</h2><p>{t("complaintReviewCases")}</p></div>
           </div>
           <Card className="farmer-form-card">
             {loading ? (
               <SkeletonCardList count={2} />
             ) : mine.length === 0 ? (
-              <div className="farmer-empty-state"><FileWarning size={22} className="text-primary mx-auto" /><p className="font-display font-semibold mt-3">No drought reports yet</p><p className="text-sm text-ink/45 mt-1">Your submitted reports will appear here.</p></div>
+              <div className="farmer-empty-state"><FileWarning size={22} className="text-primary mx-auto" /><p className="font-display font-semibold mt-3">{t("complaintNoFiled")}</p><p className="text-sm text-ink/45 mt-1">{t("complaintNoFiledSub")}</p></div>
             ) : (
               <div className="space-y-3">
                 {mine.map((c) => (

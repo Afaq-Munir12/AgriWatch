@@ -77,6 +77,7 @@ export function useSupabaseAuth() {
     if (signInError) {
       console.error("Google sign-in failed:", signInError);
       setError(signInError);
+      throw signInError;
     }
   }
 

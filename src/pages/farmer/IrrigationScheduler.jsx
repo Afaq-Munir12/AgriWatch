@@ -5,6 +5,7 @@ import Card from "../../components/Card";
 import { useLanguage } from "../../i18n/LanguageContext";
 import { getMyFields } from "../../services/farmerFieldService";
 import { useMyProfile } from "../../hooks/useMyProfile";
+import { localizeCropName } from "../../utils/localizeAgriculture";
 import {
   getIrrigationRecommendation,
   predictDistrict,
@@ -92,14 +93,14 @@ function getIrrigationStatus(schedule) {
     status.includes("required")
   ) {
     return {
-      label: "Irrigation Required",
+      labelKey: "irrStatusRequired",
       tone: "danger",
     };
   }
 
   if (status.includes("monitor")) {
     return {
-      label: "Monitor Field",
+      labelKey: "irrStatusMonitor",
       tone: "warn",
     };
   }
@@ -110,13 +111,13 @@ function getIrrigationStatus(schedule) {
     status.includes("sufficient")
   ) {
     return {
-      label: "No Irrigation Required",
+      labelKey: "irrStatusNotRequired",
       tone: "ok",
     };
   }
 
   return {
-    label: "Irrigation Recommendation",
+    labelKey: "irrStatusRecommendation",
     tone: "normal",
   };
 }
@@ -126,7 +127,7 @@ function getIrrigationStatus(schedule) {
 // ============================================================
 
 export default function IrrigationScheduler() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
 
   // ============================================================
   // REAL LOGGED-IN FARMER PROFILE
@@ -545,24 +546,24 @@ export default function IrrigationScheduler() {
         }
         subtitle={
           district
-            ? `Smart irrigation guidance · ${district}`
-            : "Smart irrigation guidance"
+            ? `${t("irrSmartGuidance")} · ${district}`
+            : t("irrSmartGuidance")
         }
       />
 
       <main
         className="farmer-page p-4 sm:p-8 space-y-6"
-        dir="ltr"
+        dir={lang === "ur" ? "rtl" : "ltr"}
       >
         <section className="farmer-page-hero">
           <div className="farmer-hero-content">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <span className="farmer-hero-eyebrow"><Sparkles size={13} /> Smart irrigation assistant</span>
-                <h2 className="farmer-hero-title">Water guidance for your registered fields</h2>
-                <p className="farmer-hero-copy">AgriWatch combines field size, crop information and district environmental conditions to produce a practical irrigation recommendation.</p>
+                <span className="farmer-hero-eyebrow"><Sparkles size={13} /> {t("irrAssistant")}</span>
+                <h2 className="farmer-hero-title">{t("irrWaterGuidance")}</h2>
+                <p className="farmer-hero-copy">{t("irrHeroBody")}</p>
                 <div className="farmer-hero-actions">
-                  <span className="farmer-hero-button"><MapPin size={14} /> {district || "District not configured"}</span>
+                  <span className="farmer-hero-button"><MapPin size={14} /> {district || t("commonDistrictNotConfigured")}</span>
                   {selectedField && <span className="farmer-hero-button"><Sprout size={14} /> {selectedField.field_name}</span>}
                 </div>
               </div>
@@ -570,9 +571,9 @@ export default function IrrigationScheduler() {
             </div>
 
             <div className="farmer-hero-stats">
-              <div className="farmer-hero-stat"><span>Drought status</span><strong>{predictionLoading ? "Scanning…" : severity}</strong></div>
-              <div className="farmer-hero-stat"><span>Soil moisture</span><strong>{predictionLoading ? "—" : `${soilMoisturePercent.toFixed(1)}%`}</strong></div>
-              <div className="farmer-hero-stat"><span>Recommendation</span><strong>{scheduleLoading ? "Calculating…" : irrigationStatus.label}</strong></div>
+              <div className="farmer-hero-stat"><span>{t("envDroughtStatus")}</span><strong>{predictionLoading ? t("fhScanning") : t({ Normal: "sevNormal", Moderate: "sevModerate", Severe: "sevSevere", Extreme: "sevExtreme" }[severity] || "sevNormal")}</strong></div>
+              <div className="farmer-hero-stat"><span>{t("envSoilMoisture")}</span><strong>{predictionLoading ? "—" : `${soilMoisturePercent.toFixed(1)}%`}</strong></div>
+              <div className="farmer-hero-stat"><span>{t("irrRecommendation")}</span><strong>{scheduleLoading ? t("irrCalculating") : t(irrigationStatus.labelKey)}</strong></div>
             </div>
           </div>
         </section>
@@ -589,12 +590,12 @@ export default function IrrigationScheduler() {
 
               <div>
                 <p className="font-medium text-sm">
-                  Unable to load farmer profile
+                  {t("fhProfileLoadError")}
                 </p>
 
                 <p className="text-xs mt-1">
                   {profileError?.message ||
-                    "Please refresh the page or sign in again."}
+                    t("fhProfileLoadErrorSub")}
                 </p>
               </div>
             </div>
@@ -615,13 +616,11 @@ export default function IrrigationScheduler() {
 
                 <div>
                   <p className="font-medium">
-                    District not configured
+                    {t("commonDistrictNotConfigured")}
                   </p>
 
                   <p className="text-sm text-ink/50 mt-1">
-                    Add your district to your
-                    farmer profile before using
-                    irrigation recommendations.
+                    {t("irrDistrictRequiredBody")}
                   </p>
                 </div>
               </div>
@@ -634,13 +633,11 @@ export default function IrrigationScheduler() {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
               <p className="font-display font-semibold text-lg">
-                Select Your Field
+                {t("irrSelectField")}
               </p>
 
               <p className="text-sm text-ink/45 mt-1">
-                Irrigation guidance is
-                calculated separately for each
-                registered field.
+                {t("irrSelectFieldSub")}
               </p>
             </div>
 
@@ -661,7 +658,7 @@ export default function IrrigationScheduler() {
                       value={String(field.id)}
                     >
                       {field.field_name} —{" "}
-                      {field.crop}
+                      {localizeCropName(field.crop, t, lang)}
                     </option>
                   ))}
                 </select>
@@ -671,7 +668,7 @@ export default function IrrigationScheduler() {
           {(profileLoading ||
             fieldsLoading) && (
             <p className="text-sm text-ink/45 mt-5">
-              Loading your farm fields...
+              {t("irrLoadingFields")}
             </p>
           )}
 
@@ -699,10 +696,7 @@ export default function IrrigationScheduler() {
                 />
 
                 <p className="text-sm text-ink/55">
-                  You do not have any registered
-                  fields. Add a farm field first
-                  to generate irrigation
-                  recommendations.
+                  {t("irrNoFields")}
                 </p>
               </div>
             )}
@@ -715,7 +709,7 @@ export default function IrrigationScheduler() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
               <div>
                 <p className="farmer-card-label">
-                  Field
+                  {t("irrField")}
                 </p>
 
                 <p className="font-semibold mt-1">
@@ -725,7 +719,7 @@ export default function IrrigationScheduler() {
 
               <div>
                 <p className="farmer-card-label">
-                  Crop
+                  {t("irrCrop")}
                 </p>
 
                 <div className="flex items-center gap-2 mt-1">
@@ -735,21 +729,21 @@ export default function IrrigationScheduler() {
                   />
 
                   <p className="font-semibold capitalize">
-                    {selectedField.crop}
+                    {localizeCropName(selectedField.crop, t, lang)}
                   </p>
                 </div>
               </div>
 
               <div>
                 <p className="farmer-card-label">
-                  Area
+                  {t("irrArea")}
                 </p>
 
                 <p className="font-semibold mt-1">
                   {safeNumber(
                     selectedField.area_acres
                   )}{" "}
-                  acres
+                  {t("commonAcres")}
                 </p>
               </div>
 
@@ -765,8 +759,7 @@ export default function IrrigationScheduler() {
                   />
 
                   <p className="font-semibold">
-                    {district ||
-                      "Not available"}
+                    {district || t("irrNotAvailable")}
                   </p>
                 </div>
               </div>
@@ -787,8 +780,7 @@ export default function IrrigationScheduler() {
 
                 <div>
                   <p className="font-medium text-sm">
-                    District ML data could not
-                    be loaded
+                    {t("irrMlDataFailed")}
                   </p>
 
                   <p className="text-xs mt-1">
@@ -808,13 +800,13 @@ export default function IrrigationScheduler() {
 
               <Card className="farmer-data-card">
                 <p className="farmer-card-label">
-                  Drought Status
+                  {t("envDroughtStatus")}
                 </p>
 
                 {predictionLoading ||
                 profileLoading ? (
                   <p className="text-sm text-ink/40 mt-4">
-                    Loading...
+                    {t("commonLoading")}
                   </p>
                 ) : (
                   <>
@@ -827,7 +819,7 @@ export default function IrrigationScheduler() {
                     </span>
 
                     <p className="text-xs text-ink/45 mt-3">
-                      ML probability:{" "}
+                      {t("envMlProbability")}:{" "}
                       {droughtProbability.toFixed(
                         1
                       )}
@@ -842,7 +834,7 @@ export default function IrrigationScheduler() {
               <Card className="farmer-data-card">
                 <div className="flex justify-between">
                   <p className="farmer-card-label">
-                    Soil Moisture
+                    {t("envSoilMoisture")}
                   </p>
 
                   <Droplets
@@ -853,7 +845,7 @@ export default function IrrigationScheduler() {
 
                 {predictionLoading ? (
                   <p className="text-sm text-ink/40 mt-4">
-                    Loading...
+                    {t("commonLoading")}
                   </p>
                 ) : (
                   <>
@@ -868,7 +860,7 @@ export default function IrrigationScheduler() {
                     </p>
 
                     <p className="text-xs text-ink/40 mt-2">
-                      Current soil moisture
+                      {t("envCurrentSoilMoisture")}
                     </p>
                   </>
                 )}
@@ -879,7 +871,7 @@ export default function IrrigationScheduler() {
               <Card className="farmer-data-card">
                 <div className="flex justify-between">
                   <p className="farmer-card-label">
-                    Rainfall
+                    {t("envRainfall")}
                   </p>
 
                   <CloudRain
@@ -890,7 +882,7 @@ export default function IrrigationScheduler() {
 
                 {predictionLoading ? (
                   <p className="text-sm text-ink/40 mt-4">
-                    Loading...
+                    {t("commonLoading")}
                   </p>
                 ) : (
                   <>
@@ -903,7 +895,7 @@ export default function IrrigationScheduler() {
                     </p>
 
                     <p className="text-xs text-ink/40 mt-2">
-                      Current monthly rainfall
+                      {t("envCurrentMonthlyRainfall")}
                     </p>
                   </>
                 )}
@@ -925,7 +917,7 @@ export default function IrrigationScheduler() {
 
                 {predictionLoading ? (
                   <p className="text-sm text-ink/40 mt-4">
-                    Loading...
+                    {t("commonLoading")}
                   </p>
                 ) : (
                   <>
@@ -934,7 +926,7 @@ export default function IrrigationScheduler() {
                     </p>
 
                     <p className="text-xs text-ink/40 mt-2">
-                      Current vegetation index
+                      {t("envCurrentVegetationIndex")}
                     </p>
                   </>
                 )}
@@ -949,13 +941,13 @@ export default function IrrigationScheduler() {
             <div className="flex items-start justify-between gap-4 flex-wrap">
               <div>
                 <p className="font-display font-semibold text-lg">
-                  Irrigation Recommendation
+                  {t("irrRecommendationTitle")}
                 </p>
 
                 <p className="text-sm text-ink/45 mt-1">
                   {selectedField.field_name} ·{" "}
-                  {selectedField.crop} ·{" "}
-                  {selectedField.area_acres} acres
+                  {localizeCropName(selectedField.crop, t, lang)} ·{" "}
+                  {selectedField.area_acres} {t("commonAcres")}
                 </p>
               </div>
 
@@ -979,14 +971,13 @@ export default function IrrigationScheduler() {
                   }
                 />
 
-                Refresh
+                {t("commonRefresh")}
               </button>
             </div>
 
             {scheduleLoading && (
               <div className="py-12 text-center text-sm text-ink/45">
-                Calculating irrigation
-                requirement...
+                {t("irrCalculatingRequirement")}
               </div>
             )}
 
@@ -1001,8 +992,7 @@ export default function IrrigationScheduler() {
 
                     <div>
                       <p className="font-medium text-sm text-danger">
-                        Irrigation calculation
-                        failed
+                        {t("irrCalculationFailed")}
                       </p>
 
                       <p className="text-xs text-danger mt-1">
@@ -1058,7 +1048,7 @@ export default function IrrigationScheduler() {
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="farmer-field-panel">
                       <p className="farmer-card-label">
-                        Recommended Water
+                        {t("irrRecommendedWater")}
                       </p>
 
                       <p className="text-xl font-semibold mt-2">
@@ -1072,7 +1062,7 @@ export default function IrrigationScheduler() {
 
                     <div className="farmer-field-panel">
                       <p className="farmer-card-label">
-                        Estimated Water
+                        {t("irrEstimatedWater")}
                       </p>
 
                       <p className="text-xl font-semibold mt-2">
@@ -1086,7 +1076,7 @@ export default function IrrigationScheduler() {
 
                     <div className="farmer-field-panel">
                       <p className="farmer-card-label">
-                        Next Irrigation
+                        {t("irrNextIrrigation")}
                       </p>
 
                       <p className="text-xl font-semibold mt-2">
@@ -1102,8 +1092,7 @@ export default function IrrigationScheduler() {
               !schedule &&
               !predictionLoading && (
                 <div className="py-8 text-center text-sm text-ink/40">
-                  Waiting for irrigation
-                  recommendation...
+                  {t("irrWaiting")}
                 </div>
               )}
           </Card>

@@ -76,9 +76,9 @@ export default function Sidebar({ navItems, roleLabelKey, basePath }) {
         <div className="px-5 pb-2">
           <div dir="ltr" className="flex items-center gap-2 text-[11px] text-mist/45 bg-white/5 rounded-lg px-3 py-2">
             <Command size={12} className="shrink-0" />
-            <span>Press</span>
+            <span>{basePath === "/pdma" ? "Press" : t("sidebarPress")}</span>
             <kbd className="bg-white/10 rounded px-1.5 py-0.5 font-mono text-[10px]">Ctrl K</kbd>
-            <span>to search</span>
+            <span>{basePath === "/pdma" ? "to search" : t("sidebarToSearch")}</span>
           </div>
         </div>
 

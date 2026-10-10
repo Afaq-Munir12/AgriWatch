@@ -63,9 +63,9 @@ function getAlertDate(alert) {
 // ============================================================
 
 export default function PublicAlerts() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const { district: savedDistrict, loading: profileLoading } = useCurrentProfile("public");
-  const userDistrictName = savedDistrict || "your district";
+  const userDistrictName = savedDistrict || t("commonYourDistrict");
 
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -83,7 +83,7 @@ export default function PublicAlerts() {
     async function loadAlerts() {
       if (!savedDistrict) {
         setAlerts([]);
-        setError("No district is saved in your General Public profile. Update it in Settings.");
+        setError(t("publicNoDistrictSaved"));
         setLoading(false);
         return;
       }
@@ -103,7 +103,7 @@ export default function PublicAlerts() {
       } catch (err) {
         console.error("PUBLIC ALERTS ERROR:", err);
         if (!cancelled) {
-          setError(err?.message || "Unable to load alerts.");
+          setError(err?.message || t("alertsUnableLoad"));
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -174,17 +174,16 @@ export default function PublicAlerts() {
           title={t(
             "ptPublicAlertsTitle"
           )}
-          subtitle={`Loading alerts for ${userDistrictName}...`}
+          subtitle={`${t("alertsLoadingFor")} ${userDistrictName}...`}
         />
 
         <main
           className="p-4 sm:p-8 public-page"
-          dir="ltr"
+          dir={lang === "ur" ? "rtl" : "ltr"}
         >
           <Card>
             <p className="text-sm text-ink/50">
-              Loading real AgriWatch
-              alerts...
+              {t("alertsLoadingReal")}
             </p>
           </Card>
         </main>
@@ -208,11 +207,11 @@ export default function PublicAlerts() {
 
         <main
           className="p-4 sm:p-8 public-page"
-          dir="ltr"
+          dir={lang === "ur" ? "rtl" : "ltr"}
         >
           <Card>
             <p className="font-display font-semibold">
-              Unable to load alerts
+              {t("alertsUnableLoad")}
             </p>
 
             <p className="text-sm text-ink/60 mt-2">
@@ -234,23 +233,23 @@ export default function PublicAlerts() {
         title={t(
           "ptPublicAlertsTitle"
         )}
-        subtitle={`${userDistrictName} — Public drought alerts`}
+        subtitle={`${userDistrictName} — ${t("ptPublicAlertsTitle")}`}
       />
 
       <main
         className="p-4 sm:p-8 space-y-6 public-page"
-        dir="ltr"
+        dir={lang === "ur" ? "rtl" : "ltr"}
       >
         <section className="public-page-hero">
           <div className="public-hero-content">
-            <span className="public-hero-eyebrow">PDMA alert center</span>
-            <h2 className="public-hero-title">Regional drought alerts for {userDistrictName}</h2>
-            <p className="public-hero-copy">Official drought messages and actionable guidance for the public, ordered with the newest alert first.</p>
+            <span className="public-hero-eyebrow">{t("alertsPdmaCenter")}</span>
+            <h2 className="public-hero-title">{t("alertsRegional")} — {userDistrictName}</h2>
+            <p className="public-hero-copy">{t("publicAlertsHeroBody")}</p>
           </div>
           <div className="public-hero-stats">
-            <div className="public-hero-stat"><span>Active alerts</span><strong>{districtAlerts.length}</strong></div>
-            <div className="public-hero-stat"><span>Latest severity</span><strong>{districtAlerts[0]?.severity || districtAlerts[0]?.risk_level || "No alert"}</strong></div>
-            <div className="public-hero-stat"><span>Audience</span><strong>Public</strong></div>
+            <div className="public-hero-stat"><span>{t("activeAlert")}</span><strong>{districtAlerts.length}</strong></div>
+            <div className="public-hero-stat"><span>{t("alertsLatestSeverity")}</span><strong>{districtAlerts[0]?.severity || districtAlerts[0]?.risk_level ? t({ Low: "riskLow", Normal: "sevNormal", Moderate: "sevModerate", High: "riskHigh", Severe: "sevSevere", Extreme: "sevExtreme" }[districtAlerts[0]?.severity || districtAlerts[0]?.risk_level] || "riskLow") : t("alertsNoAlert")}</strong></div>
+            <div className="public-hero-stat"><span>{t("publicAudience")}</span><strong>{t("alertsPublicAudience")}</strong></div>
           </div>
         </section>
 
@@ -262,7 +261,7 @@ export default function PublicAlerts() {
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <p className="text-xs uppercase text-ink/40 font-medium">
-                Regional Alerts
+                {t("alertsRegional")}
               </p>
 
               <p className="font-display font-semibold mt-1">
@@ -270,15 +269,13 @@ export default function PublicAlerts() {
               </p>
 
               <p className="text-xs text-ink/40 mt-1">
-                Alerts issued by
-                AgriWatch / PDMA for
-                your area.
+                {t("alertsIssuedBy")}
               </p>
             </div>
 
             <div className="text-right">
               <p className="text-xs uppercase text-ink/40 font-medium">
-                Active Alerts
+                {t("activeAlert")}
               </p>
 
               <p className="font-display text-2xl font-semibold mt-1">
@@ -314,13 +311,11 @@ export default function PublicAlerts() {
               </div>
 
               <p className="font-display font-semibold">
-                No active alerts
+                {t("alertsNoActive")}
               </p>
 
               <p className="text-sm text-ink/50 mt-2">
-                There are currently no
-                public drought alerts
-                issued for{" "}
+                {t("alertsNoDistrictAlerts")} {" "}
                 {userDistrictName}.
               </p>
             </div>
@@ -347,7 +342,7 @@ export default function PublicAlerts() {
 
             const message =
               alert.message ||
-              "Drought advisory issued for this district.";
+              t("alertsDefaultAdvisory");
 
             const audience =
               alert.sentTo ||
@@ -383,7 +378,7 @@ export default function PublicAlerts() {
                           text-primary
                         "
                       >
-                        Latest
+                        {t("alertsLatest")}
                       </span>
                     )}
                   </div>
@@ -405,7 +400,7 @@ export default function PublicAlerts() {
                   </p>
 
                   <p className="text-xs text-ink/40 mt-0.5">
-                    Drought Alert
+                    {t("alertsDroughtAlert")}
                   </p>
                 </div>
 
@@ -436,21 +431,21 @@ export default function PublicAlerts() {
                   "
                 >
                   <span>
-                    Severity:{" "}
+                    {t("alertsSeverity")}:{" "}
                     <strong className="text-ink/60">
-                      {severity}
+                      {t({ Low: "riskLow", Normal: "sevNormal", Moderate: "sevModerate", High: "riskHigh", Severe: "sevSevere", Extreme: "sevExtreme" }[severity] || "riskLow")}
                     </strong>
                   </span>
 
                   <span>
-                    Audience:{" "}
+                    {t("publicAudience")}:{" "}
                     <strong className="text-ink/60">
                       {audience}
                     </strong>
                   </span>
 
                   <span>
-                    Source:{" "}
+                    {t("alertsSource")}:{" "}
                     <strong className="text-ink/60">
                       AgriWatch / PDMA
                     </strong>

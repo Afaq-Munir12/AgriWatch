@@ -27,7 +27,7 @@ export default function OAuthResumeGuard() {
       hash.includes("access_token=") ||
       hash.includes("error=");
 
-    const recoverablePath = ["/", "/login", "/signup"].includes(location.pathname);
+    const recoverablePath = ["/", "/login", "/signup", "/admin-portal/login"].includes(location.pathname);
 
     if (recoverablePath && (hasOAuthReturn || (!loading && !!user))) {
       navigate(`/auth/callback${location.search || ""}`, { replace: true });

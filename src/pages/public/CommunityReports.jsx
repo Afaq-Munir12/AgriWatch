@@ -8,7 +8,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGri
 import { CheckCircle2, Clock, Send, MessageSquarePlus, Bug, ArrowRight } from "lucide-react";
 
 export default function CommunityReports() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const { complaints, offline, error } = useComplaints();
 
   const underReview = complaints.filter((c) => c.status === "Under Review").length;
@@ -26,24 +26,24 @@ export default function CommunityReports() {
   return (
     <>
       <Topbar
-        title="Community Reports"
-        subtitle="Aggregate view of farmer damage reports and PDMA response — no personal details shown"
+        title={t("communityTitle")}
+        subtitle={t("communitySub")}
       />
-      <main className="p-4 sm:p-8 space-y-6 public-page" dir="ltr">
+      <main className="p-4 sm:p-8 space-y-6 public-page" dir={lang === "ur" ? "rtl" : "ltr"}>
         <section className="public-page-hero">
           <div className="public-hero-content">
-            <span className="public-hero-eyebrow">Community intelligence</span>
-            <h2 className="public-hero-title">See how drought reports are moving through PDMA</h2>
-            <p className="public-hero-copy">A privacy-safe community view of submitted drought damage reports and their response status across districts.</p>
+            <span className="public-hero-eyebrow">{t("communityEyebrow")}</span>
+            <h2 className="public-hero-title">{t("communityHeroTitle")}</h2>
+            <p className="public-hero-copy">{t("communityHeroBody")}</p>
           </div>
           <div className="public-hero-stats">
-            <div className="public-hero-stat"><span>Under review</span><strong>{underReview}</strong></div>
-            <div className="public-hero-stat"><span>Forwarded</span><strong>{forwarded}</strong></div>
-            <div className="public-hero-stat"><span>Resolved</span><strong>{resolved}</strong></div>
+            <div className="public-hero-stat"><span>{t("statusUnderReview")}</span><strong>{underReview}</strong></div>
+            <div className="public-hero-stat"><span>{t("statusForwarded")}</span><strong>{forwarded}</strong></div>
+            <div className="public-hero-stat"><span>{t("statusResolved")}</span><strong>{resolved}</strong></div>
           </div>
         </section>
 
-        {offline && <OfflineNotice what="reports" error={error} title="Your reports are unavailable." detail="Refresh your account or sign in again. No local or example reports are shown." />}
+        {offline && <OfflineNotice what={t("communityReportsWord")} error={error} title="Your reports are unavailable." detail="Refresh your account or sign in again. No local or example reports are shown." />}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Link to="/public/complaint" className="block">
@@ -53,11 +53,10 @@ export default function CommunityReports() {
               </div>
               <div>
                 <p className="font-display font-semibold text-sm flex items-center gap-1.5">
-                  Submit a report <ArrowRight size={13} className="text-primary" />
+                  {t("communitySubmitReport")} <ArrowRight size={13} className="text-primary" />
                 </p>
                 <p className="text-xs text-ink/50 mt-0.5">
-                  Water shortage, crop damage or relief problems in your area — goes to your district
-                  PDMA officer.
+                  {t("communitySubmitReportBody")}
                 </p>
               </div>
             </Card>
@@ -69,10 +68,10 @@ export default function CommunityReports() {
               </div>
               <div>
                 <p className="font-display font-semibold text-sm flex items-center gap-1.5">
-                  Report a software issue <ArrowRight size={13} className="text-danger" />
+                  {t("communitySoftwareIssue")} <ArrowRight size={13} className="text-danger" />
                 </p>
                 <p className="text-xs text-ink/50 mt-0.5">
-                  Something broken on the website or app? The AgriWatch admin team picks these up.
+                  {t("communitySoftwareIssueBody")}
                 </p>
               </div>
             </Card>
@@ -85,7 +84,7 @@ export default function CommunityReports() {
               <Clock size={16} className="text-warn" />
             </div>
             <div>
-              <p className="text-xs uppercase text-ink/40 font-medium">Under Review</p>
+              <p className="text-xs uppercase text-ink/40 font-medium">{t("statusUnderReview")}</p>
               <p className="font-display text-xl font-semibold">{underReview}</p>
             </div>
           </Card>
@@ -94,7 +93,7 @@ export default function CommunityReports() {
               <Send size={16} className="text-blue-600" />
             </div>
             <div>
-              <p className="text-xs uppercase text-ink/40 font-medium">Forwarded</p>
+              <p className="text-xs uppercase text-ink/40 font-medium">{t("statusForwarded")}</p>
               <p className="font-display text-xl font-semibold">{forwarded}</p>
             </div>
           </Card>
@@ -103,14 +102,14 @@ export default function CommunityReports() {
               <CheckCircle2 size={16} className="text-primary" />
             </div>
             <div>
-              <p className="text-xs uppercase text-ink/40 font-medium">Resolved</p>
+              <p className="text-xs uppercase text-ink/40 font-medium">{t("statusResolved")}</p>
               <p className="font-display text-xl font-semibold">{resolved}</p>
             </div>
           </Card>
         </div>
 
         <Card className="public-chart-card">
-          <p className="font-display font-semibold mb-4">Reports by District</p>
+          <p className="font-display font-semibold mb-4">{t("reportsByDistrict")}</p>
           <ResponsiveContainer width="100%" height={260}>
             <BarChart data={byDistrict}>
               <CartesianGrid strokeDasharray="3 3" stroke="#DCE1D3" vertical={false} />
@@ -123,7 +122,7 @@ export default function CommunityReports() {
         </Card>
 
         <p className="text-xs text-ink/40">
-          Farmer names, descriptions, and photos are private and only visible to the farmer and PDMA officers.
+          {t("communityPrivacyNote")}
         </p>
       </main>
     </>
