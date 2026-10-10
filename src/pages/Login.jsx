@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -99,6 +99,17 @@ export default function Login() {
   const recaptchaContainer = useRef(null);
   const personalLogin = role !== "admin";
   const otpOperation = useRef(0);
+  const routedAccount = useRef(null);
+  const routePersonal = useCallback((state) => {
+    const destination = state.error ? "/personal-account" : personalDestination(state.access);
+    const accountRoute = `${state.user?.uid}:${destination}`;
+    if (routedAccount.current === accountRoute) return;
+    routedAccount.current = accountRoute;
+    if (!state.error && state.access?.status === "portal" && state.access.portal !== role) {
+      showToast(t(state.access.portal === "public" ? "firebaseStoredPublicNotice" : "firebaseStoredFarmerNotice"), "info", 6000);
+    }
+    navigate(destination, { replace: true });
+  }, [navigate, role, showToast, t]);
 
   useEffect(() => () => { ++otpOperation.current; cancelOtp(); }, [cancelOtp]);
   function resetOtp() {
@@ -135,8 +146,8 @@ export default function Login() {
     setError(message); showToast(message, "error", 6000);
   }
   useEffect(() => {
-    if (personalLogin && personal.user && !personal.loading) navigate(personal.error ? "/personal-account" : personalDestination(personal.access), { replace: true });
-  }, [personal.user, personal.loading, personal.error, personal.access, navigate, personalLogin]);
+    if (personalLogin && personal.user && !personal.loading) routePersonal({ user: personal.user, error: personal.error, access: personal.access });
+  }, [personal.user, personal.loading, personal.error, personal.access, routePersonal, personalLogin]);
 
   const phoneError = useMemo(() => (phone ? localizedPhoneError(pakistanPhoneError(phone), t) : ""), [phone, t]);
   const prettyPhone = phone ? `+92 ${phone.slice(0, 3)} ${phone.slice(3, 6)} ${phone.slice(6)}` : "+92";
@@ -200,7 +211,7 @@ export default function Login() {
         const state = await personal.confirmOtp(otp);
         if (operation !== otpOperation.current) return;
         setPhone(""); setOtp("");
-        navigate(state.error ? "/personal-account" : personalDestination(state.access), { replace: true });
+        routePersonal(state);
         return;
       }
       const result = await verifyPhoneOtp(phone, otp);
@@ -358,7 +369,7 @@ export default function Login() {
               </div>
 
               <div className="auth-card-body-scroll flex-1">
-                <p className="auth-label mb-2">{t("loginIAmA")}</p>
+                <p className="auth-label mb-2">{t(personalLogin ? "firebasePersonalSelection" : "loginIAmA")}</p>
                 <div className="grid grid-cols-3 gap-2 mb-5">
                   {roles.map(({ key, labelKey, icon: Icon }) => (
                     <button key={key} type="button" disabled={busy && !(personalLogin && key !== "admin")} onClick={() => selectRole(key)} onMouseDown={addRipple} className={`role-choice ${role === key ? "role-choice-active" : ""}`}>

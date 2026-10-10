@@ -45,6 +45,7 @@ function login() {
 describe('existing login UI with separate personal and staff auth', () => {
   it('Farmer hint sends Firebase OTP and stored Public role opens Public without Supabase role grants', async () => {
     login();
+    expect(screen.getByText('firebasePersonalSelection')).toBeTruthy();
     fireEvent.change(screen.getByPlaceholderText('3XX XXXXXXX'), { target: { value: '3110000000' } });
     fireEvent.click(screen.getByText('sendOtp'));
     await waitFor(() => expect(mocks.personal.sendOtp).toHaveBeenCalledTimes(1));
@@ -53,6 +54,7 @@ describe('existing login UI with separate personal and staff auth', () => {
     fireEvent.change(screen.getByPlaceholderText('••••••'), { target: { value: '123456' } });
     fireEvent.click(screen.getByText('firebaseVerifyContinue'));
     await screen.findByText('Public dashboard');
+    expect(mocks.showToast).toHaveBeenCalledWith('firebaseStoredPublicNotice', 'info', 6000);
     expect(mocks.getSignupRequest).not.toHaveBeenCalled();
     expect(sessionStorage.getItem('agriwatch_portal_access')).toBeNull();
   });
@@ -65,6 +67,7 @@ describe('existing login UI with separate personal and staff auth', () => {
     fireEvent.change(screen.getByPlaceholderText('••••••'), { target: { value: '123456' } });
     fireEvent.click(screen.getByText('firebaseVerifyContinue'));
     await screen.findByText('Farmer dashboard');
+    expect(mocks.showToast).toHaveBeenCalledWith('firebaseStoredFarmerNotice', 'info', 6000);
   });
   it('PDMA uses its original Supabase phone flow and approved stored registration', async () => {
     mocks.verifyPhoneOtp.mockResolvedValue({ user: { id: 'staff-uuid' } });

@@ -4,6 +4,9 @@
 // (for example severity/crop labels) is intentionally localized.
 
 const dict = {
+  firebasePersonalSelection: { en: "Account type preference — your saved role is used", ur: "اکاؤنٹ کی قسم کی ترجیح — آپ کا محفوظ کردار استعمال ہوگا" },
+  firebaseStoredPublicNotice: { en: "Your saved account is General Public. Opening General Public.", ur: "آپ کا محفوظ اکاؤنٹ عام شہری کا ہے۔ عام شہری پورٹل کھولا جا رہا ہے۔" },
+  firebaseStoredFarmerNotice: { en: "Your saved account is Farmer. Opening Farmer.", ur: "آپ کا محفوظ اکاؤنٹ کسان کا ہے۔ کسان پورٹل کھولا جا رہا ہے۔" },
   firebaseOtpCancel: { en: "Cancel and retry", ur: "منسوخ کریں اور دوبارہ کوشش کریں" },
   firebaseOtpResend: { en: "Send a new code", ur: "نیا کوڈ بھیجیں" },
   firebaseOtpTimeout: { en: "Phone verification took too long. Cancel any open CAPTCHA and try again.", ur: "فون کی تصدیق میں زیادہ وقت لگا۔ کھلے کیپچا کو بند کریں اور دوبارہ کوشش کریں۔" },
