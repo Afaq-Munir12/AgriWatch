@@ -2,6 +2,8 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
+import { BrowserRouter } from 'react-router-dom'
+import { PersonalAuthProvider } from './firebase/PersonalAuthContext.jsx'
 import { LanguageProvider } from './i18n/LanguageContext.jsx'
 import { ThemeProvider } from './theme/ThemeContext.jsx'
 import { ComplaintsProvider } from './store/ComplaintsContext.jsx'
@@ -14,6 +16,8 @@ createRoot(document.getElementById('root')).render(
     <ThemeProvider>
       <LanguageProvider>
         <ToastProvider>
+          <BrowserRouter>
+          <PersonalAuthProvider>
           <ComplaintsProvider>
             <IssueReportsProvider>
               <RegistrationsProvider>
@@ -21,6 +25,8 @@ createRoot(document.getElementById('root')).render(
               </RegistrationsProvider>
             </IssueReportsProvider>
           </ComplaintsProvider>
+        </PersonalAuthProvider>
+          </BrowserRouter>
         </ToastProvider>
       </LanguageProvider>
     </ThemeProvider>

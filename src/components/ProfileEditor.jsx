@@ -79,7 +79,7 @@ export default function ProfileEditor({ role, className = "" }) {
           <p className="font-display font-semibold">{t("yourProfile")}</p>
           <p className="text-xs text-ink/45 mt-0.5">{t("profileCardSub")}</p>
         </div>
-        {!editing && (
+        {!editing && !profile.readOnly && (
           <button
             onClick={startEdit}
             className="btn-animated shrink-0 flex items-center gap-1.5 text-xs font-medium border border-line rounded-lg px-3 py-1.5 bg-surface hover:bg-paper-dim transition-colors"
@@ -89,6 +89,7 @@ export default function ProfileEditor({ role, className = "" }) {
         )}
       </div>
 
+      {profile.readOnly && <p className="text-xs text-ink/45 mb-4">This is your mobile account profile. Update it in the AgriWatch mobile app.</p>}
       {!profile.signedIn && (
         <p className="text-xs text-ink/45 bg-paper-dim rounded-lg px-3 py-2 mb-4">{t("demoProfileNote")}</p>
       )}

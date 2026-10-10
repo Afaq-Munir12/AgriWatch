@@ -1,5 +1,6 @@
 import Topbar from "../../components/Topbar";
 import { useLanguage } from "../../i18n/LanguageContext";
+import PersonalAccountStatus from "../../components/PersonalAccountStatus";
 import ProfileEditor from "../../components/ProfileEditor";
 
 export default function PublicSettings() {
@@ -21,6 +22,7 @@ export default function PublicSettings() {
           </div>
         </section>
         <ProfileEditor role="public" />
+        <PersonalAccountStatus />
       </main>
     </>
   );

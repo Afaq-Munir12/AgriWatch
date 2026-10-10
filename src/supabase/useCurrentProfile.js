@@ -1,3 +1,5 @@
+import { usePersonalAuth } from "../firebase/PersonalAuthContext";
+import { personalProfileView } from "../firebase/profile.js";
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "./config";
 import { useSupabaseAuth } from "./useSupabaseAuth";
@@ -31,7 +33,7 @@ function readOverride(role) {
   }
 }
 
-export function useCurrentProfile(fallbackRole = "farmer") {
+function useLegacyProfile(fallbackRole = "farmer", enabled = true) {
   const { user, loading: authLoading } = useSupabaseAuth();
   const key = user ? cacheKey(user.id, fallbackRole) : null;
   const hasInitialCache = !!key && realProfileCache.has(key);
@@ -41,7 +43,7 @@ export function useCurrentProfile(fallbackRole = "farmer") {
   const [override, setOverride] = useState(() => readOverride(fallbackRole));
 
   useEffect(() => {
-    if (authLoading) return;
+    if (!enabled || authLoading) return;
 
     if (!user) {
       setProfile(null);
@@ -82,7 +84,7 @@ export function useCurrentProfile(fallbackRole = "farmer") {
     return () => {
       cancelled = true;
     };
-  }, [user, authLoading, fallbackRole]);
+  }, [user, authLoading, fallbackRole, enabled]);
 
   const isFarmerish = fallbackRole === "farmer";
 
@@ -139,7 +141,7 @@ export function useCurrentProfile(fallbackRole = "farmer") {
         try {
           localStorage.setItem(overrideKey(fallbackRole), JSON.stringify(merged));
         } catch {
-          // storage unavailable — state still keeps this session's edits
+          // storage unavailable â€” state still keeps this session's edits
         }
         setOverride(merged);
       }
@@ -163,4 +165,11 @@ export function useCurrentProfile(fallbackRole = "farmer") {
     signedIn: !!user,
     updateProfile,
   };
+}
+
+export function useCurrentProfile(role = "farmer") {
+  const personal = usePersonalAuth();
+  const isPersonal = role === "farmer" || role === "public";
+  const legacy = useLegacyProfile(role, !isPersonal);
+  return isPersonal ? personalProfileView(personal) : legacy;
 }

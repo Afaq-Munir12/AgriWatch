@@ -9,6 +9,7 @@ import {
   LogOut,
   User,
 } from "lucide-react";
+import { usePersonalAuth } from "../firebase/PersonalAuthContext";
 import { useLanguage } from "../i18n/LanguageContext";
 import { useToast } from "./ToastContext";
 import { supabase } from "../supabase/config";
@@ -45,10 +46,12 @@ export default function ProfileDropdown({
   const { t, lang } = useLanguage();
   const { showToast } = useToast();
   const navigate = useNavigate();
+  const personal = usePersonalAuth();
+  const personalPortal = currentRole === "farmer" || currentRole === "public";
 
   const switchTargets = useMemo(
-    () => Object.keys(PORTALS).filter((role) => role !== currentRole),
-    [currentRole]
+    () => (personalPortal ? personal.access?.storedRoles || [] : Object.keys(PORTALS)).filter((role) => role !== currentRole),
+    [currentRole, personalPortal, personal.access]
   );
 
   useEffect(() => {
@@ -103,6 +106,12 @@ export default function ProfileDropdown({
 
     setSwitchingRole(targetRole);
     try {
+      if (personalPortal) {
+        const refreshed = await personal.refresh();
+        // Route guard re-checks the refreshed memberships; never grant a staff or legacy role.
+        if (!["farmer", "public"].includes(targetRole) || !refreshed?.access?.storedRoles.includes(targetRole)) throw new Error("Stored membership required.");
+        setOpen(false); navigate(PORTALS[targetRole].path, { replace: true }); return;
+      }
       const { data, error } = await supabase
         .from("website_signup_requests")
         .select("role, status")
@@ -142,6 +151,9 @@ export default function ProfileDropdown({
     try {
       clearPortalAccess();
       clearLoginAttempt();
+      if (personalPortal) {
+        await personal.signOut(); setOpen(false); navigate("/login", { replace: true }); return;
+      }
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       setOpen(false);
@@ -162,7 +174,7 @@ export default function ProfileDropdown({
         aria-haspopup="true"
         aria-expanded={open}
         aria-disabled={loading}
-        className="hidden sm:flex items-center gap-2 pl-3 border-l border-line rounded-lg hover:bg-paper-dim transition-colors"
+        className="flex items-center gap-2 pl-3 border-l border-line rounded-lg hover:bg-paper-dim transition-colors"
       >
         {loading ? (
           <>
@@ -206,7 +218,7 @@ export default function ProfileDropdown({
               <span className="flex-1">{t("yourProfile")}</span>
             </button>
 
-            <button
+            {switchTargets.length > 0 && <button
               onClick={() => setShowSwitch((v) => !v)}
               className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-ink/80 hover:bg-paper-dim transition-colors text-left"
               aria-expanded={showSwitch}
@@ -222,6 +234,7 @@ export default function ProfileDropdown({
               />
             </button>
 
+            }
             {showSwitch && (
               <div className="mx-3 mb-1 rounded-lg border border-line bg-paper-dim/55 p-1.5 space-y-1">
                 {switchTargets.map((role) => {

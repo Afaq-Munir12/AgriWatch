@@ -1,5 +1,6 @@
 import Topbar from "../../components/Topbar";
 import { useLanguage } from "../../i18n/LanguageContext";
+import PersonalAccountStatus from "../../components/PersonalAccountStatus";
 import ProfileEditor from "../../components/ProfileEditor";
 import { Settings, ShieldCheck, UserRound, Sparkles } from "lucide-react";
 
@@ -31,6 +32,7 @@ export default function FarmerSettings() {
           </div>
           <ProfileEditor role="farmer" className="max-w-none" />
         </section>
+        <PersonalAccountStatus />
       </main>
     </>
   );

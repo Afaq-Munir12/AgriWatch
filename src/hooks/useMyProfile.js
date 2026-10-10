@@ -1,3 +1,6 @@
+import { useLocation } from "react-router-dom";
+import { usePersonalAuth } from "../firebase/PersonalAuthContext";
+import { personalProfile } from "../firebase/profile.js";
 import { useCallback, useEffect, useState } from "react";
 import { useSupabaseAuth } from "../supabase/useSupabaseAuth";
 import { supabase } from "../supabase/config";
@@ -7,11 +10,11 @@ import { supabase } from "../supabase/config";
 // immediately while a quiet background refresh checks for newer data.
 const farmerProfileCache = new Map();
 
-// Only these fields are ever sent in an update — status/role/documents are
+// Only these fields are ever sent in an update â€” status/role/documents are
 // decided by admins in the portal, not editable by the account owner.
 const EDITABLE_FIELDS = ["full_name", "phone", "district", "tehsil", "crop", "farm_size", "designation"];
 
-export function useMyProfile() {
+function useLegacyMyProfile(enabled = true) {
   const { user, loading: authLoading } = useSupabaseAuth();
   const cachedAtMount = user ? farmerProfileCache.get(user.id) : undefined;
   const [profile, setProfile] = useState(() => cachedAtMount ?? null);
@@ -50,7 +53,7 @@ export function useMyProfile() {
   const refresh = useCallback(() => fetchProfile({ showLoading: true }), [fetchProfile]);
 
   useEffect(() => {
-    if (authLoading) return;
+    if (!enabled || authLoading) return;
 
     if (!user) {
       setProfile(null);
@@ -70,7 +73,7 @@ export function useMyProfile() {
     // Cached data is genuine data, so it is safe to keep visible while this
     // background refresh runs. With no cache, the page stays in skeleton mode.
     fetchProfile({ showLoading: !hasCachedProfile });
-  }, [authLoading, user, fetchProfile]);
+  }, [authLoading, user, fetchProfile, enabled]);
 
   const updateProfile = useCallback(
     async (fields) => {
@@ -97,4 +100,12 @@ export function useMyProfile() {
   );
 
   return { user, profile, loading: authLoading || loading, error, updateProfile, refresh };
+}
+
+export function useMyProfile() {
+  const { pathname } = useLocation();
+  const personal = usePersonalAuth();
+  const isPersonal = /^\/(farmer|public)(\/|$)/.test(pathname);
+  const legacy = useLegacyMyProfile(!isPersonal);
+  return isPersonal ? { user: personal.user ? { id: personal.user.uid, identityProvider: "firebase" } : null, profile: personalProfile(personal), loading: personal.loading, error: personal.error, refresh: personal.refresh, updateProfile: async () => { throw new Error("Update this profile in the AgriWatch mobile app."); } } : legacy;
 }

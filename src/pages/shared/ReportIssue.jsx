@@ -135,6 +135,7 @@ export default function ReportIssue({ role = "farmer" }) {
     <>
       <Topbar title="Report a Software Issue" subtitle={subtitle} />
       <main className={`${role === "pdma" ? "pdma-page" : "farmer-page"} p-4 sm:p-8 space-y-6`} dir="ltr">
+        {profile.readOnly && <p className="text-sm text-ink/55 rounded-xl border border-line p-3">Use the AgriWatch mobile app to submit an issue for your mobile account.</p>}
         <section className="farmer-page-hero">
           <div className="farmer-hero-content">
             <div className="flex flex-wrap items-start justify-between gap-4">
@@ -264,7 +265,7 @@ export default function ReportIssue({ role = "farmer" }) {
               </p>
               <button
                 type="submit"
-                disabled={busy}
+                disabled={busy || profile.readOnly}
                 onMouseDown={addRipple}
                 className="btn-animated flex items-center gap-2 bg-primary text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-primary-light transition-colors disabled:opacity-50"
               >

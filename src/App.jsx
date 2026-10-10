@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import CommandPalette from "./components/CommandPalette";
 import OAuthResumeGuard from "./components/OAuthResumeGuard";
 
@@ -20,6 +20,8 @@ import Alerts from "./pages/admin/Alerts";
 import Complaints from "./pages/admin/Complaints";
 import RequireAdminAuth from "./components/RequireAdminAuth";
 import RequirePortalAuth from "./components/RequirePortalAuth";
+import RequirePersonalAuth from "./components/RequirePersonalAuth";
+import PersonalAccount from "./pages/PersonalAccount";
 import AdminPortalLayout from "./layouts/AdminPortalLayout";
 import AdminPortalLogin from "./pages/adminportal/AdminPortalLogin";
 import AdminPortalOverview from "./pages/adminportal/AdminPortalOverview";
@@ -52,12 +54,13 @@ import PublicComplaint from "./pages/public/PublicComplaint";
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <>
       <OAuthResumeGuard />
       <CommandPalette />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/personal-account" element={<PersonalAccount />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/complete-profile" element={<CompleteProfile />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
@@ -92,7 +95,7 @@ export default function App() {
           </Route>
         </Route>
 
-        <Route element={<RequirePortalAuth role="farmer" />}>
+        <Route element={<RequirePersonalAuth role="farmer" />}>
           <Route element={<FarmerLayout />}>
             <Route path="/farmer" element={<FarmerHome />} />
             <Route path="/farmer/district/:id" element={<DistrictDetail />} />
@@ -107,7 +110,7 @@ export default function App() {
           </Route>
         </Route>
 
-        <Route element={<RequirePortalAuth role="public" />}>
+        <Route element={<RequirePersonalAuth role="public" />}>
           <Route element={<PublicLayout />}>
             <Route path="/public" element={<PublicHome />} />
             <Route path="/public/district/:id" element={<DistrictDetail />} />
@@ -122,6 +125,6 @@ export default function App() {
           </Route>
         </Route>
       </Routes>
-    </BrowserRouter>
+    </>
   );
 }

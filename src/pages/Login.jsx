@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -13,6 +13,8 @@ import {
   Users2,
   XCircle,
 } from "lucide-react";
+import { usePersonalAuth } from "../firebase/PersonalAuthContext";
+import { personalDestination } from "../firebase/session.js";
 import logo from "../assets/logo.jpeg";
 import { useLanguage } from "../i18n/LanguageContext";
 import LanguageToggle from "../components/LanguageToggle";
@@ -76,12 +78,21 @@ export default function Login() {
   const [error, setError] = useState("");
   const [googleState, setGoogleState] = useState(null);
   const navigate = useNavigate();
+  const personal = usePersonalAuth();
+  const cancelOtp = personal.cancelOtp;
+  const recaptchaContainer = useRef(null);
+  const personalLogin = role !== "admin";
+
+  useEffect(() => () => cancelOtp(), [cancelOtp]);
+  useEffect(() => {
+    if (personal.user && !personal.loading) navigate(personal.error ? "/personal-account" : personalDestination(personal.access), { replace: true });
+  }, [personal.user, personal.loading, personal.error, personal.access, navigate]);
 
   const phoneError = useMemo(() => (phone ? localizedPhoneError(pakistanPhoneError(phone), t) : ""), [phone, t]);
   const prettyPhone = phone ? `+92 ${phone.slice(0, 3)} ${phone.slice(3, 6)} ${phone.slice(6)}` : "+92";
 
   useEffect(() => {
-    if (authLoading) return;
+    if (authLoading || busy) return;
 
     if (!user) {
       return;
@@ -98,7 +109,7 @@ export default function Login() {
 
     // An old Supabase session alone must never auto-enter a portal.
     signOut();
-  }, [user, authLoading, navigate, signOut]);
+  }, [user, authLoading, navigate, signOut, busy]);
 
   async function requestOtp(e) {
     e.preventDefault();
@@ -111,8 +122,13 @@ export default function Login() {
     setBusy(true);
     setError("");
     try {
-      await sendPhoneOtp(phone);
-      localStorage.setItem("pendingSignupRole", role);
+      if (personalLogin) {
+        clearLoginAttempt();
+        await personal.sendOtp(toPakistanE164(phone), recaptchaContainer.current);
+      } else {
+        await sendPhoneOtp(phone);
+        localStorage.setItem("pendingSignupRole", role);
+      }
       setStep("otp");
     } catch (err) {
       setError(err?.message || t("loginErrSendOtp"));
@@ -132,6 +148,12 @@ export default function Login() {
     setBusy(true);
     setError("");
     try {
+      if (personalLogin) {
+        const state = await personal.confirmOtp(otp);
+        setPhone(""); setOtp("");
+        navigate(state.error ? "/personal-account" : personalDestination(state.access), { replace: true });
+        return;
+      }
       const result = await verifyPhoneOtp(phone, otp);
       const signedInUser = result?.user;
       if (!signedInUser) throw new Error(t("loginErrNoSession"));
@@ -156,6 +178,7 @@ export default function Login() {
   }
 
   async function handleGoogleSignIn() {
+    if (personalLogin) { setError("Use phone verification for your Farmer or General Public account. Google sign-in remains available for PDMA and administrators."); return; }
     setError("");
     setBusy(true);
     localStorage.setItem("pendingSignupRole", role);
@@ -257,6 +280,8 @@ export default function Login() {
 
               <div className="auth-card-body-scroll flex-1">
 
+              <div ref={recaptchaContainer} />
+              {personalLogin && <p className="text-xs text-ink/45 mb-3">Your saved account role determines which portal opens after verification.</p>}
               {step === "phone" ? (
                 <>
                   <p className="auth-label mb-2">{t("loginIAmA")}</p>
@@ -265,7 +290,8 @@ export default function Login() {
                       <button
                         key={key}
                         type="button"
-                        onClick={() => setRole(key)}
+                        onClick={() => { if (!busy) setRole(key); }}
+                        disabled={busy}
                         onMouseDown={addRipple}
                         className={`role-choice ${role === key ? "role-choice-active" : ""}`}
                       >
@@ -329,7 +355,7 @@ export default function Login() {
                 </>
               ) : (
                 <form onSubmit={verifyOtp} className="space-y-5 animate-fade-in">
-                  <button type="button" onClick={() => { setStep("phone"); setOtp(""); setError(""); }} className="inline-flex items-center gap-1.5 text-xs font-semibold text-ink/50 hover:text-ink">
+                  <button type="button" onClick={() => { personal.cancelOtp(); setStep("phone"); setOtp(""); setError(""); }} className="inline-flex items-center gap-1.5 text-xs font-semibold text-ink/50 hover:text-ink">
                     <ArrowLeft size={14} /> {t("changeNumber")}
                   </button>
 
@@ -358,7 +384,7 @@ export default function Login() {
 
                   <button type="submit" disabled={busy || otp.length !== 6} onMouseDown={addRipple} className="btn-animated auth-primary-btn">
                     {busy && <Loader2 size={16} className="animate-spin" />}
-                    {t("verifyContinueAs")} {t(roles.find((r) => r.key === role).labelKey)}
+                    {personalLogin ? "Verify and continue" : <>{t("verifyContinueAs")} {t(roles.find((r) => r.key === role).labelKey)}</>}
                   </button>
                 </form>
               )}

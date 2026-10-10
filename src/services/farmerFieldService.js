@@ -1,3 +1,4 @@
+import { auth, readFirebaseProfile } from "../firebase/runtime.js";
 import { supabase } from "../supabase/config";
 
 // ============================================================
@@ -7,6 +8,11 @@ import { supabase } from "../supabase/config";
 export async function getMyFields(userId) {
   if (!userId) {
     return [];
+  }
+
+  if (auth.currentUser?.uid === userId) {
+    const profile = await readFirebaseProfile(userId);
+    return Array.isArray(profile?.fields) ? profile.fields : [];
   }
 
   const { data, error } = await supabase

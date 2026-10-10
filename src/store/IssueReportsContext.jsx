@@ -1,3 +1,4 @@
+import { useLocation } from "react-router-dom";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { supabase } from "../supabase/config";
 import {
@@ -41,6 +42,8 @@ export function IssueReportsProvider({ children }) {
   const [error, setError] = useState(null);
   const [offline, setOffline] = useState(false);
   const offlineRef = useRef(false);
+  const { pathname } = useLocation();
+  const personalPortal = /^\/(farmer|public)(\/|$)/.test(pathname);
 
   const goOffline = useCallback((err) => {
     offlineRef.current = true;
@@ -93,6 +96,7 @@ export function IssueReportsProvider({ children }) {
     screenshot = null,
     userId = null,
   }) {
+    if (personalPortal) throw new Error("Use the AgriWatch mobile app to report an issue for your mobile account.");
     let screenshotUrl = null;
     if (screenshot instanceof File) {
       screenshotUrl = await uploadAttachment(screenshot, "issues");
@@ -186,7 +190,7 @@ export function IssueReportsProvider({ children }) {
 
   return (
     <IssueReportsContext.Provider
-      value={{ issues, loading, error, offline, addIssue, updateIssue, reload: load }}
+      value={{ issues: personalPortal ? [] : issues, loading, error, offline, addIssue, updateIssue, reload: load }}
     >
       {children}
     </IssueReportsContext.Provider>

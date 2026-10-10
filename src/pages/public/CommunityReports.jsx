@@ -43,7 +43,7 @@ export default function CommunityReports() {
           </div>
         </section>
 
-        {offline && <OfflineNotice what="reports" error={error} />}
+        {offline && <OfflineNotice what="reports" error={error} title="Your reports are unavailable." detail="Refresh your account or sign in again. No local or example reports are shown." />}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Link to="/public/complaint" className="block">
