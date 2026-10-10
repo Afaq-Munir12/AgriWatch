@@ -23,85 +23,42 @@ import {
 // ============================================================
 
 const generalTips = [
-  {
-    id: "water",
-    title: "Conserve Water",
-    body:
-      "Avoid unnecessary water use. Repair leaking pipes and use stored water carefully during dry periods.",
-    icon: Droplets,
-  },
-  {
-    id: "irrigation",
-    title: "Use Efficient Irrigation",
-    body:
-      "Water crops during cooler hours and avoid over-irrigation. Drip or targeted irrigation can reduce water loss.",
-    icon: Sprout,
-  },
-  {
-    id: "soil",
-    title: "Protect Soil Moisture",
-    body:
-      "Use mulch and organic matter where appropriate to reduce evaporation and help soil retain moisture.",
-    icon: Leaf,
-  },
-  {
-    id: "heat",
-    title: "Reduce Heat Exposure",
-    body:
-      "During very hot conditions, avoid unnecessary outdoor activity in peak afternoon hours and keep drinking water available.",
-    icon: Sun,
-  },
-  {
-    id: "rain",
-    title: "Store Rainwater Safely",
-    body:
-      "Where practical, collect rainfall for later non-drinking uses and protect stored water from contamination.",
-    icon: CloudRain,
-  },
-  {
-    id: "updates",
-    title: "Follow Official Alerts",
-    body:
-      "Check AgriWatch and official PDMA advisories regularly when drought conditions begin to worsen.",
-    icon: ShieldAlert,
-  },
+  { id: "water", titleKey: "awarenessTipWaterTitle", bodyKey: "awarenessTipWaterBody", icon: Droplets },
+  { id: "irrigation", titleKey: "awarenessTipIrrigationTitle", bodyKey: "awarenessTipIrrigationBody", icon: Sprout },
+  { id: "soil", titleKey: "awarenessTipSoilTitle", bodyKey: "awarenessTipSoilBody", icon: Leaf },
+  { id: "heat", titleKey: "awarenessTipHeatTitle", bodyKey: "awarenessTipHeatBody", icon: Sun },
+  { id: "rain", titleKey: "awarenessTipRainTitle", bodyKey: "awarenessTipRainBody", icon: CloudRain },
+  { id: "updates", titleKey: "awarenessTipUpdatesTitle", bodyKey: "awarenessTipUpdatesBody", icon: ShieldAlert },
 ];
 
 // ============================================================
 // RISK-SPECIFIC ADVICE
 // ============================================================
 
-function getRiskAdvice(riskLevel) {
+function getRiskAdvice(riskLevel, t) {
   switch (riskLevel) {
     case "Severe":
       return {
-        title: "Severe drought precautions",
-        body:
-          "Drought risk is currently severe. Prioritize essential water use, avoid water wastage and closely follow official drought alerts.",
+        title: t("awarenessRiskSevereTitle"),
+        body: t("awarenessRiskSevereBody"),
         icon: ShieldAlert,
       };
-
     case "High":
       return {
-        title: "High drought precautions",
-        body:
-          "Drought risk is high. Reduce non-essential water use and monitor crops, soil moisture and local alerts closely.",
+        title: t("awarenessRiskHighTitle"),
+        body: t("awarenessRiskHighBody"),
         icon: Activity,
       };
-
     case "Moderate":
       return {
-        title: "Stay prepared",
-        body:
-          "Drought risk is moderate. Use water efficiently and continue monitoring local environmental conditions.",
+        title: t("awarenessRiskModerateTitle"),
+        body: t("awarenessRiskModerateBody"),
         icon: Droplets,
       };
-
     default:
       return {
-        title: "Maintain good water practices",
-        body:
-          "Current drought risk is relatively low, but continued water conservation helps protect supplies during future dry periods.",
+        title: t("awarenessRiskLowTitle"),
+        body: t("awarenessRiskLowBody"),
         icon: Home,
       };
   }
@@ -112,9 +69,9 @@ function getRiskAdvice(riskLevel) {
 // ============================================================
 
 export default function Awareness() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const { district: savedDistrict, loading: profileLoading } = useCurrentProfile("public");
-  const userDistrictName = savedDistrict || "your district";
+  const userDistrictName = savedDistrict || t("commonYourDistrict");
 
   const [prediction, setPrediction] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -132,7 +89,7 @@ export default function Awareness() {
     async function loadPrediction() {
       if (!savedDistrict) {
         setPrediction(null);
-        setError("No district is saved in your General Public profile. Update it in Settings.");
+        setError(t("publicNoDistrictSaved"));
         setLoading(false);
         return;
       }
@@ -145,7 +102,7 @@ export default function Awareness() {
         const data = await predictDistrict(apiDistrict);
 
         if (!data?.success) {
-          throw new Error("Prediction data was not available.");
+          throw new Error(t("publicPredictionUnavailable"));
         }
 
         if (!cancelled) setPrediction(data);
@@ -153,7 +110,7 @@ export default function Awareness() {
         console.error("PUBLIC AWARENESS ERROR:", err);
         if (!cancelled) {
           setPrediction(null);
-          setError(err?.message || "Unable to load current drought status.");
+          setError(err?.message || t("publicDroughtStatusUnavailable"));
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -181,8 +138,8 @@ export default function Awareness() {
   );
 
   const riskAdvice = useMemo(
-    () => getRiskAdvice(riskLevel),
-    [riskLevel]
+    () => getRiskAdvice(riskLevel, t),
+    [riskLevel, t, lang]
   );
 
   const RiskIcon = riskAdvice.icon;
@@ -195,23 +152,23 @@ export default function Awareness() {
     <>
       <Topbar
         title={t("ptPublicAwarenessTitle")}
-        subtitle={`${userDistrictName} — Drought awareness & water conservation`}
+        subtitle={`${userDistrictName} — ${t("awarenessTopbarSubtitle")}`}
       />
 
       <main
         className="p-4 sm:p-8 space-y-6 public-page"
-        dir="ltr"
+        dir={lang === "ur" ? "rtl" : "ltr"}
       >
         <section className="public-page-hero">
           <div className="public-hero-content">
-            <span className="public-hero-eyebrow">Community preparedness</span>
-            <h2 className="public-hero-title">Drought awareness for {userDistrictName}</h2>
-            <p className="public-hero-copy">Practical water-saving guidance, local risk context, and simple actions households can take before drought conditions worsen.</p>
+            <span className="public-hero-eyebrow">{t("awarenessPreparedness")}</span>
+            <h2 className="public-hero-title">{t("awarenessTitle")} {userDistrictName}</h2>
+            <p className="public-hero-copy">{t("awarenessBody")}</p>
           </div>
           <div className="public-hero-stats">
-            <div className="public-hero-stat"><span>Current risk</span><strong>{effectiveLoading ? "Loading" : error ? "Unavailable" : riskLevel}</strong></div>
-            <div className="public-hero-stat"><span>30-day risk</span><strong>{effectiveLoading || error ? "—" : `${probability.toFixed(1)}%`}</strong></div>
-            <div className="public-hero-stat"><span>Guidance</span><strong>6 key actions</strong></div>
+            <div className="public-hero-stat"><span>{t("awarenessCurrentRisk")}</span><strong>{effectiveLoading ? t("commonLoading") : error ? t("commonUnavailable") : t({ Low: "riskLow", Normal: "sevNormal", Moderate: "sevModerate", High: "riskHigh", Severe: "sevSevere", Extreme: "sevExtreme" }[riskLevel] || "riskLow")}</strong></div>
+            <div className="public-hero-stat"><span>{t("awareness30DayRisk")}</span><strong>{effectiveLoading || error ? "—" : `${probability.toFixed(1)}%`}</strong></div>
+            <div className="public-hero-stat"><span>{t("awarenessGuidance")}</span><strong>{t("awarenessSixActions")}</strong></div>
           </div>
         </section>
 
@@ -220,24 +177,23 @@ export default function Awareness() {
         <Card scan className="public-data-card">
           {effectiveLoading ? (
             <p className="text-sm text-ink/50">
-              Loading current drought conditions...
+              {t("awarenessLoading")}
             </p>
           ) : error ? (
             <div>
               <p className="font-medium">
-                General drought awareness
+                {t("awarenessGeneral")}
               </p>
 
               <p className="text-sm text-ink/50 mt-1">
-                Live district status could not be loaded.
-                General conservation guidance is still available below.
+                {t("awarenessLiveUnavailable")}
               </p>
             </div>
           ) : (
             <div className="flex flex-wrap items-center justify-between gap-5">
               <div>
                 <p className="text-xs uppercase text-ink/40 font-medium">
-                  Current Regional Risk
+                  {t("awarenessCurrentRegionalRisk")}
                 </p>
 
                 <div className="flex items-center gap-3 mt-2">
@@ -251,7 +207,7 @@ export default function Awareness() {
 
               <div className="text-right">
                 <p className="text-xs uppercase text-ink/40 font-medium">
-                  30-Day Drought Risk
+                  {t("awareness30DayRisk")}
                 </p>
 
                 <p className="font-display text-2xl font-semibold mt-1">
@@ -276,7 +232,7 @@ export default function Awareness() {
 
               <div>
                 <p className="text-xs uppercase text-ink/40 font-medium">
-                  Recommended For Current Conditions
+                  {t("awarenessRecommended")}
                 </p>
 
                 <p className="font-display font-semibold mt-1">
@@ -296,11 +252,11 @@ export default function Awareness() {
         <div>
           <div className="mb-4">
             <p className="font-display font-semibold">
-              Drought Preparedness & Water-Saving Tips
+              {t("awarenessTipsTitle")}
             </p>
 
             <p className="text-xs text-ink/40 mt-1">
-              Practical guidance for households and communities.
+              {t("awarenessTipsSub")}
             </p>
           </div>
 
@@ -322,11 +278,11 @@ export default function Awareness() {
 
                   <div>
                     <p className="font-medium text-sm">
-                      {tip.title}
+                      {t(tip.titleKey)}
                     </p>
 
                     <p className="text-sm text-ink/55 mt-1 leading-relaxed">
-                      {tip.body}
+                      {t(tip.bodyKey)}
                     </p>
                   </div>
                 </Card>
@@ -336,11 +292,7 @@ export default function Awareness() {
         </div>
 
         <p className="text-xs text-ink/40">
-          Drought risk shown above is generated from the
-          AgriWatch Random Forest prediction service.
-          Awareness guidance is informational and should be
-          used alongside official PDMA and local authority
-          advisories.
+          {t("awarenessDisclaimer")}
         </p>
       </main>
     </>

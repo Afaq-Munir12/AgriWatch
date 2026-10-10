@@ -13,7 +13,7 @@ import {
 
 
 export default function PublicHome() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const { district: savedDistrict, loading: profileLoading } = useCurrentProfile("public");
 
   const [prediction, setPrediction] = useState(null);
@@ -35,7 +35,7 @@ export default function PublicHome() {
       if (!savedDistrict) {
         setPrediction(null);
         setActiveAlert(null);
-        setError("No district is saved in your General Public profile. Update it in Settings.");
+        setError(t("publicNoDistrictSaved"));
         setLoading(false);
         return;
       }
@@ -48,7 +48,7 @@ export default function PublicHome() {
         const predictionData = await predictDistrict(apiDistrict);
 
         if (!predictionData?.success) {
-          throw new Error("Backend did not return a successful prediction.");
+          throw new Error(t("publicPredictionUnavailable"));
         }
 
         if (!cancelled) setPrediction(predictionData);
@@ -98,7 +98,7 @@ export default function PublicHome() {
         console.error("PUBLIC HOME LOAD ERROR:", err);
         if (!cancelled) {
           setPrediction(null);
-          setError(err?.message || "Unable to load regional drought data.");
+          setError(err?.message || t("publicRegionalLoadFailed"));
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -121,16 +121,16 @@ export default function PublicHome() {
       <>
         <Topbar
           title={t("ptPublicHomeTitle")}
-          subtitle="Loading regional data..."
+          subtitle={t("publicLoadingRegional")}
         />
 
         <main
           className="p-4 sm:p-8 space-y-6 public-page"
-          dir="ltr"
+          dir={lang === "ur" ? "rtl" : "ltr"}
         >
           <Card scan>
             <p className="text-sm text-ink/50">
-              Loading real AgriWatch ML data...
+              {t("publicLoadingRealMl")}
             </p>
           </Card>
         </main>
@@ -147,21 +147,21 @@ export default function PublicHome() {
       <>
         <Topbar
           title={t("ptPublicHomeTitle")}
-          subtitle="Regional drought status"
+          subtitle={t("publicRegionalStatus")}
         />
 
         <main
           className="p-4 sm:p-8 space-y-6 public-page"
-          dir="ltr"
+          dir={lang === "ur" ? "rtl" : "ltr"}
         >
           <Card scan>
             <p className="font-display font-semibold">
-              Unable to load drought data
+              {t("publicUnableDrought")}
             </p>
 
             <p className="text-sm text-ink/60 mt-2">
               {error ||
-                "No prediction data was returned."}
+                t("publicNoPrediction")}
             </p>
           </Card>
         </main>
@@ -211,6 +211,16 @@ export default function PublicHome() {
   const severity =
     prediction.risk_level || "Low";
 
+  const predictionStatusKey = {
+    normal: "predictionStatusNormal",
+    moderate: "predictionStatusModerate",
+    high: "predictionStatusHigh",
+    severe: "predictionStatusSevere",
+    extreme: "predictionStatusExtreme",
+    available: "predictionStatusAvailable",
+    ready: "predictionStatusReady",
+  }[String(prediction.prediction_status || "").toLowerCase()];
+
   // ==========================================================
   // UI
   // ==========================================================
@@ -224,24 +234,24 @@ export default function PublicHome() {
 
       <main
         className="p-4 sm:p-8 space-y-6 public-page"
-        dir="ltr"
+        dir={lang === "ur" ? "rtl" : "ltr"}
       >
         <section className="public-page-hero">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <span className="public-hero-eyebrow">Public drought intelligence</span>
-              <h2 className="public-hero-title">{district} regional outlook</h2>
-              <p className="public-hero-copy">Live district conditions for citizens and communities, powered by AgriWatch machine-learning drought monitoring.</p>
+              <span className="public-hero-eyebrow">{t("publicDroughtIntelligence")}</span>
+              <h2 className="public-hero-title">{district} {t("publicRegionalOutlook")}</h2>
+              <p className="public-hero-copy">{t("publicHeroBody")}</p>
             </div>
             <div className="text-left sm:text-right">
-              <p className="text-white/60 text-xs uppercase tracking-[0.18em]">Current severity</p>
+              <p className="text-white/60 text-xs uppercase tracking-[0.18em]">{t("publicCurrentSeverity")}</p>
               <div className="mt-2"><SeverityBadge level={severity} /></div>
             </div>
           </div>
           <div className="public-hero-stats">
-            <div className="public-hero-stat"><span>Drought risk</span><strong>{droughtRisk.toFixed(1)}%</strong></div>
+            <div className="public-hero-stat"><span>{t("envDroughtRisk")}</span><strong>{droughtRisk.toFixed(1)}%</strong></div>
             <div className="public-hero-stat"><span>NDVI</span><strong>{ndvi.toFixed(2)}</strong></div>
-            <div className="public-hero-stat"><span>Rainfall</span><strong>{rainfall.toFixed(1)} mm</strong></div>
+            <div className="public-hero-stat"><span>{t("envRainfall")}</span><strong>{rainfall.toFixed(1)} mm</strong></div>
           </div>
         </section>
         {/* ====================================================
@@ -261,14 +271,14 @@ export default function PublicHome() {
               <SeverityBadge level={severity} />
 
               <span className="text-sm text-ink/50">
-                Random Forest — 30-day forecast
+                {t("publicRandomForestForecast")}
               </span>
             </div>
           </div>
 
           <div className="text-right">
             <p className="text-xs uppercase text-ink/40 font-medium">
-              Drought Risk
+              {t("envDroughtRisk")}
             </p>
 
             <p className="font-display text-2xl font-semibold mt-1">
@@ -299,7 +309,7 @@ export default function PublicHome() {
 
           <Card className="public-data-card">
             <p className="public-card-label">
-              Drought Risk
+              {t("envDroughtRisk")}
             </p>
 
             <p className="font-display text-2xl font-semibold mt-1">
@@ -309,7 +319,7 @@ export default function PublicHome() {
 
           <Card className="public-data-card">
             <p className="public-card-label">
-              Soil Moisture
+              {t("envSoilMoisture")}
             </p>
 
             <p className="font-display text-2xl font-semibold mt-1">
@@ -325,7 +335,7 @@ export default function PublicHome() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Card className="public-data-card">
             <p className="public-card-label">
-              Rainfall
+              {t("envRainfall")}
             </p>
 
             <p className="font-display text-2xl font-semibold mt-1">
@@ -338,7 +348,7 @@ export default function PublicHome() {
 
           <Card className="public-data-card">
             <p className="public-card-label">
-              Temperature
+              {t("envTemperature")}
             </p>
 
             <p className="font-display text-2xl font-semibold mt-1">
@@ -351,7 +361,7 @@ export default function PublicHome() {
 
           <Card className="public-data-card">
             <p className="public-card-label">
-              Evaporation
+              {t("envEvaporation")}
             </p>
 
             <p className="font-display text-2xl font-semibold mt-1">
@@ -384,16 +394,16 @@ export default function PublicHome() {
 
               <div className="flex flex-wrap gap-x-5 gap-y-1 mt-3 text-xs text-ink/40">
                 <span>
-                  District: {activeAlert.district}
+                  {t("publicDistrict")}: {activeAlert.district}
                 </span>
 
                 <span>
-                  Audience: {activeAlert.sentTo}
+                  {t("publicAudience")}: {activeAlert.sentTo}
                 </span>
 
                 {activeAlert.date && (
                   <span>
-                    Date: {activeAlert.date}
+                    {t("publicDate")}: {activeAlert.date}
                   </span>
                 )}
               </div>
@@ -403,8 +413,7 @@ export default function PublicHome() {
               <SeverityBadge level={severity} />
 
               <p className="text-sm text-ink/50 mt-2">
-                No active public alert has been issued for{" "}
-                {district}.
+                {t("publicNoActiveAlertForDistrict", { district })}
               </p>
             </div>
           )}
@@ -418,31 +427,31 @@ export default function PublicHome() {
           <div className="flex flex-wrap justify-between gap-4">
             <div>
               <p className="text-xs uppercase text-ink/40 font-medium">
-                Latest Environmental Data
+                {t("publicLatestEnvironmentalData")}
               </p>
 
               <p className="text-sm text-ink/70 mt-1">
-                {prediction.data_date || "N/A"}
+                {prediction.data_date || t("commonUnavailable")}
               </p>
             </div>
 
             <div>
               <p className="text-xs uppercase text-ink/40 font-medium">
-                Model
+                {t("publicModel")}
               </p>
 
               <p className="text-sm text-ink/70 mt-1">
-                Random Forest · 22 environmental features
+                {t("publicModelSummary")}
               </p>
             </div>
 
             <div>
               <p className="text-xs uppercase text-ink/40 font-medium">
-                Prediction
+                {t("publicPrediction")}
               </p>
 
               <p className="text-sm text-ink/70 mt-1">
-                {prediction.prediction_status}
+                {predictionStatusKey ? t(predictionStatusKey) : prediction.prediction_status}
               </p>
             </div>
           </div>

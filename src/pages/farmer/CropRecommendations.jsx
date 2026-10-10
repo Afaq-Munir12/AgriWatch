@@ -13,6 +13,7 @@ import {
   BarChart3,
 } from "lucide-react";
 import { useMyProfile } from "../../hooks/useMyProfile";
+import { localizeCropName } from "../../utils/localizeAgriculture";
 import { predictDistrict } from "../../services/droughtService";
 import { getMyFields } from "../../services/farmerFieldService";
 
@@ -24,7 +25,7 @@ function uiSeverity(level) {
   return "Normal";
 }
 
-function guidance(prediction) {
+function guidance(prediction, t) {
   if (!prediction) return [];
   const e = prediction.environmental_data || {};
   const probability = Number(prediction.drought_probability_percent || 0);
@@ -33,18 +34,30 @@ function guidance(prediction) {
   const ndvi = Number(e.ndvi || 0);
   const items = [];
 
-  if (probability >= 60) items.push("Drought risk is elevated. Monitor this field closely and reduce avoidable water losses.");
-  else if (probability >= 30) items.push("Drought risk is moderate. Continue regular field and moisture monitoring.");
-  else items.push("Current drought risk is relatively low. Continue normal field monitoring.");
+  if (probability >= 60) items.push(t("fcRiskElevatedAdvice"));
+  else if (probability >= 30) items.push(t("fcRiskModerateAdvice"));
+  else items.push(t("fcRiskLowAdvice"));
 
-  if (soil < 0.15) items.push(`District soil moisture is low (${(soil * 100).toFixed(1)}%). Prioritize moisture conservation.`);
-  else items.push(`District soil moisture is ${(soil * 100).toFixed(1)}%. Check field conditions before irrigation.`);
+  const soilValue = (soil * 100).toFixed(1);
+  items.push(
+    soil < 0.15
+      ? t("fcSoilLowAdvice", { value: soilValue })
+      : t("fcSoilCurrentAdvice", { value: soilValue })
+  );
 
-  if (rainfall < 20) items.push(`Recent rainfall is low (${rainfall.toFixed(1)} mm). Do not rely on rainfall alone for field water availability.`);
-  else items.push(`Recent rainfall is ${rainfall.toFixed(1)} mm. Consider this before additional irrigation.`);
+  const rainValue = rainfall.toFixed(1);
+  items.push(
+    rainfall < 20
+      ? t("fcRainLowAdvice", { value: rainValue })
+      : t("fcRainCurrentAdvice", { value: rainValue })
+  );
 
-  if (ndvi < 0.25) items.push(`NDVI is ${ndvi.toFixed(3)}, indicating possible vegetation stress in the district.`);
-  else items.push(`NDVI is ${ndvi.toFixed(3)}. Continue monitoring vegetation condition.`);
+  const ndviValue = ndvi.toFixed(3);
+  items.push(
+    ndvi < 0.25
+      ? t("fcNdviStressAdvice", { value: ndviValue })
+      : t("fcNdviCurrentAdvice", { value: ndviValue })
+  );
 
   return items;
 }
@@ -65,7 +78,7 @@ function MetricCard({ icon: Icon, label, value, progress = 0 }) {
 }
 
 export default function CropRecommendations() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const { user, profile, loading: profileLoading } = useMyProfile();
   const [fields, setFields] = useState([]);
   const [prediction, setPrediction] = useState(null);
@@ -93,7 +106,7 @@ export default function CropRecommendations() {
           setPrediction(districtPrediction);
         }
       } catch (err) {
-        if (!cancelled) setError(err.message || "Failed to load field guidance.");
+        if (!cancelled) setError(err.message || t("fcUnableGuidance"));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -102,7 +115,7 @@ export default function CropRecommendations() {
     return () => { cancelled = true; };
   }, [user, profile?.district, profileLoading]);
 
-  const tips = useMemo(() => guidance(prediction), [prediction]);
+  const tips = useMemo(() => guidance(prediction, t), [prediction, t, lang]);
   const env = prediction?.environmental_data || {};
   const severity = uiSeverity(prediction?.risk_level);
   const probability = Number(prediction?.drought_probability_percent || 0);
@@ -112,22 +125,22 @@ export default function CropRecommendations() {
 
   return (
     <>
-      <Topbar title={t("ptFarmerCropsTitle")} subtitle={profile?.district || "Your fields"} />
+      <Topbar title={t("ptFarmerCropsTitle")} subtitle={profile?.district || t("fcYourFields")} />
 
-      <main className="farmer-page p-4 sm:p-8 space-y-6" dir="ltr">
+      <main className="farmer-page p-4 sm:p-8 space-y-6" dir={lang === "ur" ? "rtl" : "ltr"}>
         <section className="farmer-page-hero">
           <div className="farmer-hero-content">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <span className="farmer-hero-eyebrow"><Sparkles size={13} /> Smart crop advisory</span>
-                <h2 className="farmer-hero-title">Recommendations for your registered fields</h2>
+                <span className="farmer-hero-eyebrow"><Sparkles size={13} /> {t("fcSmartAdvisory")}</span>
+                <h2 className="farmer-hero-title">{t("fcRecommendationsTitle")}</h2>
                 <p className="farmer-hero-copy">
-                  AgriWatch combines your district drought prediction, soil moisture, rainfall and vegetation condition to generate practical field guidance.
+                  {t("fcRecommendationsBody")}
                 </p>
                 {profile?.district && (
                   <div className="farmer-hero-actions">
                     <span className="farmer-hero-button"><MapPin size={14} /> {profile.district}</span>
-                    <span className="farmer-hero-button"><Sprout size={14} /> {fields.length} registered field{fields.length === 1 ? "" : "s"}</span>
+                    <span className="farmer-hero-button"><Sprout size={14} /> {fields.length} {t("commonRegisteredFields")}</span>
                   </div>
                 )}
               </div>
@@ -135,8 +148,8 @@ export default function CropRecommendations() {
             </div>
 
             <div className="farmer-hero-stats">
-              <div className="farmer-hero-stat"><span>Drought probability</span><strong>{prediction ? `${probability.toFixed(1)}%` : "—"}</strong></div>
-              <div className="farmer-hero-stat"><span>Soil moisture</span><strong>{prediction ? `${(soil * 100).toFixed(1)}%` : "—"}</strong></div>
+              <div className="farmer-hero-stat"><span>{t("envDroughtProbability")}</span><strong>{prediction ? `${probability.toFixed(1)}%` : "—"}</strong></div>
+              <div className="farmer-hero-stat"><span>{t("envSoilMoisture")}</span><strong>{prediction ? `${(soil * 100).toFixed(1)}%` : "—"}</strong></div>
               <div className="farmer-hero-stat"><span>NDVI</span><strong>{prediction ? ndvi.toFixed(3) : "—"}</strong></div>
             </div>
           </div>
@@ -152,15 +165,15 @@ export default function CropRecommendations() {
           <section>
             <div className="farmer-section-title mb-3">
               <div>
-                <h2>Current district conditions</h2>
-                <p>Latest environmental inputs used by the advisory engine.</p>
+                <h2>{t("fcCurrentConditions")}</h2>
+                <p>{t("fcCurrentConditionsSub")}</p>
               </div>
-              <span className="text-xs text-ink/40 font-mono">ML + satellite indicators</span>
+              <span className="text-xs text-ink/40 font-mono">{t("fcIndicators")}</span>
             </div>
             <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
-              <MetricCard icon={BarChart3} label="Drought risk" value={`${probability.toFixed(1)}%`} progress={probability} />
-              <MetricCard icon={Droplets} label="Soil moisture" value={`${(soil * 100).toFixed(1)}%`} progress={soil * 100} />
-              <MetricCard icon={CloudRain} label="Rainfall" value={`${rainfall.toFixed(1)} mm`} progress={Math.min(rainfall, 100)} />
+              <MetricCard icon={BarChart3} label={t("envDroughtRisk")} value={`${probability.toFixed(1)}%`} progress={probability} />
+              <MetricCard icon={Droplets} label={t("envSoilMoisture")} value={`${(soil * 100).toFixed(1)}%`} progress={soil * 100} />
+              <MetricCard icon={CloudRain} label={t("envRainfall")} value={`${rainfall.toFixed(1)} mm`} progress={Math.min(rainfall, 100)} />
               <MetricCard icon={Leaf} label="NDVI" value={ndvi.toFixed(3)} progress={Math.max(ndvi * 100, 0)} />
             </div>
           </section>
@@ -169,18 +182,18 @@ export default function CropRecommendations() {
         <section>
           <div className="farmer-section-title mb-3">
             <div>
-              <h2>Your field guidance</h2>
-              <p>Each registered field receives the same district-level environmental advisory, paired with its crop and acreage.</p>
+              <h2>{t("fcFieldGuidance")}</h2>
+              <p>{t("fcFieldGuidanceSub")}</p>
             </div>
           </div>
 
           {loading ? (
-            <Card><p className="text-sm text-ink/40">Loading fields and ML data...</p></Card>
+            <Card><p className="text-sm text-ink/40">{t("fcLoading")}</p></Card>
           ) : fields.length === 0 ? (
             <div className="farmer-empty-state">
               <div className="w-11 h-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center mx-auto"><Sprout size={20} /></div>
-              <p className="font-display font-semibold mt-3">No fields registered yet</p>
-              <p className="text-sm text-ink/45 mt-1">Add fields to your farmer profile to receive field-by-field guidance.</p>
+              <p className="font-display font-semibold mt-3">{t("fcNoFields")}</p>
+              <p className="text-sm text-ink/45 mt-1">{t("fcNoFieldsSub")}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
@@ -191,7 +204,7 @@ export default function CropRecommendations() {
                       <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0"><Sprout size={18} className="text-primary" /></div>
                       <div className="min-w-0">
                         <p className="font-display font-semibold truncate">{field.field_name}</p>
-                        <p className="text-xs text-ink/45 mt-0.5 capitalize">{field.crop} · {Number(field.area_acres)} acres</p>
+                        <p className="text-xs text-ink/45 mt-0.5 capitalize">{localizeCropName(field.crop, t, lang)} · {Number(field.area_acres)} {t("commonAcres")}</p>
                       </div>
                     </div>
                     {prediction && <SeverityBadge level={severity} />}
@@ -213,7 +226,7 @@ export default function CropRecommendations() {
 
         <div className="farmer-callout">
           <p className="text-xs text-ink/55 leading-relaxed">
-            Guidance uses district-level ML drought and environmental data. It is an advisory layer and is not a crop-growth prediction model.
+            {t("fcCallout")}
           </p>
         </div>
       </main>

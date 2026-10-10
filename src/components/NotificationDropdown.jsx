@@ -22,13 +22,13 @@ const toneFor = {
 
 const PANEL_WIDTH = 320;
 
-export default function NotificationDropdown({ viewAllHref = "/pdma/alerts", label = "Alerts" }) {
+export default function NotificationDropdown({ viewAllHref = "/pdma/alerts", label = null }) {
   const [open, setOpen] = useState(false);
   const [readIds, setReadIds] = useState([]);
   const [pos, setPos] = useState({ top: 0, left: 0 });
   const btnRef = useRef(null);
   const panelRef = useRef(null);
-  const { lang } = useLanguage();
+  const { t, lang } = useLanguage();
 
   const items = alerts.slice(0, 5);
   const unreadCount = items.filter((a) => !readIds.includes(a.id)).length;
@@ -84,10 +84,10 @@ export default function NotificationDropdown({ viewAllHref = "/pdma/alerts", lab
         onMouseDown={addRipple}
         data-tour="notifications"
         className="topbar-alert-button relative min-h-10 px-3 rounded-xl border border-line bg-surface hover:bg-paper-dim transition-colors flex items-center gap-2"
-        aria-label={label}
+        aria-label={label || t("navAlerts")}
       >
         <Bell size={17} className="text-ink/70 shrink-0" />
-        <span className="hidden lg:inline text-sm font-semibold text-ink/75">{label}</span>
+        <span className="hidden lg:inline text-sm font-semibold text-ink/75">{label || t("navAlerts")}</span>
         {unreadCount > 0 && (
           <span className="topbar-alert-badge absolute -top-2 -right-2 w-[19px] h-[19px] rounded-full bg-danger text-white text-[10px] flex items-center justify-center font-mono font-semibold ring-2 ring-paper z-20">
             {unreadCount > 9 ? "9+" : unreadCount}
@@ -100,10 +100,11 @@ export default function NotificationDropdown({ viewAllHref = "/pdma/alerts", lab
           ref={panelRef}
           style={{ position: "fixed", top: pos.top, left: pos.left, width: PANEL_WIDTH }}
           className="dropdown-panel max-w-[90vw] bg-surface border border-line rounded-xl shadow-2xl z-[999] overflow-hidden"
+          dir={lang === "ur" ? "rtl" : "ltr"}
         >
           <div className="flex items-center justify-between px-4 py-3 border-b border-line">
-            <p className="font-display font-semibold text-sm">Notifications</p>
-            <span className="text-xs text-ink/40">{items.length} recent</span>
+            <p className="font-display font-semibold text-sm">{t("commonNotifications")}</p>
+            <span className="text-xs text-ink/40">{items.length} {t("commonRecent")}</span>
           </div>
 
           <div className="max-h-80 overflow-y-auto">
@@ -118,8 +119,12 @@ export default function NotificationDropdown({ viewAllHref = "/pdma/alerts", lab
                     <Icon size={15} />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs font-medium">{a.district} · {a.severity}</p>
-                    <p className="text-xs text-ink/55 mt-0.5 line-clamp-2">{a.message}</p>
+                    <p className="text-xs font-medium">{a.district} · {t({ Normal: "sevNormal", Moderate: "sevModerate", Severe: "sevSevere", Extreme: "sevExtreme" }[a.severity] || "sevNormal")}</p>
+                    <p className="text-xs text-ink/55 mt-0.5 line-clamp-2">
+                      {lang === "ur"
+                        ? t({ Normal: "notificationNormal", Moderate: "notificationModerate", Severe: "notificationSevere", Extreme: "notificationExtreme" }[a.severity] || "notificationGeneral")
+                        : a.message}
+                    </p>
                     <p className="text-[10px] text-ink/35 font-mono mt-1">{a.date}</p>
                   </div>
                 </div>
@@ -132,7 +137,7 @@ export default function NotificationDropdown({ viewAllHref = "/pdma/alerts", lab
             onClick={() => setOpen(false)}
             className="block text-center text-xs font-medium text-primary py-2.5 hover:bg-paper-dim transition-colors"
           >
-            View all alerts
+            {t("commonViewAllAlerts")}
           </Link>
         </div>,
         document.body

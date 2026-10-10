@@ -53,6 +53,14 @@ export default function AuthCallback() {
         return;
       }
 
+      if (attempt.method === "admin-google") {
+        setStatus("Opening the secure Admin Portal…");
+        clearLoginAttempt();
+        localStorage.removeItem("pendingSignupRole");
+        navigate("/admin-portal", { replace: true });
+        return;
+      }
+
       const requestedUiRole =
         attempt.role || localStorage.getItem("pendingSignupRole") || "farmer";
       const requestedDbRole = normalizeDbRole(requestedUiRole);
@@ -89,6 +97,7 @@ export default function AuthCallback() {
             return;
           }
 
+          localStorage.setItem("agriwatch_require_backup_password", "1");
           clearLoginAttempt();
           navigate("/complete-profile", { replace: true });
           return;
@@ -109,6 +118,7 @@ export default function AuthCallback() {
         if (!request) {
           // Same Gmail may already own other roles. Only the selected role is
           // missing, so take the user to create this specific role profile.
+          localStorage.removeItem("agriwatch_require_backup_password");
           clearLoginAttempt();
           navigate("/complete-profile", { replace: true });
           return;

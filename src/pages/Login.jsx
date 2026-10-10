@@ -1,17 +1,17 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
-  ArrowLeft,
-  CheckCircle2,
-  Clock,
   Eye,
+  EyeOff,
+  KeyRound,
   Loader2,
   LockKeyhole,
+  QrCode,
   ShieldCheck,
   Sparkles,
   Sprout,
   Users2,
-  XCircle,
+  X,
 } from "lucide-react";
 import logo from "../assets/logo.jpeg";
 import { useLanguage } from "../i18n/LanguageContext";
@@ -19,14 +19,13 @@ import LanguageToggle from "../components/LanguageToggle";
 import ThemeToggle from "../components/ThemeToggle";
 import { addRipple } from "../utils/ripple";
 import { useSupabaseAuth } from "../supabase/useSupabaseAuth";
+import { supabase } from "../supabase/config";
+import { getSignupRequest, normalizeDbRole } from "../services/authService";
 import {
-  digitsOnly,
   normalizePakistanLocalPhone,
-  otpError,
   pakistanPhoneError,
   toPakistanE164,
 } from "../utils/formValidation";
-import { getSignupRequest, normalizeDbRole, sendPhoneOtp, verifyPhoneOtp } from "../services/authService";
 import {
   clearLoginAttempt,
   getLoginAttempt,
@@ -47,109 +46,83 @@ function routeForRole(role) {
   return roles.find((item) => item.key === normalized)?.dest || "/";
 }
 
-function localizedPhoneError(message, t) {
-  if (!message) return "";
-  if (message === "Enter your mobile number.") return t("errPhoneRequired");
-  if (message === "Enter exactly 10 digits after +92.") return t("errPhoneLength");
-  if (message === "Pakistani mobile numbers must start with 3.") return t("errPhoneStart");
-  return message;
-}
-
-function localizedOtpError(message, t) {
-  if (!message) return "";
-  if (message === "Enter the 6-digit verification code.") return t("errOtpLength");
-  return message;
+function validEmail(value = "") {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value).trim());
 }
 
 export default function Login() {
   const { t, lang } = useLanguage();
-  const { user, loading: authLoading, signIn: supabaseSignIn, signOut } = useSupabaseAuth();
+  const { user, loading: authLoading, signIn: googleSignIn, signOut } = useSupabaseAuth();
+  const navigate = useNavigate();
+  const credentialFlow = useRef(false);
+
   const [role, setRole] = useState(() => {
     const pending = localStorage.getItem("pendingSignupRole");
     if (pending === "pdma") return "admin";
     return ["farmer", "public", "admin"].includes(pending) ? pending : "farmer";
   });
-  const [step, setStep] = useState("phone");
-  const [phone, setPhone] = useState("");
-  const [otp, setOtp] = useState("");
+  const [identifier, setIdentifier] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [googleState, setGoogleState] = useState(null);
-  const navigate = useNavigate();
-
-  const phoneError = useMemo(() => (phone ? localizedPhoneError(pakistanPhoneError(phone), t) : ""), [phone, t]);
-  const prettyPhone = phone ? `+92 ${phone.slice(0, 3)} ${phone.slice(3, 6)} ${phone.slice(6)}` : "+92";
+  const [status, setStatus] = useState(null);
+  const [qrOpen, setQrOpen] = useState(false);
 
   useEffect(() => {
-    if (authLoading) return;
-
-    if (!user) {
-      return;
-    }
-
-    // OAuth is finalized in one dedicated callback component. Keeping all
-    // Google routing in one place prevents Login/Home/CompleteProfile from
-    // racing each other while Supabase restores the session.
-    const loginAttempt = getLoginAttempt();
-    if (loginAttempt) {
+    if (authLoading || !user || credentialFlow.current) return;
+    const attempt = getLoginAttempt();
+    if (attempt) {
       navigate("/auth/callback", { replace: true });
       return;
     }
-
-    // An old Supabase session alone must never auto-enter a portal.
     signOut();
   }, [user, authLoading, navigate, signOut]);
 
-  async function requestOtp(e) {
+  async function handlePasswordLogin(e) {
     e.preventDefault();
-    const validationError = localizedPhoneError(pakistanPhoneError(phone), t);
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
-
-    setBusy(true);
     setError("");
-    try {
-      await sendPhoneOtp(phone);
-      localStorage.setItem("pendingSignupRole", role);
-      setStep("otp");
-    } catch (err) {
-      setError(err?.message || t("loginErrSendOtp"));
-    } finally {
-      setBusy(false);
-    }
-  }
+    const raw = identifier.trim();
+    if (!raw) return setError(t("authErrIdentifierRequired"));
+    if (!password) return setError(t("authErrPasswordRequired"));
 
-  async function verifyOtp(e) {
-    e.preventDefault();
-    const validationError = localizedOtpError(otpError(otp), t);
-    if (validationError) {
-      setError(validationError);
-      return;
+    let credentials;
+    if (raw.includes("@")) {
+      if (!validEmail(raw)) return setError(t("authErrEmailInvalid"));
+      credentials = { email: raw.toLowerCase(), password };
+    } else {
+      const localPhone = normalizePakistanLocalPhone(raw);
+      if (pakistanPhoneError(localPhone)) return setError(t("authErrPhoneLogin"));
+      credentials = { phone: toPakistanE164(localPhone), password };
     }
 
+    credentialFlow.current = true;
     setBusy(true);
-    setError("");
     try {
-      const result = await verifyPhoneOtp(phone, otp);
-      const signedInUser = result?.user;
-      if (!signedInUser) throw new Error(t("loginErrNoSession"));
+      const { data, error: authError } = await supabase.auth.signInWithPassword(credentials);
+      if (authError) throw authError;
+      if (!data?.user?.id) throw new Error(t("authErrNoSession"));
 
-      const request = await getSignupRequest(signedInUser.id, role);
+      const dbRole = normalizeDbRole(role);
+      const request = await getSignupRequest(data.user.id, dbRole);
       if (!request) {
-        navigate("/complete-profile", { replace: true });
+        await supabase.auth.signOut();
+        credentialFlow.current = false;
+        setError(t("authErrNoSelectedRole"));
         return;
       }
       if (request.status === "approved") {
-        const selectedDbRole = normalizeDbRole(role);
-        grantPortalAccess(signedInUser.id, selectedDbRole);
-        navigate(routeForRole(selectedDbRole), { replace: true });
+        grantPortalAccess(data.user.id, dbRole);
+        navigate(routeForRole(dbRole), { replace: true });
         return;
       }
-      setGoogleState(request.status === "rejected" ? "rejected" : "pending");
+      setStatus(request.status === "rejected" ? "rejected" : "pending");
     } catch (err) {
-      setError(err?.message || t("loginErrOtpInvalid"));
+      credentialFlow.current = false;
+      const message = String(err?.message || "");
+      if (/email.*confirm/i.test(message)) setError(t("authErrEmailNotVerified"));
+      else if (/invalid login credentials/i.test(message)) setError(t("authErrInvalidCredentials"));
+      else setError(message || t("authErrCredentialLogin"));
     } finally {
       setBusy(false);
     }
@@ -161,9 +134,7 @@ export default function Login() {
     localStorage.setItem("pendingSignupRole", role);
     markLoginAttempt("google", role);
     try {
-      // Force Google to show account selection again instead of silently
-      // reusing the previous Google identity.
-      await supabaseSignIn(GOOGLE_REDIRECT, { forceAccountChoice: true });
+      await googleSignIn(GOOGLE_REDIRECT, { forceAccountChoice: true });
     } catch (err) {
       clearLoginAttempt();
       setError(err?.message || t("loginErrGoogleStart"));
@@ -172,22 +143,15 @@ export default function Login() {
     }
   }
 
-  if (googleState === "checking") {
-    return <FullScreenLoader />;
-  }
-
-  if (googleState === "pending" || googleState === "rejected") {
+  if (status) {
     return (
       <div className={`auth-page flex items-center justify-center p-5 ${lang === "ur" ? "i18n-ur" : ""}`}>
         <div className="auth-status-card animate-pop-in" dir={lang === "ur" ? "rtl" : "ltr"}>
-          <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5 ${googleState === "pending" ? "bg-warn/10" : "bg-danger/10"}`}>
-            {googleState === "pending" ? <Clock size={30} className="text-warn" /> : <XCircle size={30} className="text-danger" />}
-          </div>
           <h1 className="font-display text-xl font-semibold">
-            {googleState === "pending" ? t("authPendingTitle") : t("authRejectedTitle")}
+            {status === "pending" ? t("authPendingTitle") : t("authRejectedTitle")}
           </h1>
           <p className="text-sm text-ink/55 leading-relaxed mt-3">
-            {googleState === "pending" ? t("authPendingBody") : t("authRejectedBody")}
+            {status === "pending" ? t("authPendingBody") : t("authRejectedBody")}
           </p>
           <button onClick={signOut} className="mt-6 w-full border border-line rounded-xl py-3 text-sm font-semibold hover:bg-paper-dim transition-colors">
             {t("signOut")}
@@ -201,7 +165,6 @@ export default function Login() {
     <div className={`auth-page ${lang === "ur" ? "i18n-ur" : ""}`}>
       <div className="auth-orb auth-orb-one" />
       <div className="auth-orb auth-orb-two" />
-
       <div className="auth-layout">
         <section dir="ltr" className="hidden lg:flex flex-col justify-between rounded-[2rem] p-10 xl:p-12 auth-visual-panel auth-equal-panel animate-fade-up">
           <div>
@@ -212,28 +175,16 @@ export default function Login() {
                 <p className="text-xs tracking-[0.18em] uppercase text-white/55">GeoAI drought intelligence</p>
               </div>
             </Link>
-
             <div className="mt-20 max-w-lg">
-              <span className="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/10 px-3 py-1.5 text-xs text-white/80">
-                <Sparkles size={13} /> Secure role-based access
-              </span>
-              <h2 className="font-display text-4xl xl:text-5xl leading-tight font-semibold text-white mt-5">
-                Sign in to Pakistan's drought monitoring workspace.
-              </h2>
-              <p className="mt-5 text-white/65 leading-relaxed">
-                One account connects farmers, public users and PDMA officers with live district intelligence, alerts and advisory tools.
-              </p>
+              <span className="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/10 px-3 py-1.5 text-xs text-white/80"><Sparkles size={13} /> Secure access</span>
+              <h2 className="font-display text-4xl xl:text-5xl leading-tight font-semibold text-white mt-5">Sign in with credentials, Google, or the AgriWatch app.</h2>
+              <p className="mt-5 text-white/65 leading-relaxed">OTP is no longer the first login screen. Use your email or phone number with a password.</p>
             </div>
           </div>
-
           <div className="grid grid-cols-3 gap-3">
-            {[
-              ["+92", "Pakistan-ready OTP"],
-              ["3 roles", "Role-aware access"],
-              ["24/7", "Cloud dashboard"],
-            ].map(([value, label]) => (
+            {[['Email / Phone','Password login'],['Google','Fast access'],['Mobile App','QR sign-in']].map(([value,label]) => (
               <div key={label} className="rounded-2xl border border-white/10 bg-white/[0.07] p-4 backdrop-blur">
-                <p className="font-display text-xl text-white font-semibold">{value}</p>
+                <p className="font-display text-lg text-white font-semibold">{value}</p>
                 <p className="text-[11px] text-white/55 mt-1">{label}</p>
               </div>
             ))}
@@ -247,147 +198,78 @@ export default function Login() {
                 <div>
                   <p className="auth-eyebrow text-xs uppercase tracking-[0.18em] text-primary font-semibold">{t("loginWelcomeBack")}</p>
                   <h1 className="font-display text-2xl sm:text-3xl font-semibold mt-2">{t("loginHeading")}</h1>
-                  <p className="text-sm text-ink/50 mt-2 max-w-md">{t("loginSubheading")}</p>
+                  <p className="text-sm text-ink/50 mt-2 max-w-md">{t("loginCredentialSubheading")}</p>
                 </div>
-                <div className="auth-card-tools">
-                  <ThemeToggle />
-                  <LanguageToggle />
-                </div>
+                <div className="auth-card-tools"><ThemeToggle /><LanguageToggle /></div>
               </div>
 
               <div className="auth-card-body-scroll flex-1">
-
-              {step === "phone" ? (
-                <>
-                  <p className="auth-label mb-2">{t("loginIAmA")}</p>
-                  <div className="grid grid-cols-3 gap-2 mb-6">
-                    {roles.map(({ key, labelKey, icon: Icon }) => (
-                      <button
-                        key={key}
-                        type="button"
-                        onClick={() => setRole(key)}
-                        onMouseDown={addRipple}
-                        className={`role-choice ${role === key ? "role-choice-active" : ""}`}
-                      >
-                        <Icon size={17} />
-                        <span>{t(labelKey)}</span>
-                      </button>
-                    ))}
-                  </div>
-
-                  <form onSubmit={requestOtp} className="space-y-4">
-                    <div>
-                      <label className="auth-label">{t("phoneNumber")}</label>
-                      <div className={`phone-control mt-1.5 ${phoneError ? "field-invalid" : phone.length === 10 ? "field-valid" : ""}`} dir="ltr">
-                        <span className="text-lg" aria-hidden="true">🇵🇰</span>
-                        <span className="font-semibold text-sm text-ink/75">+92</span>
-                        <span className="w-px h-6 bg-line" />
-                        <input
-                          value={phone}
-                          onChange={(e) => {
-                            setPhone(normalizePakistanLocalPhone(e.target.value));
-                            setError("");
-                          }}
-                          inputMode="numeric"
-                          autoComplete="tel-national"
-                          placeholder="3XX XXXXXXX"
-                          maxLength={10}
-                          className="outline-none text-sm w-full bg-transparent font-mono tracking-wide"
-                        />
-                        {phone.length === 10 && !phoneError && <CheckCircle2 size={17} className="text-primary" />}
-                      </div>
-                      <div className="flex items-center justify-between gap-3 mt-1.5">
-                        <p className={`text-[11px] ${phoneError ? "text-danger" : "text-ink/40"}`}>
-                          {phoneError || t("loginPhoneHelp")}
-                        </p>
-                        <span className="text-[11px] text-ink/35" dir="ltr">{phone.length}/10</span>
-                      </div>
-                    </div>
-
-                    {error && <div className="auth-error">{error}</div>}
-
-                    <button
-                      type="submit"
-                      disabled={busy || Boolean(pakistanPhoneError(phone))}
-                      onMouseDown={addRipple}
-                      className="btn-animated auth-primary-btn"
-                    >
-                      {busy ? <Loader2 size={16} className="animate-spin" /> : <LockKeyhole size={16} />}
-                      {t("sendOtp")}
+                <p className="auth-label mb-2">{t("loginIAmA")}</p>
+                <div className="grid grid-cols-3 gap-2 mb-5">
+                  {roles.map(({ key, labelKey, icon: Icon }) => (
+                    <button key={key} type="button" onClick={() => { setRole(key); setError(""); }} onMouseDown={addRipple} className={`role-choice ${role === key ? "role-choice-active" : ""}`}>
+                      <Icon size={17} /><span>{t(labelKey)}</span>
                     </button>
+                  ))}
+                </div>
 
-                    {role === "admin" && <p className="text-xs text-ink/40 text-center">{t("adminApprovalNote")}</p>}
-                  </form>
-
-                  <div className="auth-divider"><span>{t("authOr")}</span></div>
-
-                  <button type="button" onClick={handleGoogleSignIn} disabled={busy} onMouseDown={addRipple} className="btn-animated auth-google-btn">
-                    {busy ? <Loader2 size={16} className="animate-spin" /> : <GoogleIcon />}
-                    {t("continueWithGoogle")}
-                  </button>
-
-                </>
-              ) : (
-                <form onSubmit={verifyOtp} className="space-y-5 animate-fade-in">
-                  <button type="button" onClick={() => { setStep("phone"); setOtp(""); setError(""); }} className="inline-flex items-center gap-1.5 text-xs font-semibold text-ink/50 hover:text-ink">
-                    <ArrowLeft size={14} /> {t("changeNumber")}
-                  </button>
-
-                  <div className="rounded-2xl bg-primary/8 border border-primary/15 p-4">
-                    <p className="text-xs text-ink/45">{t("verificationCodeSentTo")}</p>
-                    <p className="font-display font-semibold mt-1" dir="ltr">{prettyPhone}</p>
-                  </div>
-
+                <form onSubmit={handlePasswordLogin} className="space-y-4">
                   <div>
-                    <label className="auth-label">{t("enterOtp")}</label>
-                    <input
-                      value={otp}
-                      onChange={(e) => { setOtp(digitsOnly(e.target.value, 6)); setError(""); }}
-                      placeholder="••••••"
-                      maxLength={6}
-                      inputMode="numeric"
-                      autoComplete="one-time-code"
-                      dir="ltr"
-                      className="otp-input mt-1.5"
-                      autoFocus
-                    />
-                    <p className="text-[11px] text-ink/40 mt-1.5">{t("otpHelp")}</p>
+                    <label className="auth-label">{t("authEmailOrPhone")}</label>
+                    <div className="relative mt-1.5">
+                      <KeyRound size={17} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink/35" />
+                      <input value={identifier} onChange={(e) => { setIdentifier(e.target.value); setError(""); }} autoComplete="username" placeholder={t("authEmailPhonePlaceholder")} className="form-input !pl-10" dir="ltr" />
+                    </div>
                   </div>
-
+                  <div>
+                    <label className="auth-label">{t("authPassword")}</label>
+                    <div className="relative mt-1.5">
+                      <LockKeyhole size={17} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink/35" />
+                      <input type={showPassword ? "text" : "password"} value={password} onChange={(e) => { setPassword(e.target.value); setError(""); }} autoComplete="current-password" placeholder="••••••••" className="form-input !pl-10 !pr-11" dir="ltr" />
+                      <button type="button" onClick={() => setShowPassword((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-ink/40 hover:text-ink" aria-label={showPassword ? t("hidePassword") : t("showPassword")}>
+                        {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                      </button>
+                    </div>
+                  </div>
                   {error && <div className="auth-error">{error}</div>}
-
-                  <button type="submit" disabled={busy || otp.length !== 6} onMouseDown={addRipple} className="btn-animated auth-primary-btn">
-                    {busy && <Loader2 size={16} className="animate-spin" />}
-                    {t("verifyContinueAs")} {t(roles.find((r) => r.key === role).labelKey)}
+                  <button type="submit" disabled={busy || !identifier.trim() || !password} onMouseDown={addRipple} className="btn-animated auth-primary-btn">
+                    {busy ? <Loader2 size={16} className="animate-spin" /> : <LockKeyhole size={16} />}{t("authLoginWithPassword")}
                   </button>
                 </form>
-              )}
+
+                <div className="auth-divider"><span>{t("authOr")}</span></div>
+                <div className="grid sm:grid-cols-2 gap-2.5">
+                  <button type="button" onClick={handleGoogleSignIn} disabled={busy} onMouseDown={addRipple} className="btn-animated auth-google-btn"><GoogleIcon />{t("continueWithGoogle")}</button>
+                  <button type="button" onClick={() => setQrOpen(true)} onMouseDown={addRipple} className="btn-animated auth-google-btn"><QrCode size={17} className="text-primary" />{t("signInWithApp")}</button>
+                </div>
               </div>
 
-              {step === "phone" && (
-                <div className="auth-card-footer mt-3 pt-3 border-t border-line flex flex-wrap items-center justify-center gap-x-2 gap-y-2 text-xs">
-                  <span className="text-ink/50">{t("newHereSignUp")}</span>
-                  <Link to="/signup" className="font-semibold text-primary hover:underline">{t("signUp")}</Link>
-                  <span className="text-ink/25">•</span>
-                  <Link to="/guest" className="inline-flex items-center gap-1 font-medium text-ink/55 hover:text-ink"><Eye size={13} /> {t("continueAsGuest")}</Link>
-                </div>
-              )}
+              <div className="auth-card-footer mt-3 pt-3 border-t border-line flex flex-wrap items-center justify-center gap-x-2 gap-y-2 text-xs">
+                <span className="text-ink/50">{t("newHereSignUp")}</span><Link to="/signup" className="font-semibold text-primary hover:underline">{t("signUp")}</Link>
+                <span className="text-ink/25">•</span><Link to="/guest" className="inline-flex items-center gap-1 font-medium text-ink/55 hover:text-ink"><Eye size={13} /> {t("continueAsGuest")}</Link>
+              </div>
             </div>
-
-            <Link to="/admin-portal/login" className="auth-portal-link">
-              <ShieldCheck size={14} /> {t("adminPortalAccess")}
-            </Link>
+            <Link to="/admin-portal/login" className="auth-portal-link"><ShieldCheck size={14} /> {t("adminPortalAccess")}</Link>
           </div>
         </section>
       </div>
+
+      {qrOpen && <QrPreview t={t} onClose={() => setQrOpen(false)} />}
     </div>
   );
 }
 
-function FullScreenLoader() {
+function QrPreview({ t, onClose }) {
   return (
-    <div className="auth-page flex items-center justify-center p-6">
-      <div className="w-10 h-10 rounded-full border-[3px] border-white/20 border-t-white animate-spin" />
+    <div className="auth-qr-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="auth-qr-modal animate-pop-in">
+        <button type="button" onClick={onClose} className="auth-qr-close"><X size={18} /></button>
+        <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto"><QrCode size={24} className="text-primary" /></div>
+        <h2 className="font-display text-xl font-semibold text-center mt-4">{t("qrLoginTitle")}</h2>
+        <p className="text-sm text-ink/50 leading-relaxed text-center mt-2">{t("qrLoginBody")}</p>
+        <div className="auth-qr-placeholder"><QrCode size={128} strokeWidth={1.3} /></div>
+        <p className="text-xs text-center text-warn font-semibold">{t("qrPreviewLabel")}</p>
+      </div>
     </div>
   );
 }

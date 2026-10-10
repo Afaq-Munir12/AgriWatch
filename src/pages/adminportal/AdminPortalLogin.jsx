@@ -1,27 +1,58 @@
-import { useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import logo from "../../assets/logo.jpeg";
 import { useSupabaseAuth } from "../../supabase/useSupabaseAuth";
-import { ShieldCheck, AlertTriangle } from "lucide-react";
+import { AlertTriangle, Loader2, ShieldCheck } from "lucide-react";
 import { addRipple } from "../../utils/ripple";
+import { clearPortalAccess, markLoginAttempt } from "../../utils/authAccess";
+
+const ADMIN_CALLBACK =
+  typeof window !== "undefined"
+    ? `${window.location.origin}/auth/callback`
+    : undefined;
 
 export default function AdminPortalLogin() {
-  const { user, loading, error, signIn } = useSupabaseAuth();
+  const { loading, error, signIn, signOut } = useSupabaseAuth();
+  const [busy, setBusy] = useState(false);
+  const [localError, setLocalError] = useState("");
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (user) navigate("/admin-portal", { replace: true });
-  }, [user, navigate]);
+  async function handleAdminGoogleLogin() {
+    if (busy) return;
+    setBusy(true);
+    setLocalError("");
+
+    try {
+      // Admin Portal must always allow choosing the approved admin Gmail.
+      // Clear any Farmer/Public/PDMA Supabase session first so an old session
+      // cannot silently send the user into the wrong account.
+      await signOut();
+      clearPortalAccess();
+      markLoginAttempt("admin-google", "admin-portal");
+      await signIn(ADMIN_CALLBACK, { forceAccountChoice: true });
+    } catch (err) {
+      setLocalError(err?.message || "Admin Google sign-in could not be started.");
+      setBusy(false);
+    }
+  }
 
   return (
     <div className="auth-page flex items-center justify-center">
       <div className="w-full max-w-md page-enter">
         <div className="flex flex-col items-center mb-6">
           <Link to="/" className="flex flex-col items-center">
-            <img src={logo} alt="AgriWatch Pakistan" className="w-16 h-16 rounded-full bg-white object-cover mb-3" />
-            <h1 className="font-display text-mist text-lg font-semibold">AgriWatch Pakistan</h1>
+            <img
+              src={logo}
+              alt="AgriWatch Pakistan"
+              className="w-16 h-16 rounded-full bg-white object-cover mb-3"
+            />
+            <h1 className="font-display text-mist text-lg font-semibold">
+              AgriWatch Pakistan
+            </h1>
           </Link>
-          <p className="text-primary-light text-xs tracking-widest uppercase mt-1">Admin Portal</p>
+          <p className="text-primary-light text-xs tracking-widest uppercase mt-1">
+            Admin Portal
+          </p>
         </div>
 
         <div className="auth-form-card">
@@ -31,32 +62,40 @@ export default function AdminPortalLogin() {
             </div>
             <div>
               <p className="font-display font-semibold text-sm">Restricted access</p>
-              <p className="text-xs text-ink/50">Sign in with your authorized Google account to review and approve access requests.</p>
+              <p className="text-xs text-ink/50">
+                Sign in with your authorized Google account to review and approve access requests.
+              </p>
             </div>
           </div>
 
           <button
-            onClick={() => signIn()}
+            onClick={handleAdminGoogleLogin}
             onMouseDown={addRipple}
-            disabled={loading}
+            disabled={loading || busy}
             className="btn-animated w-full flex items-center justify-center gap-3 bg-surface border border-line rounded-lg py-2.5 text-sm font-medium hover:bg-paper-dim transition-colors disabled:opacity-60"
           >
-            <GoogleIcon />
-            Continue with Google (Admin only)
+            {busy ? <Loader2 size={16} className="animate-spin" /> : <GoogleIcon />}
+            {busy ? "Opening Google…" : "Continue with Google (Admin only)"}
           </button>
 
-          {error && (
+          {(localError || error) && (
             <div className="flex items-start gap-2 mt-4 text-xs text-danger bg-danger/5 rounded-lg p-3">
               <AlertTriangle size={14} className="shrink-0 mt-0.5" />
-              <span>{error.message}</span>
+              <span>{localError || error?.message}</span>
             </div>
           )}
 
           <p className="text-xs text-ink/40 text-center mt-5">
-            This is separate from the Farmer / Public / PDMA Officer login.
+            Only accounts already approved in the Admin Portal allowlist can enter.
           </p>
           <div className="mt-4 pt-4 border-t border-line text-center">
-            <Link to="/login" className="text-xs font-medium text-primary hover:underline">← Back to regular login</Link>
+            <button
+              type="button"
+              onClick={() => navigate("/login")}
+              className="text-xs font-medium text-primary hover:underline"
+            >
+              ← Back to regular login
+            </button>
           </div>
         </div>
       </div>

@@ -37,7 +37,7 @@ function normalizeDistrict(value) {
 // FORMAT DATE
 // ============================================================
 
-function formatDate(value) {
+function formatDate(value, lang) {
   if (!value) return "—";
 
   const date = new Date(value);
@@ -46,7 +46,7 @@ function formatDate(value) {
     return value;
   }
 
-  return date.toLocaleDateString("en-GB", {
+  return date.toLocaleDateString(lang === "ur" ? "ur-PK" : "en-GB", {
     day: "2-digit",
     month: "short",
     year: "numeric",
@@ -59,7 +59,7 @@ function formatDate(value) {
 // ============================================================
 
 export default function FarmerAlerts() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
 
   // ----------------------------------------------------------
   // REAL LOGGED-IN FARMER
@@ -198,7 +198,7 @@ export default function FarmerAlerts() {
 
           setAlertsError(
             error?.message ||
-              "Unable to load alerts."
+              t("alertsUnableLoad")
           );
         }
       } finally {
@@ -298,7 +298,7 @@ export default function FarmerAlerts() {
 
       setAlertsError(
         error?.message ||
-          "Unable to refresh alerts."
+          t("alertsUnableRefresh")
       );
     } finally {
       setLoadingAlerts(false);
@@ -323,7 +323,7 @@ export default function FarmerAlerts() {
 
       <main
         className="farmer-page p-4 sm:p-8 space-y-6"
-        dir="ltr"
+        dir={lang === "ur" ? "rtl" : "ltr"}
       >
 
         {/* ================================================ */}
@@ -340,12 +340,12 @@ export default function FarmerAlerts() {
 
               <div>
                 <p className="font-medium text-sm text-red-700">
-                  Farmer profile unavailable
+                  {t("alertsProfileUnavailable")}
                 </p>
 
                 <p className="text-xs text-red-600 mt-1">
                   {profileError?.message ||
-                    "Unable to load your farmer profile."}
+                    t("alertsUnableProfile")}
                 </p>
               </div>
             </div>
@@ -357,18 +357,18 @@ export default function FarmerAlerts() {
           <div className="farmer-hero-content">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <span className="farmer-hero-eyebrow"><Sparkles size={13} /> PDMA district alerts</span>
-                <h2 className="farmer-hero-title">Official drought alerts for your area</h2>
-                <p className="farmer-hero-copy">Stay aware of district warnings, severity changes and official action messages sent through AgriWatch.</p>
+                <span className="farmer-hero-eyebrow"><Sparkles size={13} /> {t("alertsPdmaCenter")}</span>
+                <h2 className="farmer-hero-title">{t("alertsOfficialArea")}</h2>
+                <p className="farmer-hero-copy">{t("alertsHeroBody")}</p>
                 <div className="farmer-hero-actions">
-                  <span className="farmer-hero-button"><MapPin size={14} /> {farmerDistrict || "District not assigned"}</span>
+                  <span className="farmer-hero-button"><MapPin size={14} /> {farmerDistrict || t("alertsDistrictNotAssigned")}</span>
                   <button
                     type="button"
                     onClick={handleRefresh}
                     disabled={loadingAlerts || profileLoading || !farmerDistrict}
                     className="farmer-hero-button disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <RefreshCw size={14} className={loadingAlerts ? "animate-spin" : ""} /> Refresh alerts
+                    <RefreshCw size={14} className={loadingAlerts ? "animate-spin" : ""} /> {t("alertsRefresh")}
                   </button>
                 </div>
               </div>
@@ -377,9 +377,9 @@ export default function FarmerAlerts() {
 
             {!profileLoading && !loadingAlerts && !alertsError && (
               <div className="farmer-hero-stats">
-                <div className="farmer-hero-stat"><span>Total alerts</span><strong>{statistics.total}</strong></div>
-                <div className="farmer-hero-stat"><span>Severe + extreme</span><strong>{statistics.severe + statistics.extreme}</strong></div>
-                <div className="farmer-hero-stat"><span>Monitoring</span><strong><Radio size={16} className="inline me-2" />Live</strong></div>
+                <div className="farmer-hero-stat"><span>{t("alertsTotal")}</span><strong>{statistics.total}</strong></div>
+                <div className="farmer-hero-stat"><span>{t("alertsSevereExtreme")}</span><strong>{statistics.severe + statistics.extreme}</strong></div>
+                <div className="farmer-hero-stat"><span>{t("alertsMonitoring")}</span><strong><Radio size={16} className="inline me-2" />{t("alertsLive")}</strong></div>
               </div>
             )}
           </div>
@@ -397,7 +397,7 @@ export default function FarmerAlerts() {
 
               <Card className="farmer-data-card">
                 <p className="farmer-card-label">
-                  Total Alerts
+                  {t("alertsTotal")}
                 </p>
 
                 <p className="text-2xl font-display font-semibold mt-2">
@@ -408,7 +408,7 @@ export default function FarmerAlerts() {
 
               <Card className="farmer-data-card">
                 <p className="farmer-card-label">
-                  Extreme
+                  {t("sevExtreme")}
                 </p>
 
                 <p className="text-2xl font-display font-semibold mt-2 text-red-600">
@@ -419,7 +419,7 @@ export default function FarmerAlerts() {
 
               <Card className="farmer-data-card">
                 <p className="farmer-card-label">
-                  Severe
+                  {t("sevSevere")}
                 </p>
 
                 <p className="text-2xl font-display font-semibold mt-2 text-orange-600">
@@ -430,7 +430,7 @@ export default function FarmerAlerts() {
 
               <Card className="farmer-data-card">
                 <p className="farmer-card-label">
-                  Moderate
+                  {t("sevModerate")}
                 </p>
 
                 <p className="text-2xl font-display font-semibold mt-2 text-yellow-600">
@@ -488,7 +488,7 @@ export default function FarmerAlerts() {
 
                 <div>
                   <p className="font-medium text-sm text-red-700">
-                    Unable to load alerts
+                    {t("alertsUnableLoad")}
                   </p>
 
                   <p className="text-xs text-red-600 mt-1">
@@ -522,12 +522,11 @@ export default function FarmerAlerts() {
                 </div>
 
                 <p className="font-display font-semibold mt-4">
-                  No active alerts
+                  {t("alertsNoActive")}
                 </p>
 
                 <p className="text-sm text-ink/45 mt-1 max-w-md mx-auto">
-                  There are currently no drought alerts
-                  issued for{" "}
+                  {t("alertsNoDistrictAlerts")} {" "}
                   <span className="font-medium">
                     {farmerDistrict}
                   </span>
@@ -588,7 +587,7 @@ export default function FarmerAlerts() {
                           />
 
                           <span className="text-xs text-ink/40 font-mono">
-                            {formatDate(alertDate)}
+                            {formatDate(alertDate, lang)}
                           </span>
 
                         </div>
@@ -606,7 +605,7 @@ export default function FarmerAlerts() {
 
                         <p className="text-sm text-ink/60 mt-2 leading-relaxed">
                           {alert.message ||
-                            "Drought advisory issued for your district."}
+                            t("alertsDefaultAdvisory")}
                         </p>
 
 
@@ -616,13 +615,13 @@ export default function FarmerAlerts() {
 
                           {alertId && (
                             <span className="text-[11px] text-ink/35 font-mono">
-                              ID: {alertId}
+                              {t("alertsId")}: {alertId}
                             </span>
                           )}
 
                           {audience && (
                             <span className="text-[11px] text-ink/35">
-                              Audience: {audience}
+                              {t("publicAudience")}: {audience}
                             </span>
                           )}
 

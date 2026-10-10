@@ -2,7 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import {
   CheckCircle2,
+  Check,
+  Eye,
+  EyeOff,
   FileCheck2,
+  KeyRound,
   Loader2,
   MapPin,
   Plus,
@@ -66,11 +70,23 @@ export default function CompleteProfile() {
   const [fields, setFields] = useState([{ fieldName: "Field 1", crop: "", areaAcres: "" }]);
   const [designation, setDesignation] = useState("");
   const [files, setFiles] = useState([]);
+  const [needsBackupPassword] = useState(() => localStorage.getItem("agriwatch_require_backup_password") === "1");
+  const [backupPassword, setBackupPassword] = useState("");
+  const [confirmBackupPassword, setConfirmBackupPassword] = useState("");
+  const [showBackupPassword, setShowBackupPassword] = useState(false);
+  const [showConfirmBackupPassword, setShowConfirmBackupPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
   const nameValidation = useMemo(() => (fullName ? personNameError(fullName) : ""), [fullName]);
   const phoneValidation = useMemo(() => (phone ? pakistanPhoneError(phone) : ""), [phone]);
+  const backupPasswordChecks = useMemo(() => ({
+    length: backupPassword.length > 8,
+    letter: /[A-Za-z]/.test(backupPassword),
+    number: /\d/.test(backupPassword),
+    match: Boolean(backupPassword) && backupPassword === confirmBackupPassword,
+  }), [backupPassword, confirmBackupPassword]);
+  const backupPasswordReady = Object.values(backupPasswordChecks).every(Boolean);
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/login", { replace: true });
@@ -146,21 +162,16 @@ export default function CompleteProfile() {
       return setError("Please enter your PDMA designation.");
     }
 
+    if (needsBackupPassword && !backupPasswordReady) {
+      return setError("Create a backup password with more than 8 characters, including a letter and a number, and make sure both passwords match.");
+    }
+
     if (files.length === 0) {
       return setError("Attach at least one verification document before submitting.");
     }
 
     setBusy(true);
     try {
-      const uploaded = [];
-      for (const file of files) {
-        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-        const path = `${user.id}/${Date.now()}_${safeName}`;
-        const { error: uploadErr } = await supabase.storage.from(DOCS_BUCKET).upload(path, file);
-        if (uploadErr) throw uploadErr;
-        uploaded.push({ name: file.name, path });
-      }
-
       const { data: existingRole, error: existingRoleError } = await supabase
         .from("website_signup_requests")
         .select("status, role, user_id")
@@ -170,6 +181,22 @@ export default function CompleteProfile() {
       if (existingRoleError) throw existingRoleError;
       if (existingRole) {
         throw new Error(`This Google account is already registered as ${role === "pdma" ? "PDMA Officer" : role}. Use Log in and select that role.`);
+      }
+
+      if (needsBackupPassword) {
+        const { error: passwordError } = await supabase.auth.updateUser({
+          password: backupPassword,
+        });
+        if (passwordError) throw passwordError;
+      }
+
+      const uploaded = [];
+      for (const file of files) {
+        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+        const path = `${user.id}/${Date.now()}_${safeName}`;
+        const { error: uploadErr } = await supabase.storage.from(DOCS_BUCKET).upload(path, file);
+        if (uploadErr) throw uploadErr;
+        uploaded.push({ name: file.name, path });
       }
 
       const roleStatus = role === "public" ? "approved" : "pending";
@@ -196,6 +223,7 @@ export default function CompleteProfile() {
       if (role === "farmer") await createFarmerFields(user.id, fields);
 
       localStorage.removeItem("pendingSignupRole");
+      localStorage.removeItem("agriwatch_require_backup_password");
       clearLoginAttempt();
 
       if (role === "public") {
@@ -407,6 +435,51 @@ export default function CompleteProfile() {
                 </Field>
               )}
 
+              {needsBackupPassword && (
+              <div className="rounded-2xl border border-primary/15 bg-primary/[0.045] p-4 space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                    <KeyRound size={17} className="text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold">Create backup AgriWatch password</p>
+                    <p className="text-[11px] text-ink/45 mt-1 leading-relaxed">
+                      Use your Google email plus this password later if Google sign-in is unavailable on another device.
+                    </p>
+                  </div>
+                </div>
+
+                <PasswordBox
+                  label="Backup password"
+                  value={backupPassword}
+                  onChange={setBackupPassword}
+                  show={showBackupPassword}
+                  onToggle={() => setShowBackupPassword((value) => !value)}
+                />
+                <PasswordBox
+                  label="Confirm backup password"
+                  value={confirmBackupPassword}
+                  onChange={setConfirmBackupPassword}
+                  show={showConfirmBackupPassword}
+                  onToggle={() => setShowConfirmBackupPassword((value) => !value)}
+                />
+
+                <div className="grid sm:grid-cols-2 gap-2">
+                  {[
+                    [backupPasswordChecks.length, "More than 8 characters"],
+                    [backupPasswordChecks.letter, "Contains a letter"],
+                    [backupPasswordChecks.number, "Contains a number"],
+                    [backupPasswordChecks.match, "Passwords match"],
+                  ].map(([ok, label]) => (
+                    <div key={label} className={`password-rule ${ok ? "is-valid" : ""}`}>
+                      <span className="password-rule-icon">{ok ? <Check size={12} /> : "•"}</span>
+                      <span>{label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              )}
+
               <Field label={role === "pdma" ? "PDMA ID card / appointment letter" : role === "farmer" ? "CNIC / proof of land ownership" : "CNIC or other ID"} hint="Image or PDF">
                 <label className="signup-upload-zone">
                   <UploadCloud size={19} className="text-primary" />
@@ -443,6 +516,33 @@ export default function CompleteProfile() {
             </form>
           </div>
         </section>
+      </div>
+    </div>
+  );
+}
+
+function PasswordBox({ label, value, onChange, show, onToggle }) {
+  return (
+    <div>
+      <label className="auth-label">{label}</label>
+      <div className="relative mt-1.5">
+        <input
+          type={show ? "text" : "password"}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          autoComplete="new-password"
+          placeholder="•••••••••"
+          className="form-input !pr-11"
+          dir="ltr"
+        />
+        <button
+          type="button"
+          onClick={onToggle}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-ink/40 hover:text-ink"
+          aria-label={show ? "Hide password" : "Show password"}
+        >
+          {show ? <EyeOff size={17} /> : <Eye size={17} />}
+        </button>
       </div>
     </div>
   );

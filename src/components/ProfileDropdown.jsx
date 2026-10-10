@@ -7,10 +7,12 @@ import {
   ChevronDown,
   Loader2,
   LogOut,
+  KeyRound,
   User,
 } from "lucide-react";
 import { useLanguage } from "../i18n/LanguageContext";
 import { useToast } from "./ToastContext";
+import SecurityPasswordModal from "./SecurityPasswordModal";
 import { supabase } from "../supabase/config";
 import {
   clearLoginAttempt,
@@ -39,6 +41,7 @@ export default function ProfileDropdown({
   const [showSwitch, setShowSwitch] = useState(false);
   const [switchingRole, setSwitchingRole] = useState("");
   const [signingOut, setSigningOut] = useState(false);
+  const [securityOpen, setSecurityOpen] = useState(false);
   const [pos, setPos] = useState({ top: 0, left: 0 });
   const btnRef = useRef(null);
   const panelRef = useRef(null);
@@ -207,6 +210,20 @@ export default function ProfileDropdown({
             </button>
 
             <button
+              onClick={() => {
+                setOpen(false);
+                setSecurityOpen(true);
+              }}
+              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-ink/80 hover:bg-paper-dim transition-colors text-left"
+            >
+              <KeyRound size={15} className="text-primary shrink-0" />
+              <span className="flex-1">
+                <span className="block">{t("securityPasswordMenu")}</span>
+                <span className="block text-[10px] text-ink/40 mt-0.5">{t("securityPasswordMenuHint")}</span>
+              </span>
+            </button>
+
+            <button
               onClick={() => setShowSwitch((v) => !v)}
               className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-ink/80 hover:bg-paper-dim transition-colors text-left"
               aria-expanded={showSwitch}
@@ -273,6 +290,11 @@ export default function ProfileDropdown({
         </div>,
         document.body
       )}
+
+      <SecurityPasswordModal
+        open={securityOpen}
+        onClose={() => setSecurityOpen(false)}
+      />
     </>
   );
 }
