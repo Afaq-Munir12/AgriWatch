@@ -25,6 +25,11 @@ export function createPersonalSession({ service, observeUser, currentUser }) {
     start: () => observeUser(user => { void refresh(user); }),
     refresh,
     async confirmOtp(code) { const user = await service.confirmOtp(code); verifiedUid = user.uid; await refresh(user); return state; },
+    async signInGoogle() { const user = await service.signInGoogle(); verifiedUid = null; await refresh(user); return state; },
+    async linkGoogle() {
+      if (!currentUser() || verifiedUid !== currentUser().uid) throw Object.assign(new Error('Verify this account with phone OTP before adding Google.'), { code: 'auth/otp-required' });
+      const user = await service.linkGoogle(); await refresh(user); return state;
+    },
     async signOut() {
       ++generation; verifiedUid = null;
       publish({ user: null, loading: true, access: null, snapshot: null, error: null, otpVerified: false });

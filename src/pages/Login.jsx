@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { usePersonalAuth } from "../firebase/PersonalAuthContext";
 import { personalDestination } from "../firebase/session.js";
+import { googleAuthMessage } from "../firebase/googleErrors.js";
 import logo from "../assets/logo.jpeg";
 import { useLanguage } from "../i18n/LanguageContext";
 import LanguageToggle from "../components/LanguageToggle";
@@ -87,6 +88,7 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [googleBusy, setGoogleBusy] = useState(false);
   const [error, setError] = useState("");
   const [status, setStatus] = useState(null);
   const [qrOpen, setQrOpen] = useState(false);
@@ -293,7 +295,24 @@ export default function Login() {
   }
 
   async function handleGoogleSignIn() {
-    if (personalLogin) { setError(t("firebasePersonalPhoneOnly")); return; }
+    if (busy) return;
+    if (personalLogin) {
+      resetOtp(); clearLoginAttempt();
+      const operation = ++otpOperation.current;
+      setBusy(true); setGoogleBusy(true);
+      try {
+        const state = await personal.signInGoogle();
+        if (operation === otpOperation.current) routePersonal(state);
+      } catch (failure) {
+        if (operation === otpOperation.current) {
+          const message = googleAuthMessage(failure, t);
+          setError(message); showToast(message, "error", 6000);
+        }
+      } finally {
+        if (operation === otpOperation.current) { setBusy(false); setGoogleBusy(false); }
+      }
+      return;
+    }
     setError("");
     setBusy(true);
     localStorage.setItem("pendingSignupRole", role);
@@ -343,7 +362,7 @@ export default function Login() {
             <div className="mt-20 max-w-lg">
               <span className="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/10 px-3 py-1.5 text-xs text-white/80"><Sparkles size={13} /> Secure access</span>
               <h2 className="font-display text-4xl xl:text-5xl leading-tight font-semibold text-white mt-5">Sign in with phone verification or your staff account.</h2>
-              <p className="mt-5 text-white/65 leading-relaxed">Farmer and General Public accounts use phone verification. PDMA officers can use their existing credentials or Google account.</p>
+              <p className="mt-5 text-white/65 leading-relaxed">{t("firebaseGoogleLoginSummary")}</p>
             </div>
           </div>
           <div className="grid grid-cols-3 gap-3">
@@ -419,11 +438,11 @@ export default function Login() {
                       onMouseDown={addRipple}
                       className="btn-animated auth-primary-btn"
                     >
-                      {busy ? <Loader2 size={16} className="animate-spin" /> : <LockKeyhole size={16} />}
+                      {busy && !googleBusy ? <Loader2 size={16} className="animate-spin" /> : <LockKeyhole size={16} />}
                       {t("sendOtp")}
                     </button>
 
-                    {personalLogin && busy && <button type="button" onClick={resetOtp} className="text-xs font-semibold text-ink/50 hover:text-ink">{t("firebaseOtpCancel")}</button>}
+                    {personalLogin && busy && !googleBusy && <button type="button" onClick={resetOtp} className="text-xs font-semibold text-ink/50 hover:text-ink">{t("firebaseOtpCancel")}</button>}
 
                     {role === "admin" && <p className="text-xs text-ink/40 text-center">{t("adminApprovalNote")}</p>}
                   </form>
@@ -494,9 +513,10 @@ export default function Login() {
 
                 <div className="auth-divider"><span>{t("authOr")}</span></div>
                 <div className="grid sm:grid-cols-2 gap-2.5">
-                  <button type="button" onClick={handleGoogleSignIn} disabled={busy} onMouseDown={addRipple} className="btn-animated auth-google-btn"><GoogleIcon />{t("continueWithGoogle")}</button>
+                  <button type="button" onClick={handleGoogleSignIn} disabled={busy} onMouseDown={addRipple} className="btn-animated auth-google-btn">{googleBusy ? <Loader2 size={16} className="animate-spin" /> : <GoogleIcon />}{t(googleBusy ? "firebaseGoogleOpening" : "continueWithGoogle")}</button>
                   <button type="button" onClick={() => setQrOpen(true)} onMouseDown={addRipple} className="btn-animated auth-google-btn"><QrCode size={17} className="text-primary" />{t("signInWithApp")}</button>
                 </div>
+                {personalLogin && <p className="text-xs text-ink/45 mt-3">{t("firebaseGooglePhoneAccountHint")}</p>}
               </div>
 
               <div className="auth-card-footer mt-3 pt-3 border-t border-line flex flex-wrap items-center justify-center gap-x-2 gap-y-2 text-xs">

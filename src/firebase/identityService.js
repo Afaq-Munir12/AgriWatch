@@ -4,6 +4,7 @@ export function createIdentityService({ auth, sdk, client, readProfile, readRequ
   let verifier;
   let confirmation;
   let otpGeneration = 0;
+  let phoneVerifiedUid = null;
   const cancelled = () => Object.assign(new Error('OTP attempt cancelled.'), { code: 'auth/otp-cancelled' });
   function withDeadline(operation) {
     let timer;
@@ -68,6 +69,7 @@ export function createIdentityService({ auth, sdk, client, readProfile, readRequ
       confirmation = undefined;
       clearVerifier();
       await ready(result.user);
+      phoneVerifiedUid = result.user.uid;
       return result.user;
     },
     async resolveAccess() {
@@ -81,9 +83,20 @@ export function createIdentityService({ auth, sdk, client, readProfile, readRequ
       if (auth.currentUser?.uid !== uid) throw new Error('The signed-in account changed.');
       return { firebaseUid: uid, storedProfileRole: profile?.role ?? null, ...resolvePortal(uid, memberships) };
     },
+    async signInGoogle() {
+      if (auth.currentUser) throw Object.assign(new Error('Sign out before signing into another account.'), { code: 'auth/sign-out-required' });
+      ++otpGeneration; confirmation = undefined; clearVerifier(); phoneVerifiedUid = null;
+      const provider = new sdk.GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+      const result = await sdk.signInWithPopup(auth, provider);
+      if (result.user.isAnonymous || auth.currentUser?.uid !== result.user.uid) throw new Error('Account identity changed; verification stopped.');
+      await ready(result.user);
+      return result.user;
+    },
     async linkGoogle() {
       const user = requireUser();
       const uid = user.uid;
+      if (phoneVerifiedUid !== uid) throw Object.assign(new Error('Verify this account with phone OTP before adding Google.'), { code: 'auth/otp-required' });
       const provider = new sdk.GoogleAuthProvider();
       provider.setCustomParameters({ prompt: 'select_account' });
       // Never fall back to Google sign-in, email/phone matching, unlinking, or account migration.
@@ -123,6 +136,7 @@ export function createIdentityService({ auth, sdk, client, readProfile, readRequ
     },
     async signOut() {
       ++otpGeneration;
+      phoneVerifiedUid = null;
       confirmation = undefined;
       clearVerifier();
       await sdk.signOut(auth);

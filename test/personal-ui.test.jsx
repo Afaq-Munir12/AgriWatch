@@ -23,6 +23,7 @@ import RequirePersonalAuth from '../src/components/RequirePersonalAuth';
 import RequirePortalAuth from '../src/components/RequirePortalAuth';
 import RequireAdminAuth from '../src/components/RequireAdminAuth';
 import ProfileDropdown from '../src/components/ProfileDropdown';
+import PersonalGoogleLink from '../src/components/PersonalGoogleLink';
 import { grantPortalAccess } from '../src/utils/authAccess';
 
 function roleState(role = 'public') {
@@ -35,7 +36,7 @@ function queryResult(data) {
 beforeEach(() => {
   vi.clearAllMocks(); localStorage.clear(); sessionStorage.clear();
   mocks.lang = 'en'; mocks.translate = false;
-  mocks.personal = { user: null, loading: false, access: null, error: null, sendOtp: vi.fn(async () => {}), cancelOtp: vi.fn(), confirmOtp: vi.fn(async () => roleState()), signOut: vi.fn(async () => {}), refresh: vi.fn(async () => roleState()) };
+  mocks.personal = { user: null, loading: false, access: null, error: null, sendOtp: vi.fn(async () => {}), cancelOtp: vi.fn(), confirmOtp: vi.fn(async () => roleState()), signInGoogle: vi.fn(async () => roleState()), linkGoogle: vi.fn(async () => roleState()), signOut: vi.fn(async () => {}), refresh: vi.fn(async () => roleState()) };
   mocks.legacy = { user: null, loading: false, signIn: vi.fn(async () => {}), signOut: vi.fn(async () => {}) };
 });
 afterEach(cleanup);
@@ -84,12 +85,55 @@ describe('existing login UI with separate personal and staff auth', () => {
     await screen.findByText('PDMA dashboard');
     expect(JSON.parse(sessionStorage.getItem('agriwatch_portal_access'))).toMatchObject({ userId: 'staff-uuid', role: 'pdma' });
   });
-  it('PDMA Google still uses the dedicated callback; personal Google does not create a legacy account', async () => {
-    login(); fireEvent.click(screen.getByText('continueWithGoogle'));
-    expect(mocks.legacy.signIn).not.toHaveBeenCalled();
+  it('PDMA Google still uses the dedicated Supabase callback', async () => {
+    login();
     fireEvent.click(screen.getByText('roleAdminLabel')); fireEvent.click(screen.getByText('continueWithGoogle'));
     await waitFor(() => expect(mocks.legacy.signIn).toHaveBeenCalledTimes(1));
     expect(mocks.legacy.signIn.mock.calls[0][0]).toContain('/auth/callback');
+    expect(mocks.personal.signInGoogle).not.toHaveBeenCalled();
+  });
+  it('Farmer-selected Firebase Google opens stored Public without a Supabase grant', async () => {
+    login(); fireEvent.click(screen.getByText('continueWithGoogle'));
+    await screen.findByText('Public dashboard');
+    expect(mocks.personal.signInGoogle).toHaveBeenCalledTimes(1);
+    expect(mocks.legacy.signIn).not.toHaveBeenCalled();
+    expect(mocks.getSignupRequest).not.toHaveBeenCalled();
+    expect(sessionStorage.getItem('agriwatch_portal_access')).toBeNull();
+    expect(mocks.showToast).toHaveBeenCalledWith('firebaseStoredPublicNotice', 'info', 6000);
+  });
+  it('Public-selected existing mobile Google account opens stored Farmer', async () => {
+    mocks.personal.signInGoogle.mockResolvedValue(roleState('farmer'));
+    login(); fireEvent.click(screen.getByText('rolePublicLabel')); fireEvent.click(screen.getByText('continueWithGoogle'));
+    await screen.findByText('Farmer dashboard');
+    expect(mocks.legacy.signIn).not.toHaveBeenCalled();
+  });
+  it('pending Google sign-in displays its own progress and role switching never starts OTP or staff auth', async () => {
+    let complete;
+    mocks.personal.signInGoogle.mockImplementationOnce(() => new Promise(resolve => { complete = resolve; }));
+    login(); fireEvent.click(screen.getByText('continueWithGoogle'));
+    expect(await screen.findByText('firebaseGoogleOpening')).toBeTruthy();
+    expect(screen.queryByText('firebaseOtpCancel')).toBeNull();
+    fireEvent.click(screen.getByText('rolePublicLabel'));
+    await act(async () => complete(roleState()));
+    await screen.findByText('Public dashboard');
+    expect(mocks.personal.sendOtp).not.toHaveBeenCalled();
+    expect(mocks.legacy.signIn).not.toHaveBeenCalled();
+  });
+  it('new Google account with no membership opens setup without creating a profile or role', async () => {
+    mocks.personal.signInGoogle.mockResolvedValue({ user: { uid: 'new-google-uid' }, error: null, access: { status: 'setup', storedRoles: [] } });
+    login(); fireEvent.click(screen.getByText('continueWithGoogle'));
+    await screen.findByText('Account setup');
+    expect(mocks.from).not.toHaveBeenCalled();
+    expect(mocks.getSignupRequest).not.toHaveBeenCalled();
+  });
+  it('blocked Google popup gives a safe Urdu error and retry remains possible', async () => {
+    mocks.lang = 'ur'; mocks.translate = true;
+    mocks.personal.signInGoogle.mockRejectedValueOnce(Object.assign(new Error('private-auth-detail'), { code: 'auth/popup-blocked' }));
+    login(); fireEvent.click(screen.getByText(translations.continueWithGoogle.ur));
+    expect((await screen.findByRole('alert')).textContent).toBe(translations.firebaseGooglePopupBlocked.ur);
+    expect(screen.queryByText('private-auth-detail')).toBeNull();
+    fireEvent.click(screen.getByText(translations.continueWithGoogle.ur));
+    await screen.findByText('Public dashboard');
   });
   it('Farmer/Public changes during SMS sending and code entry retain the attempt and route by stored role', async () => {
     let sent;
@@ -273,4 +317,40 @@ it('personal profile menu signs out Firebase, not Supabase, and offers no unowne
   fireEvent.click(screen.getByText('signOut'));
   await screen.findByText('Signed out login');
   expect(mocks.personal.signOut).toHaveBeenCalledTimes(1);
+});
+
+describe('phone account Google linking', () => {
+  it('restored phone sessions must verify OTP before the linking control is offered', () => {
+    mocks.personal = { ...mocks.personal, ...roleState(), otpVerified: false };
+    render(<PersonalGoogleLink />);
+    expect(screen.getByText('firebaseGoogleOtpFirst')).toBeTruthy();
+    expect(screen.queryByText('firebaseGoogleAdd')).toBeNull();
+    expect(mocks.personal.linkGoogle).not.toHaveBeenCalled();
+  });
+  it('OTP-verified phone users can link Google without starting a new sign-in', async () => {
+    mocks.personal = { ...mocks.personal, ...roleState(), otpVerified: true };
+    render(<PersonalGoogleLink />);
+    fireEvent.click(screen.getByText('firebaseGoogleAdd'));
+    await waitFor(() => expect(mocks.showToast).toHaveBeenCalledWith('firebaseGoogleLinked', 'success', 6000));
+    expect(mocks.personal.linkGoogle).toHaveBeenCalledTimes(1);
+    expect(mocks.personal.signInGoogle).not.toHaveBeenCalled();
+    expect(mocks.legacy.signIn).not.toHaveBeenCalled();
+  });
+  it('an already-used Google account shows a clear collision and allows another choice', async () => {
+    mocks.personal = { ...mocks.personal, ...roleState(), otpVerified: true };
+    mocks.personal.linkGoogle.mockRejectedValueOnce({ code: 'auth/credential-already-in-use' });
+    render(<PersonalGoogleLink />);
+    fireEvent.click(screen.getByText('firebaseGoogleAdd'));
+    expect((await screen.findByRole('alert')).textContent).toBe('firebaseGoogleUsed');
+    fireEvent.click(screen.getByText('firebaseGoogleAdd'));
+    await waitFor(() => expect(mocks.personal.linkGoogle).toHaveBeenCalledTimes(2));
+    expect(mocks.personal.user.uid).toBe('firebase-uid');
+    expect(mocks.personal.signInGoogle).not.toHaveBeenCalled();
+  });
+  it('already-linked Google users see the connected status rather than a second link button', () => {
+    mocks.personal = { ...mocks.personal, ...roleState(), user: { uid: 'firebase-uid', providerData: [{ providerId: 'google.com' }] } };
+    render(<PersonalGoogleLink />);
+    expect(screen.getByText('firebaseGoogleConnected')).toBeTruthy();
+    expect(screen.queryByText('firebaseGoogleAdd')).toBeNull();
+  });
 });

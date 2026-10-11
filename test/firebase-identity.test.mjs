@@ -6,12 +6,13 @@ import { profileMemberships, resolvePortal } from '../src/firebase/roleRouting.j
 import { checkPhoneSite } from '../src/firebase/phoneSite.js';
 function setup(options = {}) {
   const calls = [];
-  const user = { uid: 'phone-firebase-uid', isAnonymous: false, providerData: [{ providerId: 'phone' }], getIdTokenResult: async () => ({ claims: { role: options.claim || 'authenticated' } }) };
+  const user = { uid: options.googleUid || 'phone-firebase-uid', isAnonymous: false, providerData: [{ providerId: 'phone' }], getIdTokenResult: async () => ({ claims: { role: options.claim || 'authenticated' } }) };
   const auth = { currentUser: options.signedOut ? null : user };
   const report = { id: 'report-uuid', ref: 'CMP-STAGED', firebase_uid: options.foreignReport ? 'other-uid' : user.uid };
   const chain = { select: () => chain, eq: (key, uid) => { calls.push(['filter', key, uid]); return chain; }, order: async () => ({ data: [report], error: null }) };
   const sdk = {
     GoogleAuthProvider: class { setCustomParameters() {} },
+    signInWithPopup: async () => { calls.push(['google-sign-in']); if (options.googleFailure) throw { code: options.googleFailure }; user.providerData = [{ providerId: 'google.com' }]; auth.currentUser = user; return { user }; },
     linkWithPopup: async target => { calls.push(['link', target.uid]); if (options.collision) throw Object.assign(new Error('used'), { code: 'auth/credential-already-in-use' }); return { user: { ...user, uid: options.changedUid || user.uid } }; },
     RecaptchaVerifier: class { constructor(target, container, parameters) { calls.push(['recaptcha', parameters.size]); } clear() { calls.push(['clear']); } },
     signInWithPhoneNumber: async (target, phone) => { calls.push(['sms', phone]); if (options.smsFailure) throw new Error('sms-failed'); return { confirm: async code => { if (code === '000000') throw new Error('wrong-code'); auth.currentUser = user; return { user }; } }; },
@@ -19,6 +20,13 @@ function setup(options = {}) {
   };
   const service = createIdentityService({ auth, sdk, client: { from: table => { calls.push(['table', table]); return chain; } }, readProfile: async uid => { if (options.profileFailure) throw new Error('profile-read-failed'); if (options.changeDuringRead) auth.currentUser = { ...user, uid: 'other' }; return options.noProfile ? null : { uid, role: options.storedRole }; }, readRequests: async uid => options.requestFailure ? Promise.reject({ code: 'permission-denied' }) : [{ uid }], readMemberships: options.readMemberships, checkPhoneSite: options.checkPhoneSite, delay: async () => {} });
   return { service, auth, user, calls };
+}
+async function phoneSetup(options = {}) {
+  const fixture = setup({ ...options, signedOut: true });
+  await fixture.service.sendOtp('+923110000000', {});
+  await fixture.service.confirmOtp('123456');
+  fixture.calls.length = 0;
+  return fixture;
 }
 test('OTP uses invisible Firebase verifier, rejects wrong code, and retains Firebase identity', async () => {
   const { service, user, calls } = setup({ signedOut: true });
@@ -34,14 +42,59 @@ test('Google linking requires an existing Firebase account', async () => {
   assert.equal(calls.length, 0);
 });
 test('Google collision does not switch, merge, or overwrite identities', async () => {
-  const { service, auth, calls } = setup({ collision: true });
+  const { service, auth, calls } = await phoneSetup({ collision: true });
   await assert.rejects(service.linkGoogle(), { code: 'auth/credential-already-in-use' });
   assert.equal(auth.currentUser.uid, 'phone-firebase-uid');
   assert.deepEqual(calls, [['link', 'phone-firebase-uid']]);
 });
 test('successful link preserves UID; unexpected identity change is rejected', async () => {
-  assert.equal((await setup().service.linkGoogle()).uid, 'phone-firebase-uid');
-  await assert.rejects(setup({ changedUid: 'other' }).service.linkGoogle(), /identity changed/);
+  assert.equal((await (await phoneSetup()).service.linkGoogle()).uid, 'phone-firebase-uid');
+  await assert.rejects((await phoneSetup({ changedUid: 'other' })).service.linkGoogle(), /identity changed/);
+});
+
+test('a restored phone session cannot link Google without a fresh successful OTP', async () => {
+  const { service, calls } = setup();
+  await assert.rejects(service.linkGoogle(), { code: 'auth/otp-required' });
+  assert.equal(calls.length, 0);
+});
+
+test('new Google sign-in uses Firebase and shows setup without creating a role or matching contacts', async () => {
+  const { service, calls, user } = setup({ signedOut: true, googleUid: 'new-google-uid', noProfile: true });
+  assert.equal((await service.signInGoogle()).uid, user.uid);
+  assert.equal((await service.resolveAccess()).status, 'setup');
+  assert.deepEqual(calls, [['google-sign-in']]);
+  await assert.rejects(service.linkGoogle(), { code: 'auth/otp-required' });
+});
+
+test('existing mobile Google UID reads its own records and stored Farmer/Public role', async () => {
+  for (const [storedRole, portal] of [['citizen', 'public'], ['farmer', 'farmer']]) {
+    const { service, user, calls } = setup({ signedOut: true, googleUid: 'mobile-google-uid', storedRole });
+    assert.equal((await service.signInGoogle()).uid, user.uid);
+    assert.equal((await service.resolveAccess()).portal, portal);
+    const snapshot = await service.snapshot();
+    assert.equal(snapshot.firebaseUid, user.uid);
+    assert.deepEqual(snapshot.providers, ['google.com']);
+    assert.ok(calls.some(call => call[0] === 'filter' && call[1] === 'firebase_uid' && call[2] === user.uid));
+    assert.ok(calls.every(call => !['insert', 'update', 'upsert', 'link'].includes(call[0])));
+  }
+});
+
+test('Google sign-in collision/cancellation do not authenticate or link a different account', async () => {
+  for (const code of ['auth/account-exists-with-different-credential', 'auth/popup-closed-by-user']) {
+    const { service, auth, calls } = setup({ signedOut: true, googleFailure: code });
+    await assert.rejects(service.signInGoogle(), { code });
+    assert.equal(auth.currentUser, null);
+    assert.deepEqual(calls, [['google-sign-in']]);
+  }
+});
+
+test('Google sign-in cannot replace a current phone UID or its verified linking eligibility', async () => {
+  const { service, user, calls } = await phoneSetup();
+  await assert.rejects(service.signInGoogle(), { code: 'auth/sign-out-required' });
+  assert.equal(calls.length, 0);
+  assert.equal((await service.linkGoogle()).uid, user.uid);
+  await service.signOut();
+  await assert.rejects(service.linkGoogle(), /Sign in/);
 });
 test('missing authenticated claim prevents all data reads', async () => {
   const { service, calls } = setup({ claim: 'missing' });

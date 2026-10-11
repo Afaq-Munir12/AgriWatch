@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import Card from './Card';
 import { usePersonalAuth } from '../firebase/PersonalAuthContext';
 import { accountObservation } from '../firebase/session.js';
+import PersonalGoogleLink from './PersonalGoogleLink';
 export default function PersonalAccountStatus() {
   const state = usePersonalAuth();
   if (!state.user) return null;
@@ -22,5 +23,6 @@ export default function PersonalAccountStatus() {
       <button type="button" onClick={download} className="border border-line rounded-lg px-3 py-2 mt-4 text-xs">Download sign-in check</button>
     </>}
     <button type="button" onClick={() => state.refresh()} disabled={state.loading} className="border border-line rounded-lg px-3 py-2 mt-4 ms-2 text-xs">Refresh account</button>
+    <PersonalGoogleLink />
   </Card>;
 }

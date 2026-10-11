@@ -4,6 +4,22 @@
 // (for example severity/crop labels) is intentionally localized.
 
 const dict = {
+  firebaseGoogleLoginSummary: { en: "Farmer and General Public accounts use phone verification or Google. PDMA officers can use their existing staff credentials or Google account.", ur: "کسان اور عام شہری فون کی تصدیق یا گوگل استعمال کر سکتے ہیں۔ پی ڈی ایم اے افسران اپنے موجودہ دفتری اکاؤنٹ یا گوگل سے سائن ان کر سکتے ہیں۔" },
+  firebaseGooglePhoneAccountHint: { en: "Already use phone OTP? Sign in with your phone first, then add Google in Settings to keep the same account.", ur: "پہلے سے فون کا کوڈ استعمال کرتے ہیں؟ اسی اکاؤنٹ کو برقرار رکھنے کے لیے پہلے فون سے سائن ان کریں، پھر ترتیبات میں گوگل شامل کریں۔" },
+  firebaseGoogleMethods: { en: "Sign-in methods", ur: "سائن ان کے طریقے" },
+  firebaseGoogleAdd: { en: "Add Google to this account", ur: "اس اکاؤنٹ میں گوگل شامل کریں" },
+  firebaseGoogleOpening: { en: "Opening Google…", ur: "گوگل کھولا جا رہا ہے…" },
+  firebaseGoogleConnected: { en: "Google is connected to this account.", ur: "گوگل اس اکاؤنٹ سے منسلک ہے۔" },
+  firebaseGoogleLinked: { en: "Google added. You can now use phone OTP or Google for this same account.", ur: "گوگل شامل ہو گیا۔ اب اسی اکاؤنٹ کے لیے فون کا کوڈ یا گوگل استعمال کر سکتے ہیں۔" },
+  firebaseGoogleLinkHint: { en: "Add Google to your verified phone account. Your saved role and existing records stay on the same account.", ur: "اپنے تصدیق شدہ فون اکاؤنٹ میں گوگل شامل کریں۔ محفوظ کردار اور موجودہ ریکارڈ اسی اکاؤنٹ پر رہیں گے۔" },
+  firebaseGoogleOtpFirst: { en: "Sign out and verify your phone with OTP first, then return to Settings to add Google to that account.", ur: "پہلے سائن آؤٹ کریں اور فون کے کوڈ سے تصدیق کریں، پھر اسی اکاؤنٹ میں گوگل شامل کرنے کے لیے ترتیبات پر واپس آئیں۔" },
+  firebaseGoogleUsed: { en: "That Google account is already linked to another Firebase account. Choose a different Google account. Your current account has not been merged or switched.", ur: "یہ گوگل اکاؤنٹ پہلے سے کسی دوسرے اکاؤنٹ سے منسلک ہے۔ دوسرا گوگل اکاؤنٹ منتخب کریں۔ آپ کے موجودہ اکاؤنٹ کو نہ ملایا گیا ہے نہ تبدیل کیا گیا ہے۔" },
+  firebaseGoogleExistingMethod: { en: "This Google account uses another sign-in method. Sign in with your existing method first; accounts will not be merged automatically.", ur: "یہ گوگل اکاؤنٹ سائن ان کا دوسرا طریقہ استعمال کرتا ہے۔ پہلے اپنے موجودہ طریقے سے سائن ان کریں؛ اکاؤنٹس خودکار طور پر نہیں ملائے جائیں گے۔" },
+  firebaseGooglePopupBlocked: { en: "Your browser blocked the Google window. Allow pop-ups for this website and try again.", ur: "براؤزر نے گوگل کی کھڑکی روک دی ہے۔ اس ویب سائٹ کے لیے پاپ اپ کی اجازت دیں اور دوبارہ کوشش کریں۔" },
+  firebaseGoogleCancelled: { en: "Google sign-in was cancelled. You can try again or use phone OTP.", ur: "گوگل سے سائن ان منسوخ ہوا۔ دوبارہ کوشش کریں یا فون کا کوڈ استعمال کریں۔" },
+  firebaseGoogleUnavailable: { en: "Google sign-in is not configured for this website address. Please contact support.", ur: "اس ویب پتے پر گوگل سے سائن ان کی ترتیب مکمل نہیں ہے۔ معاونت سے رابطہ کریں۔" },
+  firebaseGoogleSignOutFirst: { en: "Sign out before signing into another Google account.", ur: "دوسرے گوگل اکاؤنٹ سے سائن ان کرنے سے پہلے سائن آؤٹ کریں۔" },
+  firebaseGoogleFailed: { en: "Google sign-in could not be completed. Please try again.", ur: "گوگل سے سائن ان مکمل نہیں ہو سکا۔ براہ کرم دوبارہ کوشش کریں۔" },
   firebasePersonalSelection: { en: "Account type preference — your saved role is used", ur: "اکاؤنٹ کی قسم کی ترجیح — آپ کا محفوظ کردار استعمال ہوگا" },
   firebaseStoredPublicNotice: { en: "Your saved account is General Public. Opening General Public.", ur: "آپ کا محفوظ اکاؤنٹ عام شہری کا ہے۔ عام شہری پورٹل کھولا جا رہا ہے۔" },
   firebaseStoredFarmerNotice: { en: "Your saved account is Farmer. Opening Farmer.", ur: "آپ کا محفوظ اکاؤنٹ کسان کا ہے۔ کسان پورٹل کھولا جا رہا ہے۔" },

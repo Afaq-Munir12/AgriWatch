@@ -6,7 +6,7 @@ const Context = createContext(null);
 export function PersonalAuthProvider({ children }) {
   const state = useSyncExternalStore(session.subscribe, session.getSnapshot);
   useEffect(() => session.start(), []);
-  return <Context.Provider value={{ ...state, refresh: session.refresh, confirmOtp: session.confirmOtp, signOut: session.signOut, sendOtp: service.sendOtp, cancelOtp: service.dispose }}>{children}</Context.Provider>;
+  return <Context.Provider value={{ ...state, refresh: session.refresh, confirmOtp: session.confirmOtp, signInGoogle: session.signInGoogle, linkGoogle: session.linkGoogle, signOut: session.signOut, sendOtp: service.sendOtp, cancelOtp: service.dispose }}>{children}</Context.Provider>;
 }
 export function usePersonalAuth() {
   const value = useContext(Context);
