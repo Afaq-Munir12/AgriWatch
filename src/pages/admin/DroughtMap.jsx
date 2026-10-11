@@ -549,7 +549,7 @@ export default function DroughtMap() {
       >
         <PdmaPageHero
           title="Operational drought map"
-          copy="Explore district-level drought conditions across Pakistan and switch between severity, NDVI and soil-moisture views without leaving the PDMA workspace."
+          copy="Explore district-level drought conditions across Pakistan and switch between severity, NDVI and soil-moisture views without leaving the NDMA workspace."
           stats={[
             { label: "Mapped districts", value: districts.length },
             { label: "High risk", value: districts.filter((d) => d.severity === "Severe" || d.severity === "Extreme").length },

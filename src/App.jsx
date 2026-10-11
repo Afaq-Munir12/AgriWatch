@@ -7,6 +7,8 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import CompleteProfile from "./pages/CompleteProfile";
 import AuthCallback from "./pages/AuthCallback";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import GuestDashboard from "./pages/GuestDashboard";
 import DistrictDetail from "./pages/DistrictDetail";
 import DistrictCompare from "./pages/DistrictCompare";
@@ -61,6 +63,8 @@ export default function App() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/complete-profile" element={<CompleteProfile />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/auth/reset-password" element={<ResetPassword />} />
         <Route path="/guest" element={<GuestDashboard />} />
 
         {/* Admin portal — full-system oversight: access requests, user directory, reports. Separate Google-account login from the phone/OTP login above. */}
@@ -76,7 +80,7 @@ export default function App() {
           </Route>
         </Route>
 
-        {/* PDMA Officer portal — protected by an approved PDMA session + fresh portal access grant. */}
+        {/* NDMA Officer portal — protected by an approved NDMA session + fresh portal access grant. */}
         <Route element={<RequirePortalAuth role="pdma" />}>
           <Route element={<AdminLayout />}>
             <Route path="/pdma" element={<Dashboard />} />

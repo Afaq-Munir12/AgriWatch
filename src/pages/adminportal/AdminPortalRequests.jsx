@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 
 const roleIcon = { farmer: Sprout, public: Users2, pdma: ShieldCheck, admin: ShieldCheck, officer: ShieldCheck };
-const roleLabel = { farmer: "Farmer", public: "General Public", pdma: "PDMA Officer", admin: "Admin Portal", officer: "Officer" };
+const roleLabel = { farmer: "Farmer", public: "General Public", pdma: "NDMA Officer", admin: "Admin Portal", officer: "Officer" };
 
 function statusClass(status) {
   const s = String(status || "pending").toLowerCase();
@@ -162,7 +162,7 @@ export default function AdminPortalRequests() {
         <button onClick={() => switchSource("website")} onMouseDown={addRipple} className={`btn-animated text-left rounded-xl border p-4 transition-all ${source === "website" ? "bg-primary text-white border-primary shadow-lg -translate-y-0.5" : "bg-surface border-line hover:border-primary/30"}`}>
           <div className="flex items-center justify-between"><Globe2 size={18} /><span className="text-xs font-mono">{websiteRequests.length}</span></div>
           <p className="font-display font-semibold mt-3">Website sign-ups</p>
-          <p className={`text-xs mt-1 ${source === "website" ? "text-white/70" : "text-ink/45"}`}>Farmer, Public and PDMA</p>
+          <p className={`text-xs mt-1 ${source === "website" ? "text-white/70" : "text-ink/45"}`}>Farmer, Public and NDMA</p>
         </button>
         <button onClick={() => switchSource("admin")} onMouseDown={addRipple} className={`btn-animated text-left rounded-xl border p-4 transition-all ${source === "admin" ? "bg-primary text-white border-primary shadow-lg -translate-y-0.5" : "bg-surface border-line hover:border-primary/30"}`}>
           <div className="flex items-center justify-between"><ShieldCheck size={18} /><span className="text-xs font-mono">{adminRequests.length}</span></div>

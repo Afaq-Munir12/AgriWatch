@@ -11,9 +11,9 @@ export default function Settings() {
       <main className="p-4 sm:p-8 space-y-6 pdma-page" dir="ltr">
         <PdmaPageHero
           title="Officer profile and preferences"
-          copy="Keep your PDMA officer details, assigned district and account preferences current across the AgriWatch operational portal."
+          copy="Keep your NDMA officer details, assigned district and account preferences current across the AgriWatch operational portal."
           stats={[
-            { label: "Portal", value: "PDMA" },
+            { label: "Portal", value: "NDMA" },
             { label: "Access", value: "Officer" },
             { label: "Account", value: "Verified profile" },
           ]}

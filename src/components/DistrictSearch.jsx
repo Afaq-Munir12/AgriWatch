@@ -50,7 +50,7 @@ export default function DistrictSearch() {
         const payload = await getDistricts();
         if (!cancelled) setDistricts(normalizeRows(payload));
       } catch (err) {
-        console.error("PDMA district search error:", err);
+        console.error("NDMA district search error:", err);
         if (!cancelled) {
           setDistricts([]);
           setError(err?.message || "Unable to load districts.");

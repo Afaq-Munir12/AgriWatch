@@ -447,7 +447,7 @@ export default function PublicAlerts() {
                   <span>
                     {t("alertsSource")}:{" "}
                     <strong className="text-ink/60">
-                      AgriWatch / PDMA
+                      AgriWatch / NDMA
                     </strong>
                   </span>
                 </div>

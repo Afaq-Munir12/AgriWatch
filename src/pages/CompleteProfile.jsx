@@ -41,7 +41,7 @@ import { clearLoginAttempt, grantPortalAccess } from "../utils/authAccess";
 const roleOptions = [
   { key: "farmer", label: "Farmer", icon: Sprout },
   { key: "public", label: "General Public", icon: Users2 },
-  { key: "pdma", label: "PDMA Officer", icon: ShieldCheck },
+  { key: "pdma", label: "NDMA Officer", icon: ShieldCheck },
 ];
 
 const DOCS_BUCKET = "verification-documents";
@@ -159,7 +159,7 @@ export default function CompleteProfile() {
     }
 
     if (role === "pdma" && !designation.trim()) {
-      return setError("Please enter your PDMA designation.");
+      return setError("Please enter your NDMA designation.");
     }
 
     if (needsBackupPassword && !backupPasswordReady) {
@@ -180,7 +180,7 @@ export default function CompleteProfile() {
         .maybeSingle();
       if (existingRoleError) throw existingRoleError;
       if (existingRole) {
-        throw new Error(`This Google account is already registered as ${role === "pdma" ? "PDMA Officer" : role}. Use Log in and select that role.`);
+        throw new Error(`This Google account is already registered as ${role === "pdma" ? "NDMA Officer" : role}. Use Log in and select that role.`);
       }
 
       if (needsBackupPassword) {
@@ -480,7 +480,7 @@ export default function CompleteProfile() {
               </div>
               )}
 
-              <Field label={role === "pdma" ? "PDMA ID card / appointment letter" : role === "farmer" ? "CNIC / proof of land ownership" : "CNIC or other ID"} hint="Image or PDF">
+              <Field label={role === "pdma" ? "NDMA ID card / appointment letter" : role === "farmer" ? "CNIC / proof of land ownership" : "CNIC or other ID"} hint="Image or PDF">
                 <label className="signup-upload-zone">
                   <UploadCloud size={19} className="text-primary" />
                   <div className="flex-1">

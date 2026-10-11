@@ -24,7 +24,7 @@ export default function AdminPortalLogin() {
 
     try {
       // Admin Portal must always allow choosing the approved admin Gmail.
-      // Clear any Farmer/Public/PDMA Supabase session first so an old session
+      // Clear any Farmer/Public/NDMA Supabase session first so an old session
       // cannot silently send the user into the wrong account.
       await signOut();
       clearPortalAccess();

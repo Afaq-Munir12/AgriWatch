@@ -1,4 +1,4 @@
-export default function PdmaPageHero({ eyebrow = "PDMA operations", title, copy, stats = [], right = null, children = null }) {
+export default function PdmaPageHero({ eyebrow = "NDMA operations", title, copy, stats = [], right = null, children = null }) {
   return (
     <section className="pdma-page-hero">
       <div className="pdma-hero-content">

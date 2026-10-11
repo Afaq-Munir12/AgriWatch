@@ -17,7 +17,7 @@ function fmtDate(value) {
 
 function roleIcon(role) {
   if (role === "Farmer") return Sprout;
-  if (role === "PDMA Officer") return ShieldCheck;
+  if (role === "NDMA Officer") return ShieldCheck;
   return Users2;
 }
 
@@ -28,7 +28,7 @@ export default function AdminPortalUsers() {
   const [search, setSearch] = useState("");
   const [district, setDistrict] = useState("All");
 
-  const roles = ["All", "Farmer", "General Public", "PDMA Officer"];
+  const roles = ["All", "Farmer", "General Public", "NDMA Officer"];
   const districts = useMemo(
     () => ["All", ...Array.from(new Set(directory.map((u) => u.district).filter(Boolean))).sort()],
     [directory]
@@ -92,7 +92,7 @@ export default function AdminPortalUsers() {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <span className="portal-chip"><Radio size={12} /> Live approved directory</span>
-            <h1 className="font-display text-2xl sm:text-3xl font-semibold mt-3">Users & PDMA officers</h1>
+            <h1 className="font-display text-2xl sm:text-3xl font-semibold mt-3">Users & NDMA officers</h1>
             <p className="text-white/72 mt-2 max-w-2xl">Every row below comes from the real approved-role tables in Supabase and updates in realtime.</p>
           </div>
           <div className="portal-chip">{counts.totalUsers} active accounts</div>
@@ -100,7 +100,7 @@ export default function AdminPortalUsers() {
         <div className="portal-hero-grid">
           <div className="portal-metric"><p className="portal-metric-label">Farmers</p><p className="portal-metric-value">{counts.farmers}</p></div>
           <div className="portal-metric"><p className="portal-metric-label">General public</p><p className="portal-metric-value">{counts.publicUsers}</p></div>
-          <div className="portal-metric"><p className="portal-metric-label">PDMA officers</p><p className="portal-metric-value">{counts.pdmaOfficers}</p></div>
+          <div className="portal-metric"><p className="portal-metric-label">NDMA officers</p><p className="portal-metric-value">{counts.pdmaOfficers}</p></div>
         </div>
       </section>
 
@@ -112,7 +112,7 @@ export default function AdminPortalUsers() {
         <Card className="!p-4 transition-all hover:-translate-y-0.5"><p className="text-xs text-ink/45">Total approved</p><p className="text-2xl font-semibold mt-1">{counts.totalUsers}</p></Card>
         <Card className="!p-4 transition-all hover:-translate-y-0.5"><p className="text-xs text-ink/45">Farmers</p><p className="text-2xl font-semibold mt-1">{counts.farmers}</p></Card>
         <Card className="!p-4 transition-all hover:-translate-y-0.5"><p className="text-xs text-ink/45">General public</p><p className="text-2xl font-semibold mt-1">{counts.publicUsers}</p></Card>
-        <Card className="!p-4 transition-all hover:-translate-y-0.5"><p className="text-xs text-ink/45">PDMA officers</p><p className="text-2xl font-semibold mt-1">{counts.pdmaOfficers}</p></Card>
+        <Card className="!p-4 transition-all hover:-translate-y-0.5"><p className="text-xs text-ink/45">NDMA officers</p><p className="text-2xl font-semibold mt-1">{counts.pdmaOfficers}</p></Card>
       </div>
 
       <Card className="!p-4">
@@ -174,7 +174,7 @@ export default function AdminPortalUsers() {
                     <td className="py-3 pr-4 text-ink/65">{u.role}</td>
                     <td className="py-3 pr-4"><span className="inline-flex items-center gap-1 text-ink/65"><MapPin size={12} /> {u.district || "—"}</span></td>
                     <td className="py-3 pr-4"><p className="text-ink/70">{u.email || "—"}</p><p className="text-xs text-ink/40 mt-0.5">{u.phone || ""}</p></td>
-                    <td className="py-3 pr-4 text-ink/60">{u.role === "Farmer" ? [u.crop, u.farm_size || u.farmSize].filter(Boolean).join(" · ") || "—" : u.role === "PDMA Officer" ? u.designation || "—" : u.tehsil || "—"}</td>
+                    <td className="py-3 pr-4 text-ink/60">{u.role === "Farmer" ? [u.crop, u.farm_size || u.farmSize].filter(Boolean).join(" · ") || "—" : u.role === "NDMA Officer" ? u.designation || "—" : u.tehsil || "—"}</td>
                     <td className="py-3 text-xs font-mono text-ink/50">{fmtDate(u.approved_at || u.created_at)}</td>
                   </tr>
                 );

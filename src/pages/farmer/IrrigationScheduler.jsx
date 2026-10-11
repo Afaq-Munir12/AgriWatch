@@ -321,7 +321,7 @@ export default function IrrigationScheduler() {
         );
 
         // Resolve the profile district against the live ML /districts list,
-        // then use the same deployed API service as Farmer Home / Public / PDMA.
+        // then use the same deployed API service as Farmer Home / Public / NDMA.
         const apiDistrict =
           await resolveDistrictName(district);
 

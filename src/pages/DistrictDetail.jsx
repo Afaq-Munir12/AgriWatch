@@ -118,7 +118,7 @@ export default function DistrictDetail() {
               : []
         );
       } catch (err) {
-        console.error("PDMA district detail error:", err);
+        console.error("NDMA district detail error:", err);
         if (!cancelled) {
           setPrediction(null);
           setHistory([]);
@@ -380,7 +380,7 @@ export default function DistrictDetail() {
         <Card className="farmer-form-card flex items-center justify-between flex-wrap gap-4" scan>
           <div>
             <p className="text-xs uppercase text-ink/40 font-medium">Operational action</p>
-            <p className="text-sm text-ink/60 mt-1">Review the district evidence, then issue a targeted PDMA alert if required.</p>
+            <p className="text-sm text-ink/60 mt-1">Review the district evidence, then issue a targeted NDMA alert if required.</p>
           </div>
           <Link
             to={`/pdma/alerts?district=${encodeURIComponent(actualDistrict)}`}

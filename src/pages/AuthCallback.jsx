@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Loader2, ShieldCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSupabaseAuth } from "../supabase/useSupabaseAuth";
+import { supabase } from "../supabase/config";
 import { getApprovedSignupRequests, getSignupRequest, normalizeDbRole } from "../services/authService";
 import {
   clearLoginAttempt,
@@ -16,10 +17,13 @@ function routeForRole(role) {
 }
 
 export default function AuthCallback() {
-  const { user, loading, signOut } = useSupabaseAuth();
+  const { signOut } = useSupabaseAuth();
   const navigate = useNavigate();
   const [status, setStatus] = useState("Finishing Google sign-in…");
   const [problem, setProblem] = useState("");
+  const [oauthUser, setOauthUser] = useState(null);
+  const [sessionChecked, setSessionChecked] = useState(false);
+  const [sessionError, setSessionError] = useState("");
 
   const oauthError = useMemo(() => {
     if (typeof window === "undefined") return "";
@@ -27,8 +31,95 @@ export default function AuthCallback() {
     return params.get("error_description") || params.get("error") || "";
   }, []);
 
+  // OAuth can return either a PKCE code (?code=...) or an implicit
+  // access/refresh token pair (#access_token=...&refresh_token=...).
+  // Do not rely on the auth hook's initially cached null user: recover the
+  // callback session first, then perform the existing role-approval checks.
+  // A promise ref also prevents duplicate recovery under React StrictMode.
+  const recoveryPromiseRef = useRef(null);
   useEffect(() => {
-    if (loading) return;
+    let cancelled = false;
+
+    async function recoverGoogleSession() {
+      const fragment = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+      const query = new URLSearchParams(window.location.search);
+      const oauthErrorText =
+        query.get("error_description") || query.get("error") ||
+        fragment.get("error_description") || fragment.get("error");
+      if (oauthErrorText) throw new Error(oauthErrorText);
+
+      // If the provider returns an implicit token pair, explicitly establish
+      // the session instead of waiting indefinitely for an SDK auth event.
+      // Supabase Auth validates/refreshes these credentials on setSession.
+      const accessToken = fragment.get("access_token");
+      const refreshToken = fragment.get("refresh_token");
+      if (accessToken && refreshToken) {
+        const { data, error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+        if (error) throw error;
+        if (!data?.user) throw new Error("Google returned tokens, but Supabase did not accept the session.");
+        // Remove bearer credentials from the address bar/history ASAP.
+        window.history.replaceState(window.history.state, "", window.location.pathname + window.location.search);
+        return data.user;
+      }
+
+      // Supabase may already have consumed the OAuth redirect during its own
+      // initialization. Check the SDK session before trying any code exchange.
+      for (let i = 0; i < 8; i += 1) {
+        const { data, error } = await supabase.auth.getSession();
+        if (error) throw error;
+        if (data?.session?.user) {
+          if (accessToken) {
+            window.history.replaceState(window.history.state, "", window.location.pathname + window.location.search);
+          }
+          return data.session.user;
+        }
+        if (i < 7) await new Promise((resolve) => setTimeout(resolve, 400));
+      }
+
+      // Fallback for a PKCE code only when SDK initialization did not create
+      // a session; don't exchange a consumed code twice.
+      const code = query.get("code");
+      if (code) {
+        const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+        if (error) throw error;
+        if (data?.user) {
+          window.history.replaceState(window.history.state, "", window.location.pathname);
+          return data.user;
+        }
+      }
+      throw new Error(
+        "Google returned, but no Supabase session could be established. Please sign in again."
+      );
+    }
+
+    if (!recoveryPromiseRef.current) {
+      recoveryPromiseRef.current = recoverGoogleSession();
+    }
+    recoveryPromiseRef.current
+      .then((resolvedUser) => {
+        if (!cancelled) {
+          setOauthUser(resolvedUser);
+          setSessionChecked(true);
+        }
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          setSessionError(error?.message || "Google sign-in could not be completed.");
+          setSessionChecked(true);
+        }
+      });
+    return () => { cancelled = true; };
+  }, []);
+
+  // Only trust the result of the returned OAuth credentials for this callback,
+  // never a cached user from a previous login.
+  const activeUser = oauthUser;
+
+  useEffect(() => {
+    if (!sessionChecked) return;
 
     let cancelled = false;
 
@@ -48,8 +139,11 @@ export default function AuthCallback() {
         return;
       }
 
-      if (!user) {
-        setProblem("Google returned to AgriWatch, but no authenticated session was created. Please try again.");
+      if (!activeUser) {
+        setProblem(
+          sessionError ||
+          "Google returned, but Supabase did not establish a session. Please sign in again."
+        );
         return;
       }
 
@@ -75,14 +169,14 @@ export default function AuthCallback() {
         setStatus("Checking whether this Google account already has AgriWatch access…");
 
         try {
-          const approvedRoles = await getApprovedSignupRequests(user.id);
+          const approvedRoles = await getApprovedSignupRequests(activeUser.id);
           if (cancelled) return;
 
           if (approvedRoles.length > 0) {
             const roleNames = approvedRoles
               .map((item) =>
                 item.role === "pdma"
-                  ? "PDMA Officer"
+                  ? "NDMA Officer"
                   : item.role === "public"
                     ? "General Public"
                     : "Farmer"
@@ -112,7 +206,7 @@ export default function AuthCallback() {
       setStatus("Checking your approved AgriWatch role…");
 
       try {
-        const request = await getSignupRequest(user.id, requestedDbRole);
+        const request = await getSignupRequest(activeUser.id, requestedDbRole);
         if (cancelled) return;
 
         if (!request) {
@@ -125,7 +219,7 @@ export default function AuthCallback() {
         }
 
         if (request.status === "approved") {
-          grantPortalAccess(user.id, requestedDbRole);
+          grantPortalAccess(activeUser.id, requestedDbRole);
           localStorage.removeItem("pendingSignupRole");
           clearLoginAttempt();
           navigate(routeForRole(requestedDbRole), { replace: true });
@@ -150,7 +244,7 @@ export default function AuthCallback() {
     return () => {
       cancelled = true;
     };
-  }, [loading, user, navigate, oauthError]);
+  }, [activeUser, sessionChecked, sessionError, navigate, oauthError]);
 
   async function backToLogin() {
     clearLoginAttempt();

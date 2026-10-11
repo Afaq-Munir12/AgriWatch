@@ -8,7 +8,7 @@ export default function OfflineNotice({
   title = `Not connected to Supabase — showing local ${what}.`,
   detail = (
     <>
-      Anything submitted now is saved in this browser only and will not reach the PDMA or Admin
+      Anything submitted now is saved in this browser only and will not reach the NDMA or Admin
       portal. Check your <code className="font-mono">.env</code> keys and that the tables from{" "}
       <code className="font-mono">supabase/complaints_setup.sql</code> exist.
     </>

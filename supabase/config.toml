@@ -1,0 +1,4 @@
+# This bridge verifies Firebase ID tokens itself using Google's public signing keys.
+# Platform JWT enforcement is disabled ONLY for this function. Other functions keep defaults.
+[functions.phone-auth-bridge]
+verify_jwt = false

@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Map, TrendingUp, Bell, FileWarning, FileText, GitCompare, Settings, Bug,
 } from "lucide-react";
 
-// PDMA Officer portal — a signed-in officer's day-to-day tools: drought
+// NDMA Officer portal — a signed-in officer's day-to-day tools: drought
 // monitoring, alerts, and farmer complaints for their assigned area.
 // User/officer directory and access-request approvals live in the separate
 // Admin Portal (/admin-portal) only.

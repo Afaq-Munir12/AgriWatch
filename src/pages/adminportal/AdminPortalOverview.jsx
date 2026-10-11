@@ -128,7 +128,7 @@ export default function AdminPortalOverview() {
               <StatCard label="Total Users" value={counts.totalUsers} icon={Users2} delta={`${counts.recentApprovals30d} approved in last 30d`} deltaTone="ok" />
               <StatCard label="Farmers" value={counts.farmers} icon={Sprout} delta="From farmers table" deltaTone="ok" />
               <StatCard label="General Public" value={counts.publicUsers} icon={Users2} delta="From public_users table" deltaTone="ok" />
-              <StatCard label="PDMA Officers" value={counts.pdmaOfficers} icon={ShieldCheck} delta={`${counts.pdmaDistricts} districts represented`} deltaTone="ok" />
+              <StatCard label="NDMA Officers" value={counts.pdmaOfficers} icon={ShieldCheck} delta={`${counts.pdmaDistricts} districts represented`} deltaTone="ok" />
             </>
           )}
         </div>
@@ -163,7 +163,7 @@ export default function AdminPortalOverview() {
               {recentUsers.map((u) => (
                 <div key={u.directoryKey} className="py-3 flex items-center gap-3 first:pt-0 last:pb-0">
                   <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                    {u.role === "Farmer" ? <Sprout size={15} className="text-primary" /> : u.role === "PDMA Officer" ? <ShieldCheck size={15} className="text-primary" /> : <Users2 size={15} className="text-primary" />}
+                    {u.role === "Farmer" ? <Sprout size={15} className="text-primary" /> : u.role === "NDMA Officer" ? <ShieldCheck size={15} className="text-primary" /> : <Users2 size={15} className="text-primary" />}
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium truncate">{u.name}</p>
@@ -189,7 +189,7 @@ export default function AdminPortalOverview() {
           <Card>
             <div className="flex items-center gap-2">
               <MapPinned size={16} className="text-primary" />
-              <p className="font-display font-semibold">PDMA coverage</p>
+              <p className="font-display font-semibold">NDMA coverage</p>
             </div>
             <p className="text-3xl font-display font-semibold mt-4">{counts.pdmaDistricts}</p>
             <p className="text-xs text-ink/45 mt-1">districts with approved officers</p>
@@ -199,8 +199,8 @@ export default function AdminPortalOverview() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {[
-          ["/admin-portal/requests", "Review access requests", "Approve Farmer, Public, PDMA and Admin access from live Supabase queues."],
-          ["/admin-portal/users", "Browse users & officers", "Live directory of every approved Farmer, Public user and PDMA officer."],
+          ["/admin-portal/requests", "Review access requests", "Approve Farmer, Public, NDMA and Admin access from live Supabase queues."],
+          ["/admin-portal/users", "Browse users & officers", "Live directory of every approved Farmer, Public user and NDMA officer."],
           ["/admin-portal/complaints", "Field complaints", "Monitor and resolve farmer/public complaints across all districts."],
           ["/admin-portal/issues", "Software issues", "Triage glitches reported from every AgriWatch portal."],
         ].map(([to, title, text]) => (

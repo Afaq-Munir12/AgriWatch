@@ -72,7 +72,7 @@ export function SeverityPill({ level, label }) {
 }
 
 // One page, three portals. Farmer/Public get practical Urdu when selected;
-// PDMA intentionally keeps the operational English copy.
+// NDMA intentionally keeps the operational English copy.
 export default function ReportIssue({ role = "farmer" }) {
   const { issues, loading, offline, error, addIssue } = useIssueReports();
   const profile = useCurrentProfile(role === "pdma" ? "pdma" : role);
@@ -192,7 +192,7 @@ export default function ReportIssue({ role = "farmer" }) {
 
   const portalLabel =
     role === "pdma"
-      ? "PDMA"
+      ? "NDMA"
       : role === "public"
         ? tr("General Public", "عوام")
         : tr("Farmer", "کسان");

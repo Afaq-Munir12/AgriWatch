@@ -31,7 +31,7 @@ export default function Reports() {
       <main className="p-4 sm:p-8 space-y-6 pdma-page" dir="ltr">
         <PdmaPageHero
           title="Drought reporting workspace"
-          copy="Prepare district-level situation reports for PDMA review and keep a clear history of generated reporting periods."
+          copy="Prepare district-level situation reports for NDMA review and keep a clear history of generated reporting periods."
           stats={[
             { label: "Generated reports", value: generated.length },
             { label: "Current scope", value: district },

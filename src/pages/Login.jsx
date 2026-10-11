@@ -6,12 +6,10 @@ import {
   KeyRound,
   Loader2,
   LockKeyhole,
-  QrCode,
   ShieldCheck,
   Sparkles,
   Sprout,
   Users2,
-  X,
 } from "lucide-react";
 import logo from "../assets/logo.jpeg";
 import { useLanguage } from "../i18n/LanguageContext";
@@ -20,6 +18,7 @@ import ThemeToggle from "../components/ThemeToggle";
 import { addRipple } from "../utils/ripple";
 import { useSupabaseAuth } from "../supabase/useSupabaseAuth";
 import { supabase } from "../supabase/config";
+import { phonePasswordLogin, phoneBridgeEnabled } from "../services/phoneAccountBridge";
 import { getSignupRequest, normalizeDbRole } from "../services/authService";
 import {
   normalizePakistanLocalPhone,
@@ -67,7 +66,6 @@ export default function Login() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [status, setStatus] = useState(null);
-  const [qrOpen, setQrOpen] = useState(false);
 
   useEffect(() => {
     if (authLoading || !user || credentialFlow.current) return;
@@ -85,27 +83,42 @@ export default function Login() {
     const raw = identifier.trim();
     if (!raw) return setError(t("authErrIdentifierRequired"));
     if (!password) return setError(t("authErrPasswordRequired"));
-
     let credentials;
-    if (raw.includes("@")) {
-      if (!validEmail(raw)) return setError(t("authErrEmailInvalid"));
-      credentials = { email: raw.toLowerCase(), password };
-    } else {
+    let phoneCredential = null;
+    if (!raw.includes("@")) {
       const localPhone = normalizePakistanLocalPhone(raw);
       if (pakistanPhoneError(localPhone)) return setError(t("authErrPhoneLogin"));
-      credentials = { phone: toPakistanE164(localPhone), password };
+      // Supabase owns the password and returns its normal session; OTP was
+      // required at registration or when linking the number to this identity.
+      if (!phoneBridgeEnabled) return setError("Phone login is not enabled for this environment. Use email or Google until phone authentication is released.");
+      phoneCredential = toPakistanE164(localPhone);
+    } else {
+      if (!validEmail(raw)) return setError(t("authErrEmailInvalid"));
+      credentials = { email: raw.toLowerCase(), password };
     }
 
     credentialFlow.current = true;
     setBusy(true);
     try {
-      const { data, error: authError } = await supabase.auth.signInWithPassword(credentials);
+      const result = phoneCredential
+        ? { data: await phonePasswordLogin(phoneCredential, password), error: null }
+        : await supabase.auth.signInWithPassword(credentials);
+      const { data, error: authError } = result;
       if (authError) throw authError;
       if (!data?.user?.id) throw new Error(t("authErrNoSession"));
 
       const dbRole = normalizeDbRole(role);
       const request = await getSignupRequest(data.user.id, dbRole);
       if (!request) {
+        // A phone account may have been created successfully just before its
+        // initial profile submission failed or the user closed the browser.
+        // Let that *authenticated* user finish the normal role request rather
+        // than creating a duplicate UUID or silently approving the role.
+        if (phoneCredential && data.user.user_metadata?.signup_method === "firebase_phone") {
+          localStorage.setItem("pendingSignupRole", role);
+          navigate("/signup?resume=phone", { replace: true });
+          return;
+        }
         await supabase.auth.signOut();
         credentialFlow.current = false;
         setError(t("authErrNoSelectedRole"));
@@ -177,12 +190,12 @@ export default function Login() {
             </Link>
             <div className="mt-20 max-w-lg">
               <span className="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/10 px-3 py-1.5 text-xs text-white/80"><Sparkles size={13} /> Secure access</span>
-              <h2 className="font-display text-4xl xl:text-5xl leading-tight font-semibold text-white mt-5">Sign in with credentials, Google, or the AgriWatch app.</h2>
-              <p className="mt-5 text-white/65 leading-relaxed">OTP is no longer the first login screen. Use your email or phone number with a password.</p>
+              <h2 className="font-display text-4xl xl:text-5xl leading-tight font-semibold text-white mt-5">Sign in with your email or phone number and password, or continue with Google.</h2>
+              <p className="mt-5 text-white/65 leading-relaxed">Email uses your password. Phone numbers verified during registration can sign in with their Supabase password.</p>
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-3">
-            {[['Email / Phone','Password login'],['Google','Fast access'],['Mobile App','QR sign-in']].map(([value,label]) => (
+          <div className="grid grid-cols-2 gap-3">
+            {[['Email','Password login'],['Phone','Password after OTP signup']].map(([value,label]) => (
               <div key={label} className="rounded-2xl border border-white/10 bg-white/[0.07] p-4 backdrop-blur">
                 <p className="font-display text-lg text-white font-semibold">{value}</p>
                 <p className="text-[11px] text-white/55 mt-1">{label}</p>
@@ -235,12 +248,14 @@ export default function Login() {
                   <button type="submit" disabled={busy || !identifier.trim() || !password} onMouseDown={addRipple} className="btn-animated auth-primary-btn">
                     {busy ? <Loader2 size={16} className="animate-spin" /> : <LockKeyhole size={16} />}{t("authLoginWithPassword")}
                   </button>
+                  <div className="flex justify-end">
+                    <Link to="/forgot-password" className="text-xs font-semibold text-primary hover:underline">{t("forgotPasswordLink")}</Link>
+                  </div>
                 </form>
 
                 <div className="auth-divider"><span>{t("authOr")}</span></div>
-                <div className="grid sm:grid-cols-2 gap-2.5">
+                <div className="grid grid-cols-1 gap-2.5">
                   <button type="button" onClick={handleGoogleSignIn} disabled={busy} onMouseDown={addRipple} className="btn-animated auth-google-btn"><GoogleIcon />{t("continueWithGoogle")}</button>
-                  <button type="button" onClick={() => setQrOpen(true)} onMouseDown={addRipple} className="btn-animated auth-google-btn"><QrCode size={17} className="text-primary" />{t("signInWithApp")}</button>
                 </div>
               </div>
 
@@ -254,22 +269,6 @@ export default function Login() {
         </section>
       </div>
 
-      {qrOpen && <QrPreview t={t} onClose={() => setQrOpen(false)} />}
-    </div>
-  );
-}
-
-function QrPreview({ t, onClose }) {
-  return (
-    <div className="auth-qr-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="auth-qr-modal animate-pop-in">
-        <button type="button" onClick={onClose} className="auth-qr-close"><X size={18} /></button>
-        <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto"><QrCode size={24} className="text-primary" /></div>
-        <h2 className="font-display text-xl font-semibold text-center mt-4">{t("qrLoginTitle")}</h2>
-        <p className="text-sm text-ink/50 leading-relaxed text-center mt-2">{t("qrLoginBody")}</p>
-        <div className="auth-qr-placeholder"><QrCode size={128} strokeWidth={1.3} /></div>
-        <p className="text-xs text-center text-warn font-semibold">{t("qrPreviewLabel")}</p>
-      </div>
     </div>
   );
 }

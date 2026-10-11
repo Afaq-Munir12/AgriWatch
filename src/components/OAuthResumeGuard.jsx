@@ -30,7 +30,9 @@ export default function OAuthResumeGuard() {
     const recoverablePath = ["/", "/login", "/signup", "/admin-portal/login"].includes(location.pathname);
 
     if (recoverablePath && (hasOAuthReturn || (!loading && !!user))) {
-      navigate(`/auth/callback${location.search || ""}`, { replace: true });
+      // Preserve OAuth fragments when the provider falls back to the site root.
+      // Dropping #access_token/#refresh_token here loses the actual sign-in.
+      navigate({ pathname: "/auth/callback", search: location.search, hash: location.hash }, { replace: true });
     }
   }, [location.pathname, location.search, user, loading, navigate]);
 

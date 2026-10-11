@@ -5,7 +5,7 @@ import { useMyProfile } from "../hooks/useMyProfile";
 import { addRipple } from "../utils/ripple";
 import { Loader2, Pencil, Check, X } from "lucide-react";
 
-const roleLabel = { farmer: "Farmer", public: "General Public", pdma: "PDMA Officer" };
+const roleLabel = { farmer: "Farmer", public: "General Public", pdma: "NDMA Officer" };
 
 export default function ProfileCard() {
   const { user, profile, loading, updateProfile } = useMyProfile();

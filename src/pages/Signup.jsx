@@ -12,7 +12,6 @@ import {
   Mail,
   MapPin,
   Plus,
-  QrCode,
   ShieldCheck,
   Sparkles,
   Sprout,
@@ -26,6 +25,8 @@ import logo from "../assets/logo.jpeg";
 import { useLanguage } from "../i18n/LanguageContext";
 import LanguageToggle from "../components/LanguageToggle";
 import ThemeToggle from "../components/ThemeToggle";
+import FirebasePhoneOtp from "../components/FirebasePhoneOtp";
+import { phoneBridge, phonePasswordLogin, phoneBridgeEnabled } from "../services/phoneAccountBridge";
 import { getDistricts } from "../services/droughtService";
 import { createFarmerFields } from "../services/farmerFieldService";
 import { addRipple } from "../utils/ripple";
@@ -78,11 +79,11 @@ export default function Signup() {
   const [method, setMethod] = useState("email");
   const [email, setEmail] = useState(() => localStorage.getItem("pendingSignupEmail") || "");
   const [phone, setPhone] = useState("");
+  const [phoneVerified, setPhoneVerified] = useState(false);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [qrOpen, setQrOpen] = useState(false);
   const [fullName, setFullName] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -118,6 +119,21 @@ export default function Signup() {
 
   useEffect(() => {
     if (authLoading || !user) return;
+    // A phone-created Supabase identity uses an internal email username.
+    if (new URLSearchParams(window.location.search).get("resume") === "phone" && user.user_metadata?.signup_method === "firebase_phone") {
+      const pendingRole = localStorage.getItem("pendingSignupRole");
+      if (["farmer", "public", "admin"].includes(pendingRole)) setRole(pendingRole);
+      setMethod("phone");
+      // Never trust a user-typed phone for an interrupted signup. Retrieve
+      // the actual previously verified phone from the protected bridge.
+      phoneBridge("my-phone").then(({ phone: verified }) => {
+        setPhone(normalizePakistanLocalPhone(verified));
+      }).catch((err) => setError(err?.message || "Could not retrieve your verified phone."));
+      setEmail("");
+      setUserId(user.id);
+      setStep("details");
+      return;
+    }
     if (localStorage.getItem("pendingCredentialSignup") !== "email") return;
     const pendingRole = localStorage.getItem("pendingSignupRole");
     if (["farmer", "public", "admin"].includes(pendingRole)) setRole(pendingRole);
@@ -181,9 +197,17 @@ export default function Signup() {
     if (!passwordReady) return setError(t("authErrPasswordRules"));
 
     if (method === "phone") {
+      if (!phoneBridgeEnabled) return setError("Phone signup is not enabled for this environment. Email and Google signup still work.");
+      // Signed-in email/Google users should link their phone to the SAME UUID,
+      // not accidentally create a second Supabase Auth account.
+      if (user?.id) return setError("Already signed in? Use Profile → Link verified phone to keep your existing account and roles.");
       const localPhone = normalizePakistanLocalPhone(phone);
       if (pakistanPhoneError(localPhone)) return setError(t("authErrPhoneLogin"));
-      localStorage.setItem("pendingSignupRole", role);
+      setPhoneVerified(false);
+      // Phone-only signup cannot reuse an old email typed in another flow.
+      setEmail("");
+      localStorage.removeItem("pendingSignupEmail");
+      localStorage.removeItem("pendingCredentialSignup");
       setStep("phoneBridge");
       return;
     }
@@ -267,6 +291,9 @@ export default function Signup() {
     const validationError = validateDetails();
     if (validationError) return setError(validationError);
     if (!userId) return setError(t("errSessionExpired"));
+    if (method === "phone" && pakistanPhoneError(normalizePakistanLocalPhone(phone))) {
+      return setError("Your verified phone number is not loaded yet. Please wait and retry.");
+    }
 
     setBusy(true);
     setError("");
@@ -293,7 +320,7 @@ export default function Signup() {
 
       const payload = {
         user_id: userId,
-        email: email.trim().toLowerCase() || user?.email || null,
+        email: method === "phone" ? null : (email.trim().toLowerCase() || user?.email || null),
         full_name: fullName.trim(),
         role: dbRole,
         phone: method === "phone" ? toPakistanE164(normalizePakistanLocalPhone(phone)) : null,
@@ -348,12 +375,12 @@ export default function Signup() {
                 <Sparkles size={13} /> Create a verified account
               </span>
               <h2 className="font-display text-4xl xl:text-5xl leading-tight font-semibold text-white mt-5">Join the AgriWatch network.</h2>
-              <p className="mt-5 text-white/65 leading-relaxed">Create an account with email/password, prepare phone/password for the mobile bridge, or continue with Google.</p>
+              <p className="mt-5 text-white/65 leading-relaxed">Create an account with email/password, verify phone ownership using Firebase OTP, or continue with Google.</p>
             </div>
           </div>
 
           <div className="space-y-3">
-            {["Email/password account creation", "Phone/password UI ready for Firebase verification", "Separate access for farmers, public and PDMA"].map((item, index) => (
+            {["Email/password account creation", "Firebase phone OTP verification and Supabase account creation", "Separate access for farmers, public and NDMA"].map((item, index) => (
               <div key={item} className="flex items-center gap-3 rounded-2xl bg-white/[0.07] border border-white/10 px-4 py-3 text-sm text-white/75">
                 <span className="w-7 h-7 rounded-full bg-primary-light/20 flex items-center justify-center text-primary-light font-mono text-xs">0{index + 1}</span>
                 {item}
@@ -423,9 +450,8 @@ export default function Signup() {
                   </form>
 
                   <div className="auth-divider"><span>{t("authOr")}</span></div>
-                  <div className="grid sm:grid-cols-2 gap-2.5">
+                  <div className="grid grid-cols-1 gap-2.5">
                     <button type="button" onClick={handleGoogleSignup} disabled={busy} onMouseDown={addRipple} className="btn-animated auth-google-btn">{busy ? <Loader2 size={16} className="animate-spin" /> : <GoogleIcon />}{t("continueWithGoogle")}</button>
-                    <button type="button" onClick={() => setQrOpen(true)} onMouseDown={addRipple} className="btn-animated auth-google-btn"><QrCode size={17} className="text-primary" />{t("signUpWithApp")}</button>
                   </div>
                   <p className="text-[11px] text-ink/40 text-center mt-2">{t("signupGoogleNote")}</p>
                 </>
@@ -444,6 +470,35 @@ export default function Signup() {
                   <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center"><Smartphone size={29} className="text-primary" /></div>
                   <div><p className="font-display text-xl font-semibold">{t("phoneBridgeTitle")}</p><p className="text-sm text-ink/55 leading-relaxed max-w-sm mt-2">{t("phoneBridgeBody")}</p></div>
                   <div className="rounded-xl border border-primary/15 bg-primary/[0.05] px-4 py-3 text-sm font-semibold" dir="ltr">+92 {phone}</div>
+                  <div className="w-full max-w-sm text-left space-y-2">
+                    <label className="auth-label">{t("enterOtp")}</label>
+                    <FirebasePhoneOtp key={phone} phoneE164={toPakistanE164(normalizePakistanLocalPhone(phone))} onVerified={async (proof) => {
+                      setError("");
+                      setBusy(true);
+                      try {
+                        // The Edge Function validates Google's token signature, project,
+                        // phone number, and fresh authentication time before creating
+                        // any Supabase Auth user. It never grants portal approval.
+                        await phoneBridge("register", proof.idToken, password);
+                        const data = await phonePasswordLogin(proof.verifiedPhone, password);
+                        const loginError = null;
+                        if (loginError || !data?.user?.id) throw loginError || new Error("Phone account created. Please log in to continue.");
+                        setUserId(data.user.id);
+                        setPhoneVerified(true);
+                        setPassword("");
+                        setConfirmPassword("");
+                        setStep("details");
+                      } catch (err) {
+                        setError(err?.message || "Unable to create your phone account.");
+                        throw err; // FirebasePhoneOtp shows the backend error too.
+                      } finally {
+                        setBusy(false);
+                      }
+                    }} />
+                    {busy && <p role="status" className="text-xs text-ink/65">Creating your Supabase account securely…</p>}
+                    {error && <p role="alert" className="auth-error">{error}</p>}
+                    {phoneVerified && <p className="text-xs text-ink/70 text-center">Your verified phone is linked to a Supabase account. Complete your profile below.</p>}
+                  </div>
                   <button type="button" onClick={() => setStep("account")} className="btn-animated auth-primary-btn !w-auto px-6"><ArrowLeft size={15} />{t("backToSignup")}</button>
                 </div>
               )}
@@ -562,18 +617,6 @@ export default function Signup() {
           </div>
         </section>
       </div>
-      {qrOpen && (
-        <div className="auth-qr-backdrop" onMouseDown={(e) => e.target === e.currentTarget && setQrOpen(false)}>
-          <div className="auth-qr-modal animate-pop-in">
-            <button type="button" onClick={() => setQrOpen(false)} className="auth-qr-close"><X size={18} /></button>
-            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto"><QrCode size={24} className="text-primary" /></div>
-            <h2 className="font-display text-xl font-semibold text-center mt-4">{t("qrSignupTitle")}</h2>
-            <p className="text-sm text-ink/50 leading-relaxed text-center mt-2">{t("qrSignupBody")}</p>
-            <div className="auth-qr-placeholder"><QrCode size={128} strokeWidth={1.3} /></div>
-            <p className="text-xs text-center text-warn font-semibold">{t("qrPreviewLabel")}</p>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

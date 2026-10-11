@@ -13,7 +13,7 @@ import { Sprout, Users2, X, CheckCircle2, Image as ImageIcon, MapPin, Radio, Fil
 const roleIcon = { farmer: Sprout, public: Users2 };
 const roleLabel = { farmer: "Farmer", public: "General Public" };
 
-// Admin-portal view of the same complaints the PDMA officers work on —
+// Admin-portal view of the same complaints the NDMA officers work on —
 // full-system oversight, including anything an officer hasn't picked up yet.
 export default function AdminPortalComplaints() {
   const { complaints, loading, offline, error, updateStatus } = useComplaints();

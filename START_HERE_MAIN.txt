@@ -1,0 +1,35 @@
+AGRiWATCH - MAIN CONSOLIDATED SOURCE
+
+This is the MAIN frontend (React/Vite), not the separate ML backend.
+All source files, Firebase phone OTP component and Google OAuth callback fix are included.
+There is exactly ONE .env file at this project root; no staging env overlays.
+
+LOCAL FIRST:
+1. Open the 'up' folder in VS Code.
+2. The one .env already has your Main URL, Main anon/public key, Firebase web public config, and ML API URL. Never replace the anon key with a service-role key.
+3. npm install
+4. npm run dev
+5. Check Home, email/password login, Google login, role-routing, Farmer/Public/NDMA pages and ML data. Phone OTP/signup/recovery is intentionally unavailable on localhost due to the pilot's HTTPS-domain gate.
+6. Verify Main Supabase Authentication > URL Configuration allows http://localhost:5173/auth/callback and https://agri-watch-rho.vercel.app/auth/callback for Google sign-in. Keep other existing redirect entries.
+
+VERCEL:
+- Push source to existing GitHub branch; .env is intentionally gitignored. DO NOT force-add it.
+- In existing Vercel project > Settings > Environment Variables, paste/import the same values from .env for Production (do not upload secret server credentials).
+- Redeploy latest commit. Build command: npm run build; output directory: dist.
+- Until you are ready for a single-number REAL SMS pilot, keep the separate Supabase Edge Function secret AGRIWATCH_PHONE_BRIDGE_MODE=disabled. The frontend flag alone cannot bypass that server-side control.
+- If your real Vercel domain differs from https://agri-watch-rho.vercel.app, update PILOT_ORIGIN and Main AGRIWATCH_ALLOWED_ORIGINS accordingly and redeploy.
+- For production testing, only configure the one real authorized phone number, NEVER a Firebase fictional test number; test with care.
+
+ROLLBACK:
+- Supabase: set AGRIWATCH_PHONE_BRIDGE_MODE=disabled immediately.
+- Vercel: redeploy the prior working GitHub commit.
+- Reverting GitHub does NOT undo account changes or database updates made by live services.
+
+NOTE: Google login depends on your Main Supabase project OAuth settings. The callback has been updated to wait for a Supabase session, but cannot override incorrect dashboard callback settings.
+
+GOOGLE OAUTH CALLBACK REPAIR (2026-10-12)
+- AuthCallback.jsx accepts Supabase implicit hash token pairs and existing PKCE sessions.
+- OAuthResumeGuard.jsx preserves hash tokens when redirect falls back to /.
+- No Supabase schema, Firebase, phone bridge, or role-approval changes.
+- For localhost Google OAuth, Main Supabase Redirect URLs must allow http://localhost:5173/auth/callback.
+- Do not post screenshots containing #access_token or #refresh_token.

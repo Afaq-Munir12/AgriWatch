@@ -69,7 +69,7 @@ export default function Complaints() {
       <main className="p-4 sm:p-8 space-y-6 pdma-page" dir="ltr">
         <PdmaPageHero
           title="Complaint operations desk"
-          copy="Review farmer and public damage reports, move cases through the PDMA workflow and keep resolution notes attached to each complaint."
+          copy="Review farmer and public damage reports, move cases through the NDMA workflow and keep resolution notes attached to each complaint."
           stats={[
             { label: "Total complaints", value: complaints.length },
             { label: "Under review", value: complaints.filter((c) => c.status === "Under Review").length },

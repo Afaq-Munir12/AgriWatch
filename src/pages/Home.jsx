@@ -33,6 +33,29 @@ const featureKeys = [
 
 const dataSources = ["Sentinel-2 (NDVI)", "CHIRPS (SPI-3)", "NASA SMAP (Soil Moisture)", "ERA5 (SPEI)", "OpenWeatherMap"];
 
+// Research-backed, clearly time-scoped national figures.
+// Links lead to the original Pakistan Government/PBS and Germanwatch reports.
+const researchStats = [
+  {
+    value: "23.44%",
+    labelKey: "statGdp",
+    sourceKey: "statGdpSource",
+    sourceUrl: "https://finance.gov.pk/survey/chapter_26/Highlights_of_the_PES_2026.pdf",
+  },
+  {
+    value: "33.06%",
+    labelKey: "statWorkforce",
+    sourceKey: "statWorkforceSource",
+    sourceUrl: "https://finance.gov.pk/survey/chapter_26/12_Population.pdf",
+  },
+  {
+    value: "#1",
+    labelKey: "statVulnerable",
+    sourceKey: "statVulnerableSource",
+    sourceUrl: "https://www.germanwatch.org/sites/default/files/2025-02/Climate%20Risk%20Index%202025.pdf",
+  },
+];
+
 /* ---------- helpers ---------- */
 
 // Adds .hm-in once the element scrolls into view.
@@ -118,7 +141,7 @@ function PakistanScanCard({ t }) {
 
       <div className="hm-scan-header">
         <div>
-          <div className="hm-scan-kicker"><span className="hm-live-dot" /> GEOAI LIVE SCAN</div>
+          <div className="hm-scan-kicker"><span className="hm-live-dot" /> GEOAI SCAN PREVIEW</div>
           <h3>Pakistan Drought Intelligence</h3>
         </div>
         <div className="hm-satellite-badge"><Satellite size={18} /></div>
@@ -153,18 +176,18 @@ function PakistanScanCard({ t }) {
         </div>
 
         <div className="hm-scan-status hm-scan-status-a">
-          <Leaf size={13} /> <span>NDVI</span><b>0.61</b>
+          <Leaf size={13} /> <span>NDVI</span><b>Satellite</b>
         </div>
         <div className="hm-scan-status hm-scan-status-b">
-          <Droplets size={13} /> <span>SOIL</span><b>34%</b>
+          <Droplets size={13} /> <span>SOIL</span><b>Estimate</b>
         </div>
         <div className="hm-scan-status hm-scan-status-c">
-          <CloudRain size={13} /> <span>RAIN</span><b>42 mm</b>
+          <CloudRain size={13} /> <span>RAIN</span><b>Weather</b>
         </div>
       </div>
 
       <div className="hm-scan-footer">
-        <span><i className="hm-scan-dot" /> Monitoring active</span>
+        <span><i className="hm-scan-dot" /> Monitoring platform</span>
         <span>Satellite + ML</span>
         <span>{t("districtsMonitoredStrip")}</span>
       </div>
@@ -276,15 +299,20 @@ export default function Home() {
             <p className="text-xs uppercase tracking-widest text-primary-light font-semibold mb-8">{t("problemLabel")}</p>
           </Reveal>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-            {[
-              { node: <CountUp to={19} suffix="%" />, key: "statGdp" },
-              { node: <CountUp to={38} suffix="%" />, key: "statWorkforce" },
-              { node: <CountUp to={10} prefix="Top " />, key: "statVulnerable" },
-            ].map((s, i) => (
-              <Reveal key={s.key} delay={i * 120}>
-                <div className="hm-stat-card rounded-2xl p-6 h-full">
-                  <p className="font-display text-5xl font-semibold text-mist">{s.node}</p>
-                  <p className="text-mist/65 text-sm mt-3">{t(s.key)}</p>
+            {researchStats.map((stat, i) => (
+              <Reveal key={stat.labelKey} delay={i * 120}>
+                <div className="hm-stat-card rounded-2xl p-6 h-full flex flex-col">
+                  <p className="font-display text-5xl font-semibold text-mist" dir="ltr">{stat.value}</p>
+                  <p className="text-mist/75 text-sm mt-3 leading-relaxed flex-1">{t(stat.labelKey)}</p>
+                  <a
+                    href={stat.sourceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-mist/60 hover:text-mist text-xs mt-5 pt-3 border-t border-white/10 underline underline-offset-4 decoration-white/30"
+                    aria-label={`${t("researchSource")}: ${t(stat.sourceKey)}`}
+                  >
+                    {t("researchSource")}: {t(stat.sourceKey)} ↗
+                  </a>
                 </div>
               </Reveal>
             ))}

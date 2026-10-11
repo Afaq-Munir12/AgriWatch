@@ -304,7 +304,7 @@ export default function DistrictCompare() {
         dir="ltr"
       >
         <PdmaPageHero
-          eyebrow="PDMA district analysis"
+          eyebrow="NDMA district analysis"
           title="Compare drought conditions side by side"
           copy="Compare ML drought risk, vegetation, rainfall and soil moisture between two districts before prioritizing field response."
           stats={[

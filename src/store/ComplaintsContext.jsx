@@ -13,7 +13,7 @@ import {
 // Farmer / public field complaints, stored in Supabase (table: complaints).
 //
 // Every portal reads from this one provider, so a complaint filed on the
-// farmer portal shows up on the PDMA officer portal and the Admin portal
+// farmer portal shows up on the NDMA officer portal and the Admin portal
 // immediately — Supabase realtime pushes the change, no refresh needed.
 //
 // If Supabase can't be reached (no .env keys yet, table not created, laptop

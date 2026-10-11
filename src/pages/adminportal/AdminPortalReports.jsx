@@ -47,7 +47,7 @@ export default function AdminPortalReports() {
       row.total += 1;
       if (u.role === "Farmer") row.farmers += 1;
       else if (u.role === "General Public") row.public += 1;
-      else if (u.role === "PDMA Officer") row.pdma += 1;
+      else if (u.role === "NDMA Officer") row.pdma += 1;
     });
     return Array.from(map.values()).sort((a, b) => b.total - a.total).slice(0, 12);
   }, [directory]);
@@ -88,14 +88,14 @@ export default function AdminPortalReports() {
       ["Total approved users", counts.totalUsers],
       ["Farmers", counts.farmers],
       ["General public", counts.publicUsers],
-      ["PDMA officers", counts.pdmaOfficers],
+      ["NDMA officers", counts.pdmaOfficers],
       ["Pending requests", counts.totalPending],
       ["Approvals in range", approvalsInRange],
       ["Website requests in range", requestsInRange],
       ["Complaints in range", complaintsInRange],
       ["Software issues in range", issuesInRange],
       [],
-      ["District", "Total", "Farmers", "General Public", "PDMA Officers"],
+      ["District", "Total", "Farmers", "General Public", "NDMA Officers"],
       ...districtData.map((d) => [d.district, d.total, d.farmers, d.public, d.pdma]),
     ];
     const csv = summary.map((row) => row.map(csvCell).join(",")).join("\n");
@@ -181,7 +181,7 @@ export default function AdminPortalReports() {
             {[
               ["Farmers", counts.farmers, counts.totalUsers ? (counts.farmers / counts.totalUsers) * 100 : 0],
               ["General Public", counts.publicUsers, counts.totalUsers ? (counts.publicUsers / counts.totalUsers) * 100 : 0],
-              ["PDMA Officers", counts.pdmaOfficers, counts.totalUsers ? (counts.pdmaOfficers / counts.totalUsers) * 100 : 0],
+              ["NDMA Officers", counts.pdmaOfficers, counts.totalUsers ? (counts.pdmaOfficers / counts.totalUsers) * 100 : 0],
             ].map(([label, value, pct]) => (
               <div key={label}>
                 <div className="flex items-center justify-between text-sm"><span className="text-ink/60">{label}</span><span className="font-semibold">{value}</span></div>

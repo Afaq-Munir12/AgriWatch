@@ -9,7 +9,7 @@ import { ShieldCheck, Sprout, Users2, Check, X } from "lucide-react";
 import { useToast } from "../../components/ToastContext";
 
 const roleIcon = { admin: ShieldCheck, farmer: Sprout, public: Users2 };
-const roleLabel = { admin: "Admin / PDMA", farmer: "Farmer", public: "General Public" };
+const roleLabel = { admin: "Admin / NDMA", farmer: "Farmer", public: "General Public" };
 
 // Reuse the existing StatusBadge color logic by mapping our statuses onto
 // the same visual language (Pending ~ Under Review, Approved ~ Resolved).
@@ -41,7 +41,7 @@ export default function Verifications() {
     <>
       <Topbar
         title="User Verifications"
-        subtitle="Review new Farmer, General Public, and PDMA officer registrations"
+        subtitle="Review new Farmer, General Public, and NDMA officer registrations"
       />
       <main className="p-4 sm:p-8 space-y-6" dir="ltr">
         <div className="grid grid-cols-3 gap-4">

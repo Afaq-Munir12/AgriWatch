@@ -25,7 +25,7 @@ export default function DroughtReportDesk({ pdma = false }) {
     let cancelled = false;
     if (admin) fetchReportReviewers().then(rows => {
       if (!cancelled) setReviewerState({ userId: user.id, rows });
-    }).catch(() => { if (!cancelled) setMessage('Verified PDMA reviewers could not be loaded. Assignment is unavailable.'); });
+    }).catch(() => { if (!cancelled) setMessage('Verified NDMA reviewers could not be loaded. Assignment is unavailable.'); });
     return () => { cancelled = true; };
   }, [admin, user?.id]);
 
@@ -41,7 +41,7 @@ export default function DroughtReportDesk({ pdma = false }) {
     setBusy(true); setMessage('');
     try {
       await reviewReport(selected.dbId, action, note, action === 'assign' ? assignee : null, action === 'assign' ? reason : '');
-      setMessage(action === 'assign' ? 'Assignment recorded for PDMA review. This does not confirm government action.' : 'Admin action saved.');
+      setMessage(action === 'assign' ? 'Assignment recorded for NDMA review. This does not confirm government action.' : 'Admin action saved.');
     } catch (err) {
       setMessage(err.message || 'The action could not be saved.');
     } finally { setBusy(false); }
@@ -49,7 +49,7 @@ export default function DroughtReportDesk({ pdma = false }) {
 
   return <main className="p-4 sm:p-8 max-w-5xl mx-auto space-y-5">
     <h1 className="font-display text-xl font-semibold">{pdma ? 'Assigned drought reports' : 'Drought situation reports'}</h1>
-    <p className="text-sm text-ink/60">{pdma ? 'Only explicit assignments to your verified account within your permitted districts appear here.' : 'Every new report first enters AgriWatch admin review. Review, respond, and explicitly assign serious drought situations for PDMA review.'}</p>
+    <p className="text-sm text-ink/60">{pdma ? 'Only explicit assignments to your verified account within your permitted districts appear here.' : 'Every new report first enters AgriWatch admin review. Review, respond, and explicitly assign serious drought situations for NDMA review.'}</p>
     <button className="border rounded-lg px-3 py-2" onClick={reload}>Refresh reports</button>
     {error && <p role="alert">Reports are unavailable: {error.message}</p>}
     {!loading && !error && !admin && !pdma && <p>Authorized AgriWatch admin access is required.</p>}
@@ -67,7 +67,7 @@ export default function DroughtReportDesk({ pdma = false }) {
       <p className="whitespace-pre-wrap mt-3">{selected.description}</p>
       {selected.photo && <img src={selected.photo} alt="Report evidence" className="max-h-80 mt-3 rounded-lg" />}
       {selected.reviewStartedAt && <p>AgriWatch review started: {selected.reviewStartedAt}</p>}
-      {selected.assignedAt && <p>Assigned for PDMA review: {selected.assignedAt}. Government action is not confirmed.</p>}
+      {selected.assignedAt && <p>Assigned for NDMA review: {selected.assignedAt}. Government action is not confirmed.</p>}
       {selected.resolvedAt && <p>Resolution recorded: {selected.resolvedAt}</p>}
       {selected.resolutionNote && <p className="mt-3">{selected.respondedAt ? "AgriWatch admin response: " : "Recorded response: "}{selected.resolutionNote}</p>}
       {admin && <div className="space-y-3 mt-4">
@@ -78,14 +78,14 @@ export default function DroughtReportDesk({ pdma = false }) {
           <button disabled={busy || !note.trim() || Boolean(selected.resolvedAt)} onClick={() => act('resolve')}>Record resolution</button>
         </div>
         <fieldset className="border rounded-lg p-3 space-y-3">
-          <legend>Assign for PDMA review</legend>
+          <legend>Assign for NDMA review</legend>
           <label className="block"><input type="checkbox" checked={serious} onChange={e => setSerious(e.target.checked)} /> I reviewed this as a serious drought situation.</label>
           <label className="block">Verified reviewer for {selected.district}<select className="block border p-2 w-full" value={assignee} onChange={e => setAssignee(e.target.value)}>
             <option value="">Select a verified reviewer</option>
             {reviewers.filter(r => r.district === selected.district).map(r => <option key={r.user_id} value={r.user_id}>{r.user_id}</option>)}
           </select></label>
           <label className="block">Serious drought assessment<textarea className="block border p-2 w-full" value={reason} onChange={e => setReason(e.target.value)} /></label>
-          <button disabled={busy || !serious || !selected.reviewStartedAt || !assignee || reason.trim().length < 10 || Boolean(selected.resolvedAt)} onClick={() => act('assign')}>Assign for PDMA review</button>
+          <button disabled={busy || !serious || !selected.reviewStartedAt || !assignee || reason.trim().length < 10 || Boolean(selected.resolvedAt)} onClick={() => act('assign')}>Assign for NDMA review</button>
           <p className="text-xs">Assignment grants this reviewer access within their verified area. It does not confirm a referral to government or a government response.</p>
         </fieldset>
       </div>}

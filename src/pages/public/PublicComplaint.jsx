@@ -24,7 +24,7 @@ const CATEGORIES = [
 ];
 
 // General-public version of the farmer complaint form. Writes to the same
-// Supabase `complaints` table, tagged reporter_role = "public", so PDMA
+// Supabase `complaints` table, tagged reporter_role = "public", so NDMA
 // officers and the Admin portal see it alongside farmer complaints.
 export default function PublicComplaint() {
   const { t, lang } = useLanguage();

@@ -12,7 +12,7 @@ import { IssueStatusBadge, SeverityPill } from "../shared/ReportIssue";
 import { Bug, Sprout, Users2, ShieldCheck, X, CheckCircle2, Monitor, Radio, Activity } from "lucide-react";
 
 const roleIcon = { farmer: Sprout, public: Users2, pdma: ShieldCheck, admin: ShieldCheck };
-const roleLabel = { farmer: "Farmer", public: "General Public", pdma: "PDMA Officer" };
+const roleLabel = { farmer: "Farmer", public: "General Public", pdma: "NDMA Officer" };
 
 // Super-admin triage screen for "the software is broken" reports coming from
 // every portal. Reads and writes public.issue_reports in Supabase.
@@ -77,7 +77,7 @@ export default function AdminPortalIssues() {
           <div>
             <span className="portal-chip"><Radio size={12} /> Live software triage</span>
             <h1 className="font-display text-2xl sm:text-3xl font-semibold mt-3">Software issue reports</h1>
-            <p className="text-white/72 mt-2 max-w-2xl">Glitches reported by Farmer, Public and PDMA portals appear here in realtime. Track severity, reply to reporters and close resolved issues.</p>
+            <p className="text-white/72 mt-2 max-w-2xl">Glitches reported by Farmer, Public and NDMA portals appear here in realtime. Track severity, reply to reporters and close resolved issues.</p>
           </div>
           <div className="portal-chip"><Activity size={12} /> {activeCount} active</div>
         </div>

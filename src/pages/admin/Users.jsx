@@ -16,7 +16,7 @@ export default function Users() {
   const { showToast } = useToast();
   const loading = useSimulatedLoading(600);
   const [filter, setFilter] = useState("All");
-  const roles = ["All", "Farmer", "General Public", "Admin / PDMA"];
+  const roles = ["All", "Farmer", "General Public", "Admin / NDMA"];
   const filtered = filter === "All" ? users : users.filter((u) => u.role === filter);
   const { sorted, sortConfig, requestSort } = useSortableData(filtered);
 

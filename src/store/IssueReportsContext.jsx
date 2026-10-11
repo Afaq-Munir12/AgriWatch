@@ -11,7 +11,7 @@ import {
 
 // Software issue reports — "something in the app is broken".
 //
-// Raised from the farmer portal, the public portal, or by a PDMA officer,
+// Raised from the farmer portal, the public portal, or by a NDMA officer,
 // and triaged by the super-admin in the Admin Portal (/admin-portal/issues).
 // Same Supabase-first + localStorage-fallback approach as ComplaintsContext.
 
