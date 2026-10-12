@@ -162,11 +162,13 @@ export default function CompleteProfile() {
       return setError("Please enter your NDMA designation.");
     }
 
-    if (needsBackupPassword && !backupPasswordReady) {
+    // Public can keep signing in with Google; a backup password is optional
+    // later in their profile, not a condition of the simple Public signup.
+    if (role !== "public" && needsBackupPassword && !backupPasswordReady) {
       return setError("Create a backup password with more than 8 characters, including a letter and a number, and make sure both passwords match.");
     }
 
-    if (files.length === 0) {
+    if (role !== "public" && files.length === 0) {
       return setError("Attach at least one verification document before submitting.");
     }
 
@@ -183,7 +185,7 @@ export default function CompleteProfile() {
         throw new Error(`This Google account is already registered as ${role === "pdma" ? "NDMA Officer" : role}. Use Log in and select that role.`);
       }
 
-      if (needsBackupPassword) {
+      if (role !== "public" && needsBackupPassword) {
         const { error: passwordError } = await supabase.auth.updateUser({
           password: backupPassword,
         });
@@ -191,7 +193,9 @@ export default function CompleteProfile() {
       }
 
       const uploaded = [];
-      for (const file of files) {
+      // Verification uploads are required only for Farmer and NDMA. Public
+      // must not need access to the private verification-documents bucket.
+      for (const file of role === "public" ? [] : files) {
         const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
         const path = `${user.id}/${Date.now()}_${safeName}`;
         const { error: uploadErr } = await supabase.storage.from(DOCS_BUCKET).upload(path, file);
@@ -261,19 +265,21 @@ export default function CompleteProfile() {
               <img src={logo} alt="AgriWatch Pakistan" className="w-12 h-12 rounded-2xl object-cover bg-white shadow-lg" />
               <div>
                 <p className="font-display text-xl font-semibold text-white">AgriWatch Pakistan</p>
-                <p className="text-xs tracking-[0.18em] uppercase text-white/55">Google account verification</p>
+                <p className="text-xs tracking-[0.18em] uppercase text-white/55">Google account profile</p>
               </div>
             </Link>
 
             <div className="mt-20 max-w-md">
               <span className="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/10 px-3 py-1.5 text-xs text-white/80">
-                <Sparkles size={13} /> One final verification step
+                <Sparkles size={13} /> {role === "public" ? "Simple Public registration" : "One final verification step"}
               </span>
               <h2 className="font-display text-4xl xl:text-5xl leading-tight font-semibold text-white mt-5">
                 Complete your profile before entering AgriWatch.
               </h2>
               <p className="mt-5 text-white/65 leading-relaxed">
-                Your Google identity is connected. Add your role, Pakistani phone number and verification details so access can be reviewed securely.
+                {role === "public"
+                  ? "Your Google account is ready. Add your name, district and contact number to join the Public portal immediately — no documents or administrator approval."
+                  : "Your Google identity is connected. Add your role, Pakistani phone number and verification details so access can be reviewed securely."}
               </p>
             </div>
           </div>
@@ -282,7 +288,7 @@ export default function CompleteProfile() {
             {[
               [ShieldCheck, "Google verified"],
               [MapPin, "District linked"],
-              [FileCheck2, "Admin reviewed"],
+              [role === "public" ? CheckCircle2 : FileCheck2, role === "public" ? "Public access" : "Admin reviewed"],
             ].map(([Icon, label]) => (
               <div key={label} className="rounded-2xl border border-white/10 bg-white/[0.07] p-4 backdrop-blur text-white/70">
                 <Icon size={18} className="text-primary-light" />
@@ -320,7 +326,7 @@ export default function CompleteProfile() {
               <div className="signup-progress !mb-5">
                 <div className="signup-progress-item is-complete"><div className="signup-step-badge"><CheckCircle2 size={15} /></div><span>Google</span></div>
                 <div className="signup-progress-item is-active"><div className="signup-step-badge">2</div><span>Profile</span></div>
-                <div className="signup-progress-item"><div className="signup-step-badge">3</div><span>Approval</span></div>
+                {role !== "public" && <div className="signup-progress-item"><div className="signup-step-badge">3</div><span>Approval</span></div>}
               </div>
 
               <Field label="I am a">
@@ -435,7 +441,7 @@ export default function CompleteProfile() {
                 </Field>
               )}
 
-              {needsBackupPassword && (
+              {role !== "public" && needsBackupPassword && (
               <div className="rounded-2xl border border-primary/15 bg-primary/[0.045] p-4 space-y-3">
                 <div className="flex items-start gap-3">
                   <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
@@ -480,7 +486,8 @@ export default function CompleteProfile() {
               </div>
               )}
 
-              <Field label={role === "pdma" ? "NDMA ID card / appointment letter" : role === "farmer" ? "CNIC / proof of land ownership" : "CNIC or other ID"} hint="Image or PDF">
+              {role !== "public" && (
+              <Field label={role === "pdma" ? "NDMA ID card / appointment letter" : "CNIC / proof of land ownership"} hint="Image or PDF">
                 <label className="signup-upload-zone">
                   <UploadCloud size={19} className="text-primary" />
                   <div className="flex-1">
@@ -500,6 +507,13 @@ export default function CompleteProfile() {
                   </ul>
                 )}
               </Field>
+              )}
+
+              {role === "public" && (
+                <p className="rounded-xl border border-primary/20 bg-primary/[0.05] p-3 text-sm text-ink/70">
+                  No documents or admin approval are required. Your phone is saved as a contact number (no SMS verification); your Google account secures your login.
+                </p>
+              )}
 
               {error && <div className="auth-error">{error}</div>}
 
@@ -510,7 +524,7 @@ export default function CompleteProfile() {
                 className="btn-animated auth-primary-btn"
               >
                 {busy && <Loader2 size={15} className="animate-spin" />}
-                Submit for verification
+                {role === "public" ? "Create Public Account" : "Submit for verification"}
               </button>
               </div>
             </form>

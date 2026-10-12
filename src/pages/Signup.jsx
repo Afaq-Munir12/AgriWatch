@@ -278,7 +278,12 @@ export default function Signup() {
       if (invalidField) return t("errCompleteFields");
       if (farmerDocuments.length === 0) return t("errFarmerVerificationDocument");
     }
-    if (role === "public" && !publicForm.district) return t("errSelectDistrict");
+    if (role === "public") {
+      if (!publicForm.district) return t("errSelectDistrict");
+      if (pakistanPhoneError(normalizePakistanLocalPhone(phone))) {
+        return "Enter a valid Pakistani mobile number for your Public profile.";
+      }
+    }
     if (role === "admin") {
       if (!adminForm.designation.trim()) return t("errEnterDesignation");
       if (!adminForm.district) return t("errAssignedDistrict");
@@ -323,7 +328,11 @@ export default function Signup() {
         email: method === "phone" ? null : (email.trim().toLowerCase() || user?.email || null),
         full_name: fullName.trim(),
         role: dbRole,
-        phone: method === "phone" ? toPakistanE164(normalizePakistanLocalPhone(phone)) : null,
+        // Public supplies a contact number without Firebase OTP. It is not
+        // treated as a verified login credential or Firebase account link.
+        phone: (role === "public" || method === "phone")
+          ? toPakistanE164(normalizePakistanLocalPhone(phone))
+          : null,
         district,
         tehsil: role === "farmer" ? farmerForm.tehsil.trim() : null,
         crop: role === "farmer" ? farmerForm.fields[0]?.crop || null : null,
@@ -375,12 +384,19 @@ export default function Signup() {
                 <Sparkles size={13} /> Create a verified account
               </span>
               <h2 className="font-display text-4xl xl:text-5xl leading-tight font-semibold text-white mt-5">Join the AgriWatch network.</h2>
-              <p className="mt-5 text-white/65 leading-relaxed">Create an account with email/password, verify phone ownership using Firebase OTP, or continue with Google.</p>
+              <p className="mt-5 text-white/65 leading-relaxed">
+                {role === "public"
+                  ? "General Public can join using email or Google, then add a name, district and contact number. No documents or admin approval."
+                  : "Create an account with email/password, verify phone ownership using Firebase OTP, or continue with Google."}
+              </p>
             </div>
           </div>
 
           <div className="space-y-3">
-            {["Email/password account creation", "Firebase phone OTP verification and Supabase account creation", "Separate access for farmers, public and NDMA"].map((item, index) => (
+            {(role === "public"
+              ? ["Email or Google account sign-in", "Full name, district and contact number", "Immediate Public access — no document approval"]
+              : ["Email/password account creation", "Firebase phone OTP verification and Supabase account creation", "Separate access for farmers, public and NDMA"]
+            ).map((item, index) => (
               <div key={item} className="flex items-center gap-3 rounded-2xl bg-white/[0.07] border border-white/10 px-4 py-3 text-sm text-white/75">
                 <span className="w-7 h-7 rounded-full bg-primary-light/20 flex items-center justify-center text-primary-light font-mono text-xs">0{index + 1}</span>
                 {item}
@@ -414,7 +430,11 @@ export default function Signup() {
                   <p className="auth-label mb-2">{t("loginIAmA")}</p>
                   <div className="grid grid-cols-3 gap-2 mb-5">
                     {roles.map(({ key, labelKey, icon: Icon }) => (
-                      <button key={key} type="button" onClick={() => { setRole(key); setError(""); }} onMouseDown={addRipple} className={`role-choice ${role === key ? "role-choice-active" : ""}`}>
+                      <button key={key} type="button" onClick={() => {
+                        setRole(key);
+                        if (key === "public") setMethod("email"); // No Firebase OTP for Public registrations.
+                        setError("");
+                      }} onMouseDown={addRipple} className={`role-choice ${role === key ? "role-choice-active" : ""}`}>
                         <Icon size={17} /> <span>{t(labelKey)}</span>
                       </button>
                     ))}
@@ -422,9 +442,16 @@ export default function Signup() {
 
                   <div className="auth-method-switch mb-4">
                     <button type="button" onClick={() => { setMethod("email"); setError(""); }} className={method === "email" ? "is-active" : ""}><Mail size={15} /> {t("signupWithEmail")}</button>
-                    <button type="button" onClick={() => { setMethod("phone"); setError(""); }} className={method === "phone" ? "is-active" : ""}><Smartphone size={15} /> {t("signupWithPhone")}</button>
+                    {role !== "public" && (
+                      <button type="button" onClick={() => { setMethod("phone"); setError(""); }} className={method === "phone" ? "is-active" : ""}><Smartphone size={15} /> {t("signupWithPhone")}</button>
+                    )}
                   </div>
 
+                  {role === "public" && (
+                    <p className="text-xs text-ink/60 mb-4">
+                      General Public needs no verification documents or admin approval. Use email/password or Google to secure your account; your contact number is collected in the next step without SMS OTP.
+                    </p>
+                  )}
                   <form onSubmit={handleCredentialSignup} className="space-y-4">
                     {method === "email" ? (
                       <Field label={t("emailAddress")} hint={t("emailVerificationHint")}>
@@ -576,7 +603,24 @@ export default function Signup() {
                     <>
                       <SectionTitle icon={MapPin} text={t("signupPublicDetails")} />
                       <DistrictField districts={districts} value={publicForm.district} onChange={(district) => setPublicForm({ ...publicForm, district })} label={t("fieldDistrict")} t={t} />
-                      <LanguagePreference value={publicForm.language} onChange={(language) => setPublicForm({ ...publicForm, language })} t={t} />
+                      <Field label={t("phoneNumber")} hint="Contact only — no SMS OTP required">
+                        <div className="phone-control" dir="ltr">
+                          <span className="text-lg">🇵🇰</span>
+                          <span className="font-semibold text-sm">+92</span>
+                          <span className="w-px h-6 bg-line" />
+                          <input
+                            required
+                            value={phone}
+                            onChange={(event) => { setPhone(normalizePakistanLocalPhone(event.target.value)); setError(""); }}
+                            inputMode="numeric"
+                            maxLength={10}
+                            placeholder="3XX XXXXXXX"
+                            className="outline-none bg-transparent w-full text-sm font-mono"
+                            aria-label="Public contact phone number"
+                          />
+                        </div>
+                        <p className="text-[11px] text-ink/40 mt-1">This is your contact number, not a phone-login verification.</p>
+                      </Field>
                     </>
                   )}
 
