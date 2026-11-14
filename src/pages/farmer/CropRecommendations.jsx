@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import Topbar from "../../components/Topbar";
 import { useLanguage } from "../../i18n/LanguageContext";
 import Card, { SeverityBadge } from "../../components/Card";
+import AdvisoryChatWidget from "../../components/AdvisoryChatWidget";
 import {
   Sprout,
   Droplets,
@@ -230,6 +231,11 @@ export default function CropRecommendations() {
           </p>
         </div>
       </main>
+
+      <AdvisoryChatWidget
+        district={profile?.district || ""}
+        crop={fields[0]?.crop || profile?.crop || ""}
+      />
     </>
   );
 }
